@@ -78,7 +78,7 @@ export function BabyPlusSchedule() {
           onChange={(e) => handleStartDateChange(e.target.value)}
           placeholder="Select date"
           disabled={hasCompletions && !!startDate}
-          className="min-h-11 rounded-xl"
+          className="h-11 rounded-xl"
         />
         {hasCompletions && startDate && (
           <p className="text-xs text-muted-foreground">

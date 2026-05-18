@@ -67,7 +67,7 @@ export function KickForm() {
             onChange={(e) =>
               setFields((f) => ({ ...f, date: e.target.value }))
             }
-            className="min-h-11 rounded-xl"
+            className="h-11 rounded-xl"
             required
           />
         </div>
@@ -80,7 +80,7 @@ export function KickForm() {
             onChange={(e) =>
               setFields((f) => ({ ...f, time: e.target.value }))
             }
-            className="min-h-11 rounded-xl"
+            className="h-11 rounded-xl"
             required
           />
         </div>

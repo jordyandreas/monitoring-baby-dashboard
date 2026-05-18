@@ -10,7 +10,8 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { genderLabel, getGenderIcon } from "@/lib/baby-utils";
+import { GenderIcon } from "@/components/baby/gender-icon";
+import { genderLabel } from "@/lib/baby-utils";
 import type { BabyProfile, Gender } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -36,8 +37,6 @@ export function BabyProfileForm({
     if (!name.trim() || !dueDate || !gender) return;
     onSave({ name: name.trim(), gender, dueDate });
   };
-
-  const SelectedGenderIcon = gender ? getGenderIcon(gender) : null;
 
   return (
     <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
@@ -66,26 +65,24 @@ export function BabyProfileForm({
                 !gender && "text-muted-foreground",
               )}
             >
-              {SelectedGenderIcon && (
-                <SelectedGenderIcon className="size-4 shrink-0" aria-hidden />
-              )}
+              {gender ? <GenderIcon gender={gender} className="size-4" /> : null}
               {gender ? genderLabel(gender) : "Select gender"}
             </span>
           </SelectTrigger>
           <SelectContent className="p-2">
-            {GENDER_OPTIONS.map((option) => {
-              const Icon = getGenderIcon(option);
-              return (
-                <SelectItem
-                  key={option}
-                  value={option}
-                  className="rounded-lg py-2.5 pr-8 pl-2.5 capitalize"
-                >
-                  <Icon className="size-4 shrink-0 text-muted-foreground" />
-                  {genderLabel(option)}
-                </SelectItem>
-              );
-            })}
+            {GENDER_OPTIONS.map((option) => (
+              <SelectItem
+                key={option}
+                value={option}
+                className="rounded-lg py-2.5 pr-8 pl-2.5 capitalize"
+              >
+                <GenderIcon
+                  gender={option}
+                  className="size-4 text-muted-foreground"
+                />
+                {genderLabel(option)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -98,7 +95,7 @@ export function BabyProfileForm({
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           placeholder="Select date"
-          className="min-h-11 rounded-xl"
+          className="h-11 rounded-xl"
           required
         />
       </div>

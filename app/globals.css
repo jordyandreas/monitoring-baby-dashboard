@@ -126,4 +126,13 @@
     max-width: 100%;
     min-width: 0;
   }
+
+  input[type="date"]::-webkit-datetime-edit,
+  input[type="time"]::-webkit-datetime-edit,
+  input[type="datetime-local"]::-webkit-datetime-edit {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    line-height: 1;
+  }
 }
