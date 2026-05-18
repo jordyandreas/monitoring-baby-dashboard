@@ -117,7 +117,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   );
 
   const resetBabyPlus = useCallback(() => {
-    updateBabyPlus(() => ({ startDate: "", completions: {} }));
+    updateBabyPlus(() => ({ startDate: "", dailyTime: "", completions: {} }));
   }, [updateBabyPlus]);
 
   const setVitaminItems = useCallback(

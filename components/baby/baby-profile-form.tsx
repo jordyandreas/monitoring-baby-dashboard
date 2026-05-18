@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -55,7 +56,7 @@ export function BabyProfileForm({
       <div className="space-y-2">
         <Label>Gender</Label>
         <Select
-          value={gender || null}
+          value={gender || undefined}
           onValueChange={(v) => setGender(v as Gender)}
         >
           <SelectTrigger className="min-h-11 w-full rounded-xl">
@@ -89,14 +90,11 @@ export function BabyProfileForm({
 
       <div className="min-w-0 space-y-2">
         <Label htmlFor="due-date">Expected delivery date</Label>
-        <Input
+        <DatePicker
           id="due-date"
-          type="date"
           value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
+          onChange={setDueDate}
           placeholder="Select date"
-          className="h-11 rounded-xl"
-          required
         />
       </div>
 

@@ -4,7 +4,8 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Label } from "@/components/ui/label";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import { getKickButtonLabel } from "@/lib/kick-label";
@@ -60,33 +61,22 @@ export function KickForm() {
       <form onSubmit={handleSubmit} className="grid min-w-0 gap-3 sm:grid-cols-2">
         <div className="min-w-0 space-y-2">
           <Label htmlFor="kick-date">Date</Label>
-          <Input
+          <DatePicker
             id="kick-date"
-            type="date"
             value={fields.date}
-            onChange={(e) =>
-              setFields((f) => ({ ...f, date: e.target.value }))
-            }
-            className="h-11 rounded-xl"
-            required
+            onChange={(date) => setFields((f) => ({ ...f, date }))}
           />
         </div>
         <div className="min-w-0 space-y-2">
           <Label htmlFor="kick-time">Time</Label>
-          <Input
+          <TimePicker
             id="kick-time"
-            type="time"
             value={fields.time}
-            onChange={(e) =>
-              setFields((f) => ({ ...f, time: e.target.value }))
-            }
-            className="h-11 rounded-xl"
-            required
+            onChange={(time) => setFields((f) => ({ ...f, time }))}
           />
         </div>
         <Button
           type="submit"
-          variant="outline"
           className="min-h-11 rounded-xl sm:col-span-2"
         >
           Add kick

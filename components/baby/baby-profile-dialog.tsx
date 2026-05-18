@@ -50,11 +50,11 @@ export function BabyProfileDialog({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
-          <SheetHeader>
+        <SheetContent side="bottom" className="rounded-t-3xl px-6 pb-6">
+          <SheetHeader className="px-0 pt-5">
             <SheetTitle>Edit baby profile</SheetTitle>
           </SheetHeader>
-          <div className="mt-4 pb-4">{form}</div>
+          <div className="mt-4">{form}</div>
         </SheetContent>
       </Sheet>
     );
@@ -62,7 +62,7 @@ export function BabyProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl sm:max-w-md">
+      <DialogContent className="rounded-2xl p-6 sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit baby profile</DialogTitle>
         </DialogHeader>

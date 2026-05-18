@@ -8,6 +8,7 @@ import {
   parseISO,
   startOfDay,
 } from "date-fns";
+import { isBeforeDailySessionTime, parseTimeString } from "./time-utils";
 
 export const TOTAL_SOUNDS = 16;
 export const DAYS_PER_SOUND = 9;
@@ -85,4 +86,49 @@ export function isBeforeProgram(date: Date, startDate: Date): boolean {
 
 export function isAfterProgram(date: Date, startDate: Date): boolean {
   return isAfter(startOfDay(date), getProgramEnd(startDate));
+}
+
+export type TodayListeningPhase = "waiting" | "ready" | "done";
+
+export type TodayListeningStatus =
+  | { kind: "before-program" }
+  | { kind: "after-program" }
+  | {
+      kind: "active";
+      soundIndex: number;
+      dayIndex: number;
+      phase: TodayListeningPhase;
+    };
+
+export function getTodayListeningStatus(
+  startDate: Date,
+  dailyTime: string,
+  completions: Record<string, boolean>,
+  now: Date = new Date(),
+): TodayListeningStatus {
+  const position = getProgramPosition(startDate, now);
+
+  if (position.status === "before") return { kind: "before-program" };
+  if (position.status === "after") return { kind: "after-program" };
+
+  const key = completionKey(position.soundIndex, position.dayIndex);
+  if (completions[key]) {
+    return {
+      kind: "active",
+      soundIndex: position.soundIndex,
+      dayIndex: position.dayIndex,
+      phase: "done",
+    };
+  }
+
+  const hasDailyTime = !!parseTimeString(dailyTime);
+  const phase: TodayListeningPhase =
+    hasDailyTime && isBeforeDailySessionTime(now, dailyTime) ? "waiting" : "ready";
+
+  return {
+    kind: "active",
+    soundIndex: position.soundIndex,
+    dayIndex: position.dayIndex,
+    phase,
+  };
 }

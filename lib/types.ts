@@ -14,6 +14,8 @@ export interface KickEntry {
 
 export interface BabyPlusState {
   startDate: string;
+  /** Daily listening time in 24h `HH:mm` (browser local timezone). */
+  dailyTime: string;
   completions: Record<string, boolean>;
 }
 
@@ -48,6 +50,7 @@ export const DEFAULT_STORAGE: AppStorage = {
   baby: null,
   babyPlus: {
     startDate: "",
+    dailyTime: "",
     completions: {},
   },
   kicks: [],

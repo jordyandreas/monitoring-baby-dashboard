@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
 import { Check, RotateCcw } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -13,8 +12,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { ProgramEndsLine } from "@/components/baby-plus/program-ends-line";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Progress } from "@/components/ui/progress";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
@@ -22,7 +23,6 @@ import {
   countCompletions,
   formatDisplayDate,
   getBlockDates,
-  getProgramEnd,
   getProgramPosition,
   isDateInFuture,
   isToday,
@@ -35,8 +35,12 @@ import { cn } from "@/lib/utils";
 export function BabyPlusSchedule() {
   const [resetOpen, setResetOpen] = useState(false);
   const { data, updateBabyPlus, resetBabyPlus } = useAppStorage();
-  const babyPlus = data?.babyPlus ?? { startDate: "", completions: {} };
-  const { startDate, completions } = babyPlus;
+  const babyPlus = data?.babyPlus ?? {
+    startDate: "",
+    dailyTime: "",
+    completions: {},
+  };
+  const { startDate, dailyTime, completions } = babyPlus;
   const parsedStart = parseStartDate(startDate);
   const completed = countCompletions(completions);
   const hasCompletions = completed > 0;
@@ -50,6 +54,10 @@ export function BabyPlusSchedule() {
 
   const handleStartDateChange = (value: string) => {
     updateBabyPlus((prev) => ({ ...prev, startDate: value }));
+  };
+
+  const handleDailyTimeChange = (value: string) => {
+    updateBabyPlus((prev) => ({ ...prev, dailyTime: value }));
   };
 
   const toggleCompletion = (
@@ -70,20 +78,37 @@ export function BabyPlusSchedule() {
   return (
     <div className="space-y-6">
       <section className="min-w-0 space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-        <Label htmlFor="start-date">Program start date</Label>
-        <Input
-          id="start-date"
-          type="date"
-          value={startDate}
-          onChange={(e) => handleStartDateChange(e.target.value)}
-          placeholder="Select date"
-          disabled={hasCompletions && !!startDate}
-          className="h-11 rounded-xl"
-        />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Label htmlFor="start-date">Program start date</Label>
+            <DatePicker
+              id="start-date"
+              value={startDate}
+              onChange={handleStartDateChange}
+              placeholder="Select date"
+              disabled={hasCompletions && !!startDate}
+            />
+          </div>
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Label htmlFor="daily-time">Daily listening time</Label>
+            <TimePicker
+              id="daily-time"
+              value={dailyTime}
+              onChange={handleDailyTimeChange}
+              placeholder="Select time"
+              disabled={!parsedStart}
+            />
+          </div>
+        </div>
         {hasCompletions && startDate && (
           <p className="text-xs text-muted-foreground">
             Start date is locked after your first check-in. Reset the program to
             change it.
+          </p>
+        )}
+        {!parsedStart && (
+          <p className="text-xs text-muted-foreground">
+            Set a start date first, then choose when you listen each day.
           </p>
         )}
         {parsedStart && (
@@ -95,9 +120,10 @@ export function BabyPlusSchedule() {
               </span>
             </div>
             <Progress value={(completed / TOTAL_DAYS) * 100} className="h-3" />
-            <p className="text-xs text-muted-foreground">
-              Ends {format(getProgramEnd(parsedStart), "EEEE, MMM d, yyyy")}
-            </p>
+            <ProgramEndsLine
+              startDate={parsedStart}
+              dailyTime={dailyTime}
+            />
           </div>
         )}
         {hasCompletions && (
@@ -128,6 +154,7 @@ export function BabyPlusSchedule() {
         </p>
       ) : (
         <Accordion
+          type="multiple"
           defaultValue={defaultOpen ? [defaultOpen] : undefined}
           className="space-y-2"
         >

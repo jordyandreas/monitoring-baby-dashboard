@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { format } from "date-fns";
 import { ChevronRight, Music } from "lucide-react";
+import { ProgramEndsLine } from "@/components/baby-plus/program-ends-line";
+import { TodayListeningStatus } from "@/components/baby-plus/today-listening-status";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -16,8 +17,6 @@ import { LoadingCard } from "@/components/layout/loading-card";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   countCompletions,
-  getProgramEnd,
-  getProgramPosition,
   parseStartDate,
   TOTAL_DAYS,
 } from "@/lib/baby-plus";
@@ -28,8 +27,9 @@ export function BabyPlusWidget({ className }: { className?: string }) {
 
   if (!mounted) return <LoadingCard />;
 
-  const { startDate, completions } = data?.babyPlus ?? {
+  const { startDate, dailyTime, completions } = data?.babyPlus ?? {
     startDate: "",
+    dailyTime: "",
     completions: {},
   };
   const parsedStart = parseStartDate(startDate);
@@ -68,10 +68,16 @@ export function BabyPlusWidget({ className }: { className?: string }) {
               </div>
               <Progress value={progressPercent} className="h-2.5" />
             </div>
-            <TodayStatus startDate={parsedStart} />
-            <p className="text-xs text-muted-foreground">
-              Ends {format(getProgramEnd(parsedStart), "MMM d, yyyy")}
-            </p>
+            <TodayListeningStatus
+              startDate={parsedStart}
+              dailyTime={dailyTime}
+              completions={completions}
+            />
+            <ProgramEndsLine
+              startDate={parsedStart}
+              dailyTime={dailyTime}
+              dateFormat="MMM d, yyyy"
+            />
           </>
         )}
         <Link
@@ -86,31 +92,5 @@ export function BabyPlusWidget({ className }: { className?: string }) {
         </Link>
       </CardContent>
     </Card>
-  );
-}
-
-function TodayStatus({ startDate }: { startDate: Date }) {
-  const position = getProgramPosition(startDate);
-
-  if (position.status === "before") {
-    return (
-      <p className="rounded-xl bg-muted px-3 py-2 text-sm">
-        Program starts soon — get ready!
-      </p>
-    );
-  }
-
-  if (position.status === "after") {
-    return (
-      <p className="rounded-xl bg-mint/40 px-3 py-2 text-sm font-medium text-mint-foreground">
-        Program complete — great job!
-      </p>
-    );
-  }
-
-  return (
-    <p className="rounded-xl bg-lilac/40 px-3 py-2 text-sm font-medium text-lilac-foreground">
-      Today: Sound {position.soundIndex + 1}, Day {position.dayIndex + 1}
-    </p>
   );
 }
