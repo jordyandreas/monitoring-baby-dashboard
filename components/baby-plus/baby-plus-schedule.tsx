@@ -69,13 +69,14 @@ export function BabyPlusSchedule() {
 
   return (
     <div className="space-y-6">
-      <section className="space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+      <section className="min-w-0 space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
         <Label htmlFor="start-date">Program start date</Label>
         <Input
           id="start-date"
           type="date"
           value={startDate}
           onChange={(e) => handleStartDateChange(e.target.value)}
+          placeholder="Select date"
           disabled={hasCompletions && !!startDate}
           className="min-h-11 rounded-xl"
         />

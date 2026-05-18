@@ -118,4 +118,12 @@
     @apply font-sans;
   }
 
+  /* Safari iOS: date/time inputs ignore min-width and overflow cards */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+  }
 }

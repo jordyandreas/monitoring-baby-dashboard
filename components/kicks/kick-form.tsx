@@ -38,7 +38,7 @@ export function KickForm() {
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="min-w-0 space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
       <Button
         type="button"
         className="min-h-12 w-full rounded-xl text-base"
@@ -57,8 +57,8 @@ export function KickForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="grid min-w-0 gap-3 sm:grid-cols-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="kick-date">Date</Label>
           <Input
             id="kick-date"
@@ -71,7 +71,7 @@ export function KickForm() {
             required
           />
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="kick-time">Time</Label>
           <Input
             id="kick-time"

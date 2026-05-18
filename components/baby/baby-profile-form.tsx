@@ -40,7 +40,7 @@ export function BabyProfileForm({
   const SelectedGenderIcon = gender ? getGenderIcon(gender) : null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
       <div className="space-y-2">
         <Label htmlFor="baby-name">Baby name</Label>
         <Input
@@ -90,13 +90,14 @@ export function BabyProfileForm({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <Label htmlFor="due-date">Expected delivery date</Label>
         <Input
           id="due-date"
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
+          placeholder="Select date"
           className="min-h-11 rounded-xl"
           required
         />
