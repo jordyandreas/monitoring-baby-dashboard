@@ -35,7 +35,7 @@ export function BabyProfileCard({ className }: { className?: string }) {
     return (
       <Card
         className={cn(
-          "h-full overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-lilac/30 via-card to-secondary/30 shadow-sm",
+          "h-full overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-secondary/50 to-card shadow-sm",
           className,
         )}
       >
@@ -67,7 +67,7 @@ export function BabyProfileCard({ className }: { className?: string }) {
     <>
       <Card
         className={cn(
-          "h-full overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-lilac/25 via-card to-mint/20 shadow-sm",
+          "h-full overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-secondary/50 to-card shadow-sm",
           className,
         )}
       >
