@@ -23,7 +23,7 @@ import {
 } from "@/lib/baby-plus";
 import { cn } from "@/lib/utils";
 
-export function BabyPlusWidget() {
+export function BabyPlusWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
 
   if (!mounted) return <LoadingCard />;
@@ -37,7 +37,12 @@ export function BabyPlusWidget() {
   const progressPercent = (completed / TOTAL_DAYS) * 100;
 
   return (
-    <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-secondary/50 to-card shadow-sm">
+    <Card
+      className={cn(
+        "flex h-full flex-col rounded-2xl border-border/60 bg-gradient-to-br from-secondary/50 to-card shadow-sm",
+        className,
+      )}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Music className="size-5 text-lilac-deep" />
@@ -47,7 +52,7 @@ export function BabyPlusWidget() {
           16 sounds · 9 days each · belly learning program
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-1 flex-col space-y-4">
         {!parsedStart ? (
           <p className="text-sm text-muted-foreground">
             Set a start date to begin your 144-day listening journey.
@@ -73,7 +78,7 @@ export function BabyPlusWidget() {
           href="/baby-plus"
           className={cn(
             buttonVariants({ variant: "outline" }),
-            "min-h-11 w-full rounded-xl",
+            "mt-auto min-h-11 w-full rounded-xl",
           )}
         >
           Open Baby Plus

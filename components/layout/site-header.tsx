@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Baby, Footprints, Home, Music } from "lucide-react";
+import { Baby, Footprints, Home, Music, Pill } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/vitamins", label: "Vitamins", icon: Pill },
   { href: "/baby-plus", label: "Baby Plus", icon: Music },
   { href: "/kicks", label: "Kicks", icon: Footprints },
 ] as const;
@@ -31,6 +32,12 @@ const pageMeta: Record<
     description:
       "Log each kick to discover when your baby is most active.",
     icon: Footprints,
+  },
+  "/vitamins": {
+    title: "Vitamin tracker",
+    description:
+      "Track daily vitamins — only today and yesterday are kept in history.",
+    icon: Pill,
   },
 };
 

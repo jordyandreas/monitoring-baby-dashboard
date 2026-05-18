@@ -9,15 +9,18 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
+import { genderLabel, getGenderIcon } from "@/lib/baby-utils";
 import type { BabyProfile, Gender } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface BabyProfileFormProps {
   initial?: BabyProfile | null;
   onSave: (profile: BabyProfile) => void;
   onCancel?: () => void;
 }
+
+const GENDER_OPTIONS: Gender[] = ["girl", "boy", "not-yet"];
 
 export function BabyProfileForm({
   initial,
@@ -33,6 +36,8 @@ export function BabyProfileForm({
     if (!name.trim() || !dueDate || !gender) return;
     onSave({ name: name.trim(), gender, dueDate });
   };
+
+  const SelectedGenderIcon = gender ? getGenderIcon(gender) : null;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,12 +60,32 @@ export function BabyProfileForm({
           onValueChange={(v) => setGender(v as Gender)}
         >
           <SelectTrigger className="min-h-11 w-full rounded-xl">
-            <SelectValue placeholder="Select gender" />
+            <span
+              className={cn(
+                "flex flex-1 items-center gap-2 text-left text-sm",
+                !gender && "text-muted-foreground",
+              )}
+            >
+              {SelectedGenderIcon && (
+                <SelectedGenderIcon className="size-4 shrink-0" aria-hidden />
+              )}
+              {gender ? genderLabel(gender) : "Select gender"}
+            </span>
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="girl">Girl</SelectItem>
-            <SelectItem value="boy">Boy</SelectItem>
-            <SelectItem value="not-yet">Not yet</SelectItem>
+          <SelectContent className="p-2">
+            {GENDER_OPTIONS.map((option) => {
+              const Icon = getGenderIcon(option);
+              return (
+                <SelectItem
+                  key={option}
+                  value={option}
+                  className="rounded-lg py-2.5 pr-8 pl-2.5 capitalize"
+                >
+                  <Icon className="size-4 shrink-0 text-muted-foreground" />
+                  {genderLabel(option)}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

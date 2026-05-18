@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
 import { Check, RotateCcw } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Accordion,
   AccordionContent,
@@ -31,6 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export function BabyPlusSchedule() {
+  const [resetOpen, setResetOpen] = useState(false);
   const { data, updateBabyPlus, resetBabyPlus } = useAppStorage();
   const babyPlus = data?.babyPlus ?? { startDate: "", completions: {} };
   const { startDate, completions } = babyPlus;
@@ -62,16 +65,6 @@ export function BabyPlusSchedule() {
         [key]: checked,
       },
     }));
-  };
-
-  const handleReset = () => {
-    if (
-      window.confirm(
-        "Reset the entire Baby Plus program? All checkmarks will be cleared.",
-      )
-    ) {
-      resetBabyPlus();
-    }
   };
 
   return (
@@ -107,15 +100,24 @@ export function BabyPlusSchedule() {
           </div>
         )}
         {hasCompletions && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 rounded-xl"
-            onClick={handleReset}
-          >
-            <RotateCcw className="size-4" />
-            Reset program
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 rounded-xl"
+              onClick={() => setResetOpen(true)}
+            >
+              <RotateCcw className="size-4" />
+              Reset program
+            </Button>
+            <ConfirmDialog
+              open={resetOpen}
+              onOpenChange={setResetOpen}
+              description="Reset the entire Baby Plus program? All checkmarks will be cleared."
+              onConfirm={resetBabyPlus}
+              confirmVariant="destructive"
+            />
+          </>
         )}
       </section>
 

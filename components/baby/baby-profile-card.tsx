@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Baby, Calendar, Pencil } from "lucide-react";
+import { Baby, Calendar, Heart, Pencil } from "lucide-react";
 import { BabyProfileForm } from "./baby-profile-form";
 import { BabyProfileDialog } from "./baby-profile-dialog";
-import { Badge } from "@/components/ui/badge";
+import { GenderBadge } from "./gender-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,12 +17,13 @@ import { LoadingCard } from "@/components/layout/loading-card";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   formatDueDate,
-  genderBadgeClass,
-  genderLabel,
+  getBabyGreeting,
   getDueDateCountdown,
+  getPregnancyProgress,
 } from "@/lib/baby-utils";
+import { cn } from "@/lib/utils";
 
-export function BabyProfileCard() {
+export function BabyProfileCard({ className }: { className?: string }) {
   const { data, mounted, setBaby } = useAppStorage();
   const [open, setOpen] = useState(false);
 
@@ -32,7 +33,12 @@ export function BabyProfileCard() {
 
   if (!baby) {
     return (
-      <Card className="overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-lilac/30 via-card to-secondary/30 shadow-sm">
+      <Card
+        className={cn(
+          "h-full overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-lilac/30 via-card to-secondary/30 shadow-sm",
+          className,
+        )}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Baby className="size-6 text-lilac-deep" />
@@ -54,20 +60,24 @@ export function BabyProfileCard() {
     );
   }
 
+  const pregnancy = getPregnancyProgress(baby.dueDate);
+  const greeting = getBabyGreeting(baby.name, baby.gender);
+
   return (
     <>
-      <Card className="overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-lilac/25 via-card to-mint/20 shadow-sm">
-        <CardHeader className="flex flex-row items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-2xl">{baby.name}</CardTitle>
-            <CardDescription className="mt-1 flex flex-wrap items-center gap-2">
-              <Badge
-                variant="outline"
-                className={genderBadgeClass(baby.gender)}
-              >
-                {genderLabel(baby.gender)}
-              </Badge>
-            </CardDescription>
+      <Card
+        className={cn(
+          "h-full overflow-hidden rounded-2xl border-border/60 bg-gradient-to-br from-lilac/25 via-card to-mint/20 shadow-sm",
+          className,
+        )}
+      >
+        <CardHeader className="flex flex-row items-start justify-between gap-2 pb-3">
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className="text-sm font-medium leading-relaxed text-lilac-deep/90">
+              {greeting}
+            </p>
+            <CardTitle className="text-2xl leading-tight">{baby.name}</CardTitle>
+            <GenderBadge gender={baby.gender} />
           </div>
           <Button
             variant="ghost"
@@ -79,12 +89,36 @@ export function BabyProfileCard() {
             <Pencil className="size-4" />
           </Button>
         </CardHeader>
+
         <CardContent className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="size-4 text-lilac-deep" />
-            <span>Due {formatDueDate(baby.dueDate)}</span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-start gap-3 rounded-xl border border-lilac/30 bg-lilac/20 px-4 py-3">
+              <Heart className="mt-0.5 size-5 shrink-0 text-lilac-deep" />
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Pregnancy
+                </p>
+                <p className="text-lg font-bold text-foreground">
+                  {pregnancy.weekDisplay}
+                </p>
+                <p className="text-sm text-muted-foreground">{pregnancy.label}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-xl border border-border/50 bg-card px-4 py-3">
+              <Calendar className="mt-0.5 size-5 shrink-0 text-lilac-deep" />
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Due date
+                </p>
+                <p className="text-sm font-semibold text-foreground">
+                  {formatDueDate(baby.dueDate)}
+                </p>
+              </div>
+            </div>
           </div>
-          <p className="rounded-xl bg-lilac/40 px-4 py-3 text-sm font-medium text-lilac-foreground">
+
+          <p className="rounded-xl bg-lilac/40 px-4 py-3 text-center text-sm font-medium text-lilac-foreground">
             {getDueDateCountdown(baby.dueDate)}
           </p>
         </CardContent>

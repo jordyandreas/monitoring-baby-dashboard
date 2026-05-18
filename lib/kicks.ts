@@ -1,5 +1,7 @@
 import {
+  addDays,
   format,
+  isSameDay,
   isWithinInterval,
   parseISO,
   startOfDay,
@@ -93,6 +95,47 @@ export function formatHourLabel(hour: number): string {
   const ampm = hour >= 12 ? "PM" : "AM";
   const hour12 = hour % 12 || 12;
   return `${hour12}:00 ${ampm}`;
+}
+
+export function getTodayDateStr(reference: Date = new Date()): string {
+  return format(startOfDay(reference), "yyyy-MM-dd");
+}
+
+export interface KickDateStripItem {
+  date: string;
+  label: string;
+  isToday: boolean;
+  kickCount: number;
+}
+
+/** Dates before/after today for the horizontal strip (today centered). */
+export function getKickDateStrip(
+  kicks: KickEntry[],
+  daysBefore = 7,
+  daysAfter = 7,
+  reference: Date = new Date(),
+): KickDateStripItem[] {
+  const today = startOfDay(reference);
+
+  return Array.from({ length: daysBefore + daysAfter + 1 }, (_, i) => {
+    const day = addDays(today, i - daysBefore);
+    const date = format(day, "yyyy-MM-dd");
+    return {
+      date,
+      label: format(day, "EEE, d MMM yyyy"),
+      isToday: isSameDay(day, today),
+      kickCount: kicks.filter((k) => k.date === date).length,
+    };
+  });
+}
+
+export function getKicksForDate(
+  kicks: KickEntry[],
+  date: string,
+): KickEntry[] {
+  return kicks
+    .filter((k) => k.date === date)
+    .sort((a, b) => b.time.localeCompare(a.time));
 }
 
 export function groupKicksByDate(

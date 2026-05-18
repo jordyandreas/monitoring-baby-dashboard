@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Footprints, Home, Music } from "lucide-react";
+import { Footprints, Home, Music, Pill } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/baby-plus", label: "Baby Plus", icon: Music },
+  { href: "/vitamins", label: "Vitamins", icon: Pill },
+  { href: "/baby-plus", label: "Plus", icon: Music },
   { href: "/kicks", label: "Kicks", icon: Footprints },
 ];
 
@@ -25,7 +26,7 @@ export function BottomNav() {
               key={href}
               href={href}
               className={cn(
-                "flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-semibold transition-colors",
+                "flex min-h-11 min-w-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-2 text-[10px] font-semibold transition-colors",
                 active
                   ? "bg-lilac/50 text-lilac-foreground"
                   : "text-muted-foreground hover:bg-muted/60",

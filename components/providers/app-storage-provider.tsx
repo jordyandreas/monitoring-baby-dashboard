@@ -4,15 +4,28 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
-import { readStorage, writeStorage } from "@/lib/storage";
-import type { AppStorage, BabyPlusState, BabyProfile, KickEntry } from "@/lib/types";
+import {
+  getAppStorageServerSnapshot,
+  getAppStorageSnapshot,
+  isAppStorageHydrated,
+  subscribeAppStorage,
+  updateAppStorage,
+} from "@/lib/storage";
+import type {
+  AppStorage,
+  BabyPlusState,
+  BabyProfile,
+  KickEntry,
+  VitaminItem,
+  VitaminState,
+} from "@/lib/types";
+import { rolloverVitaminState, syncVitaminItems } from "@/lib/vitamins";
 
 interface AppStorageContextValue {
-  data: AppStorage | null;
+  data: AppStorage;
   mounted: boolean;
   isLoading: boolean;
   setBaby: (baby: BabyProfile | null) => void;
@@ -21,27 +34,43 @@ interface AppStorageContextValue {
   addKick: (kick: Omit<KickEntry, "id">) => void;
   removeKick: (id: string) => void;
   resetBabyPlus: () => void;
+  setVitaminItems: (items: VitaminItem[]) => void;
+  toggleVitamin: (
+    day: "today" | "yesterday",
+    vitaminId: string,
+    checked: boolean,
+  ) => void;
 }
 
 const AppStorageContext = createContext<AppStorageContextValue | null>(null);
 
 export function AppStorageProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<AppStorage | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setData(readStorage());
-    setMounted(true);
-  }, []);
+  const data = useSyncExternalStore(
+    subscribeAppStorage,
+    getAppStorageSnapshot,
+    getAppStorageServerSnapshot,
+  );
+  const mounted = useSyncExternalStore(
+    subscribeAppStorage,
+    isAppStorageHydrated,
+    () => false,
+  );
 
   const persist = useCallback((updater: (prev: AppStorage) => AppStorage) => {
-    setData((prev) => {
-      const base = prev ?? readStorage();
-      const next = updater(base);
-      writeStorage(next);
-      return next;
-    });
+    updateAppStorage(updater);
   }, []);
+
+  const updateVitamins = useCallback(
+    (updater: (prev: VitaminState) => VitaminState) => {
+      persist((prev) => ({
+        ...prev,
+        vitamins: rolloverVitaminState(
+          updater(rolloverVitaminState(prev.vitamins)),
+        ),
+      }));
+    },
+    [persist],
+  );
 
   const setBaby = useCallback(
     (baby: BabyProfile | null) => {
@@ -91,6 +120,42 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
     updateBabyPlus(() => ({ startDate: "", completions: {} }));
   }, [updateBabyPlus]);
 
+  const setVitaminItems = useCallback(
+    (items: VitaminItem[]) => {
+      updateVitamins((prev) => syncVitaminItems(prev, items));
+    },
+    [updateVitamins],
+  );
+
+  const toggleVitamin = useCallback(
+    (day: "today" | "yesterday", vitaminId: string, checked: boolean) => {
+      updateVitamins((prev) => {
+        if (day === "yesterday" && !prev.yesterday) return prev;
+
+        const key = day === "today" ? "today" : "yesterday";
+        const record =
+          key === "today" ? prev.today : prev.yesterday!;
+
+        const completed = { ...record.completed };
+        if (checked) {
+          completed[vitaminId] = true;
+        } else {
+          delete completed[vitaminId];
+        }
+
+        if (key === "today") {
+          return { ...prev, today: { ...prev.today, completed } };
+        }
+
+        return {
+          ...prev,
+          yesterday: { ...prev.yesterday!, completed },
+        };
+      });
+    },
+    [updateVitamins],
+  );
+
   const value = useMemo(
     () => ({
       data,
@@ -102,6 +167,8 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
       addKick,
       removeKick,
       resetBabyPlus,
+      setVitaminItems,
+      toggleVitamin,
     }),
     [
       data,
@@ -112,6 +179,8 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
       addKick,
       removeKick,
       resetBabyPlus,
+      setVitaminItems,
+      toggleVitamin,
     ],
   );
 

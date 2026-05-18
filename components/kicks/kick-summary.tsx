@@ -61,10 +61,10 @@ export function KickSummary({ compact = false }: { compact?: boolean }) {
               type="button"
               onClick={() => setRange(days)}
               className={cn(
-                "min-h-9 flex-1 rounded-full text-sm font-semibold transition-colors",
+                "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
                 range === days
-                  ? "bg-lilac/60 text-lilac-foreground"
-                  : "bg-muted text-muted-foreground",
+                  ? "bg-lilac-deep text-primary-foreground shadow-md"
+                  : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/60",
               )}
             >
               {days} days
@@ -83,24 +83,46 @@ export function KickSummary({ compact = false }: { compact?: boolean }) {
           <p className="text-sm font-medium text-muted-foreground">
             Daily activity (last {chartDays} days)
           </p>
-          <div className="flex h-24 items-end justify-between gap-1">
-            {perDay.map((day) => (
-              <div
-                key={day.date}
-                className="flex flex-1 flex-col items-center gap-1"
-              >
-                <div
-                  className="w-full rounded-t-md bg-lilac-deep/70 transition-all"
-                  style={{
-                    height: `${Math.max((day.count / maxCount) * 100, day.count > 0 ? 8 : 2)}%`,
-                  }}
-                  title={`${day.count} kicks`}
-                />
-                <span className="text-[10px] text-muted-foreground">
-                  {day.label.split(" ")[1]}
-                </span>
-              </div>
-            ))}
+          <div className="rounded-xl border border-border/50 bg-muted/20 px-2 pb-2 pt-3">
+            <div className="flex h-28 items-end justify-between gap-1.5">
+              {perDay.map((day) => {
+                const barHeight =
+                  day.count > 0
+                    ? Math.max(Math.round((day.count / maxCount) * 88), 10)
+                    : 4;
+
+                return (
+                  <div
+                    key={day.date}
+                    className="flex min-w-0 flex-1 flex-col items-center gap-1"
+                  >
+                    <div
+                      className="group relative flex w-full max-w-7 flex-col justify-end"
+                      style={{ height: 88 }}
+                    >
+                      {day.count > 0 && (
+                        <div
+                          className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-lilac-deep px-2 py-1 text-[10px] font-semibold text-primary-foreground opacity-0 shadow-md transition-opacity group-hover:opacity-100"
+                          role="tooltip"
+                        >
+                          {day.count} kick{day.count === 1 ? "" : "s"}
+                        </div>
+                      )}
+                      <div
+                        className={cn(
+                          "w-full bg-lilac-deep transition-colors group-hover:bg-[#6b5bd4]",
+                          day.count > 0 ? "opacity-100" : "opacity-20",
+                        )}
+                        style={{ height: barHeight }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {day.label.split(" ")[1]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -116,16 +138,16 @@ export function KickSummary({ compact = false }: { compact?: boolean }) {
                   className="flex items-center gap-3 text-sm"
                 >
                   <span className="w-20 shrink-0 font-medium">{slot.label}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-lilac/30">
                     <div
-                      className="h-full rounded-full bg-sky"
+                      className="h-full rounded-full bg-lilac-deep"
                       style={{
                         width: `${(slot.count / (topHours[0]?.count ?? 1)) * 100}%`,
                       }}
                     />
                   </div>
-                  <span className="w-8 text-right text-muted-foreground">
-                    {slot.count}
+                  <span className="shrink-0 text-right text-muted-foreground tabular-nums">
+                    {slot.count} kick{slot.count === 1 ? "" : "s"}
                   </span>
                 </li>
               ))}
