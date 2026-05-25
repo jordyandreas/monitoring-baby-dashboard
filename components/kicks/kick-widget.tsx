@@ -11,12 +11,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingCard } from "@/components/layout/loading-card";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import { getKicksInRange, getTopHours } from "@/lib/kicks";
 import { cn } from "@/lib/utils";
 
 export function KickWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
+  const { t } = useLocale();
 
   if (!mounted) return <LoadingCard />;
 
@@ -34,19 +36,19 @@ export function KickWidget({ className }: { className?: string }) {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Footprints className="size-5 text-lilac-deep" />
-          Baby kicks
+          {t("kicks.title")}
         </CardTitle>
-        <CardDescription>Track movement patterns over time</CardDescription>
+        <CardDescription>{t("kicks.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-4">
         <div className="rounded-xl bg-card/80 px-4 py-3">
           <p className="text-2xl font-bold">{last7}</p>
-          <p className="text-sm text-muted-foreground">kicks in the last 7 days</p>
+          <p className="text-sm text-muted-foreground">{t("kicks.last7Days")}</p>
         </div>
         {topHours.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">
-              Most active times
+              {t("kicks.mostActive")}
             </p>
             <ul className="space-y-1.5">
               {topHours.map((slot) => (
@@ -80,7 +82,7 @@ export function KickWidget({ className }: { className?: string }) {
             "mt-auto min-h-11 w-full rounded-xl",
           )}
         >
-          Open kick monitor
+          {t("kicks.open")}
           <ChevronRight className="size-4" />
         </Link>
       </CardContent>

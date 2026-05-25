@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { PageShell } from "@/components/layout/page-shell";
 import { SiteHeader } from "@/components/layout/site-header";
 import { AppStorageProvider } from "@/components/providers/app-storage-provider";
+import { LocaleProvider } from "@/components/providers/locale-provider";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -26,11 +27,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunito.variable} h-full`}>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
-        <AppStorageProvider>
-          <SiteHeader />
-          <PageShell>{children}</PageShell>
-          <BottomNav />
-        </AppStorageProvider>
+        <LocaleProvider>
+          <AppStorageProvider>
+            <SiteHeader />
+            <PageShell>{children}</PageShell>
+            <BottomNav />
+          </AppStorageProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

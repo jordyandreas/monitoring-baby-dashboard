@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   getTodayListeningStatus,
   type TodayListeningStatus,
@@ -21,6 +22,7 @@ export function TodayListeningStatus({
   completions,
   className,
 }: TodayListeningStatusProps) {
+  const { t } = useLocale();
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -58,37 +60,47 @@ export function TodayListeningStatus({
       )}
       aria-live="polite"
     >
-      {status ? renderMessage(status, dailyTime) : " "}
+      {status ? renderMessage(status, dailyTime, t) : " "}
     </p>
   );
 }
 
+type TranslateFn = (
+  key: string,
+  params?: Record<string, string | number>,
+) => string;
+
 function renderMessage(
   status: TodayListeningStatus,
   dailyTime: string,
+  t: TranslateFn,
 ): string {
   if (status.kind === "before-program") {
-    return "Program starts soon — get ready!";
+    return t("babyPlus.programStartsSoon");
   }
 
   if (status.kind === "after-program") {
-    return "Program complete — great job!";
+    return t("babyPlus.programComplete");
   }
 
   const sound = status.soundIndex + 1;
   const day = status.dayIndex + 1;
 
   if (status.phase === "done") {
-    return `Done for today ✓ · Sound ${sound}, Day ${day}`;
+    return t("babyPlus.doneForToday", { sound, day });
   }
 
   if (status.phase === "waiting" && dailyTime) {
-    return `Starts at ${formatTimeAmPm(dailyTime)} · Sound ${sound}, Day ${day}`;
+    return t("babyPlus.startsAt", {
+      time: formatTimeAmPm(dailyTime),
+      sound,
+      day,
+    });
   }
 
   if (status.phase === "ready" && dailyTime) {
-    return `Time to listen · Sound ${sound}, Day ${day}`;
+    return t("babyPlus.timeToListen", { sound, day });
   }
 
-  return `Today: Sound ${sound}, Day ${day}`;
+  return t("babyPlus.todaySound", { sound, day });
 }

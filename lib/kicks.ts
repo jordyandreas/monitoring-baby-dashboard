@@ -7,7 +7,13 @@ import {
   startOfDay,
   subDays,
 } from "date-fns";
+import { enUS, id as idLocale } from "date-fns/locale";
+import type { Locale } from "@/lib/i18n/types";
 import { formatTimeAmPm } from "./time-utils";
+
+function dateFnsLocale(locale: Locale) {
+  return locale === "id" ? idLocale : enUS;
+}
 import type { KickEntry } from "./types";
 
 export function formatKickTime(time: string): string {
@@ -28,20 +34,38 @@ export function getKicksInRange(
   });
 }
 
+export interface KicksPerDayItem {
+  date: string;
+  /** Short x-axis label (day of month, or d/M when span > 7 days). */
+  dayLabel: string;
+  /** Full date for tooltips and screen readers. */
+  fullLabel: string;
+  isToday: boolean;
+  count: number;
+}
+
 export function getKicksPerDay(
   kicks: KickEntry[],
   days: number,
   reference: Date = new Date(),
-): { date: string; label: string; count: number }[] {
-  const result: { date: string; label: string; count: number }[] = [];
+  locale: Locale = "en",
+): KicksPerDayItem[] {
+  const result: KicksPerDayItem[] = [];
+  const today = startOfDay(reference);
+  const dfLocale = dateFnsLocale(locale);
+  const compactAxis = days > 7;
 
   for (let i = days - 1; i >= 0; i--) {
-    const day = subDays(startOfDay(reference), i);
+    const day = subDays(today, i);
     const dateStr = format(day, "yyyy-MM-dd");
     const count = kicks.filter((k) => k.date === dateStr).length;
     result.push({
       date: dateStr,
-      label: format(day, "MMM d"),
+      dayLabel: compactAxis
+        ? format(day, "d/M", { locale: dfLocale })
+        : format(day, "d", { locale: dfLocale }),
+      fullLabel: format(day, "EEE, d MMM yyyy", { locale: dfLocale }),
+      isToday: isSameDay(day, today),
       count,
     });
   }
@@ -111,6 +135,7 @@ export function getKickDateStrip(
   daysBefore = 7,
   daysAfter = 7,
   reference: Date = new Date(),
+  locale: Locale = "en",
 ): KickDateStripItem[] {
   const today = startOfDay(reference);
 
@@ -119,7 +144,7 @@ export function getKickDateStrip(
     const date = format(day, "yyyy-MM-dd");
     return {
       date,
-      label: format(day, "EEE, d MMM yyyy"),
+      label: format(day, "EEE, d MMM yyyy", { locale: dateFnsLocale(locale) }),
       isToday: isSameDay(day, today),
       kickCount: kicks.filter((k) => k.date === date).length,
     };

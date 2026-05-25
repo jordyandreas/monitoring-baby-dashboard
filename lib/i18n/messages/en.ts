@@ -1,0 +1,198 @@
+export const en = {
+  locale: {
+    switchTo: "Bahasa",
+    en: "English",
+    id: "Bahasa",
+    aria: "Switch language",
+  },
+  nav: {
+    home: "Home",
+    vitamins: "Vitamins",
+    babyPlus: "Baby Plus",
+    plus: "Plus",
+    kicks: "Kicks",
+  },
+  pages: {
+    home: {
+      title: "Baby Monitor",
+      description: "Your pregnancy companion — saved on this device only",
+    },
+    babyPlus: {
+      title: "Baby Plus",
+      description:
+        "Play one sound daily for 9 days, then move to the next — 16 sounds over 144 days.",
+    },
+    kicks: {
+      title: "Kick monitor",
+      description: "Log each kick to discover when your baby is most active.",
+    },
+    vitamins: {
+      title: "Vitamin tracker",
+      description:
+        "Track daily vitamins — only today and yesterday are kept in history.",
+    },
+  },
+  common: {
+    cancel: "Cancel",
+    save: "Save",
+    ok: "OK",
+    selectDate: "Select date",
+    clearDate: "Clear date",
+    selectTime: "Select time",
+    selectGender: "Select gender",
+    confirmTitle: "Are you sure?",
+    today: "Today",
+    yesterday: "Yesterday",
+    day: "Day",
+    days: "days",
+    daySingular: "day",
+    kick: "kick",
+    kicks: "kicks",
+    done: "Done",
+    current: "Current",
+    progress: "Progress",
+  },
+  greeting: {
+    goodMorning: "Good Morning",
+    goodAfternoon: "Good Afternoon",
+    goodEvening: "Good Evening",
+    goodNight: "Good Night",
+  },
+  baby: {
+    yourLittleOne: "Your little one",
+    addProfileHint:
+      "Add your baby's name, gender, and expected delivery date to get started.",
+    editProfile: "Edit profile",
+    editBabyProfile: "Edit baby profile",
+    pregnancy: "Pregnancy",
+    trimester1: "Trimester 1",
+    trimester2: "Trimester 2",
+    trimester3: "Trimester 3",
+    babyName: "Baby name",
+    namePlaceholder: "e.g. Little Star",
+    gender: "Gender",
+    lmpCalculation: "LMP Calculation",
+    lmpHint: "LMP = Last Menstrual Period calculation",
+    or: "or",
+    expectedDelivery: "Expected delivery date",
+    eddInfoAria: "How expected delivery date is calculated",
+    eddInfoTitle: "Expected Delivery Date (EDD)",
+    eddInfoP1:
+      "EDD is the estimated birth date based on how far along the pregnancy is.",
+    eddInfoP2:
+      "The calculation uses Naegele's Rule: EDD = Last Menstrual Period (LMP) + 7 days − 3 months + 1 year. Results may differ by a few days because of calendar variations and the number of days in a month.",
+    eddInfoP3:
+      "Estimated birth is typically at 40 weeks of pregnancy from LMP. The most accurate EDD is determined by a first-trimester ultrasound with your obstetrician.",
+    eddInfoSource:
+      "Source: Book Pregnancy and Birth: When Your Baby's Due Date Has Passed & www.acog.org",
+    eddInfoGotIt: "Got it",
+    boy: "Boy",
+    girl: "Girl",
+    notYet: "Not yet",
+    daysUntilDue: "{count} {unit} until due date",
+    dueToday: "Due date is today!",
+    daysPastDue: "{count} {unit} past due date",
+    week: "Week",
+    weeksPregnant: "{weeks} weeks, {days} {dayUnit} pregnant",
+    weekPregnant: "{weeks} week pregnant",
+    weeksPregnantShort: "{weeks} weeks pregnant",
+    pastDueWeeks: "{weeks} weeks, {days} {dayUnit} (past due)",
+    pastDueWeeksOnly: "{weeks} weeks (past due)",
+    dueFarAway: "Due date is more than 40 weeks away",
+    greetingDefault: "We can't wait to meet your little one.",
+    greetingBoy: "Hi Baby {name}. We can't wait to meet you, little one.",
+    greetingGirl: "Hi Baby {name}. We can't wait to meet you, sweetheart.",
+    greetingUnknown: "Hi Baby {name}. We can't wait to see you.",
+  },
+  babyPlus: {
+    title: "Baby Plus",
+    subtitle: "16 sounds · 9 days each · belly learning program",
+    setStartHint: "Set a start date to begin your 144-day listening journey.",
+    open: "Open Baby Plus",
+    programStart: "Program start date",
+    dailyTime: "Daily listening time",
+    startLocked:
+      "Start date is locked after your first check-in. Reset the program to change it.",
+    setStartFirst: "Set a start date first, then choose when you listen each day.",
+    overallProgress: "Overall progress",
+    resetProgram: "Reset program",
+    resetConfirm:
+      "Reset the entire Baby Plus program? All checkmarks will be cleared.",
+    chooseStartHint: "Choose a start date above to see your 16-sound schedule.",
+    sound: "Sound",
+    daysProgress: "{completed} / {total} days",
+    programStartsSoon: "Program starts soon — get ready!",
+    programComplete: "Program complete — great job!",
+    doneForToday: "Done for today ✓ · Sound {sound}, Day {day}",
+    startsAt: "Starts at {time} · Sound {sound}, Day {day}",
+    timeToListen: "Time to listen · Sound {sound}, Day {day}",
+    todaySound: "Today: Sound {sound}, Day {day}",
+    everyDayEnds: "Every {time} · Ends {date}",
+    ends: "Ends {date}",
+  },
+  kicks: {
+    title: "Baby kicks",
+    subtitle: "Track movement patterns over time",
+    last7Days: "kicks in the last 7 days",
+    mostActive: "Most active times",
+    open: "Open kick monitor",
+    quickBoy: "He's kicking now",
+    quickGirl: "She's kicking now",
+    quickDefault: "Baby's kicking now",
+    orCustom: "or custom",
+    date: "Date",
+    time: "Time",
+    addKick: "Add kick",
+    deleteKick: "Delete kick",
+    deleteConfirm: "Delete this kick log? This cannot be undone.",
+    emptyList: "No kicks logged yet. Tap the button above when you feel movement!",
+    emptyDay: "No kicks logged on this day.",
+    summaryTitle: "Kick summary",
+    summarySubtitle: "Track patterns to learn when your baby moves most",
+    rangeDays: "{count} days",
+    rangeHint: "Choose a period — the total and chart below use the same range.",
+    kicksInRange: "kicks in the last {count} days",
+    dailyActivity: "Daily activity",
+    dailyActivityHint:
+      "Each bar is one calendar day. A taller bar means you logged more kicks that day.",
+    chartDateRange: "{from} – {to}",
+    chartEmptyPeriod:
+      "No kicks in this period yet. Log a kick and the matching day’s bar will grow.",
+    mostActiveHint:
+      "When you usually log kicks during the selected period (not a medical schedule).",
+    barAriaLabel: "{count} kicks on {date}",
+    logToSeePatterns: "Log kicks to see your patterns here.",
+  },
+  vitamins: {
+    title: "Vitamins",
+    subtitle: "Daily vitamin checklist",
+    emptyHint: "Add your vitamins to track what you take each day.",
+    takenToday: "taken today · {date}",
+    allDone: "All vitamins done for today",
+    left: "{count} left:",
+    more: "+{count} more",
+    setup: "Set up vitamins",
+    open: "Open vitamin tracker",
+    yourVitamins: "Your vitamins",
+    formHint:
+      "Add the vitamins you take daily. Start with three slots, or add more as needed.",
+    placeholder: "Vitamin {index}",
+    removeAria: "Remove vitamin",
+    add: "Add vitamin",
+    save: "Save vitamins",
+    removeConfirm:
+      "Remove {name} from your list? It will also be removed from today and yesterday tracking.",
+    thisVitamin: "this vitamin",
+    saveNamesHint: "Save your vitamin names above to start daily tracking.",
+    noYesterday:
+      "No record for {date} yet — yesterday appears after your first full day of tracking.",
+  },
+} as const;
+
+type WidenStrings<T> = T extends string
+  ? string
+  : T extends object
+    ? { [K in keyof T]: WidenStrings<T[K]> }
+    : T;
+
+export type Messages = WidenStrings<typeof en>;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BabyProfileForm } from "./baby-profile-form";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ export function BabyProfileDialog({
   initial,
   onSave,
 }: BabyProfileDialogProps) {
+  const { t } = useLocale();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -47,12 +49,14 @@ export function BabyProfileDialog({
     />
   );
 
+  const title = t("baby.editBabyProfile");
+
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="rounded-t-3xl px-6 pb-6">
           <SheetHeader className="px-0 pt-5">
-            <SheetTitle>Edit baby profile</SheetTitle>
+            <SheetTitle>{title}</SheetTitle>
           </SheetHeader>
           <div className="mt-4">{form}</div>
         </SheetContent>
@@ -64,7 +68,7 @@ export function BabyProfileDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl p-6 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit baby profile</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         {form}
       </DialogContent>

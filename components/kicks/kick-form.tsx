@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
-import { getKickButtonLabel } from "@/lib/kick-label";
+import { getKickButtonLabel } from "@/lib/i18n/kicks";
 
 function getNowFields() {
   const now = new Date();
@@ -20,10 +21,11 @@ function getNowFields() {
 
 export function KickForm() {
   const { data, addKick } = useAppStorage();
+  const { t } = useLocale();
   const [fields, setFields] = useState(getNowFields);
 
   const gender = data?.baby?.gender;
-  const kickLabel = getKickButtonLabel(gender);
+  const kickLabel = getKickButtonLabel(gender, t);
 
   const handleQuickAdd = () => {
     const now = getNowFields();
@@ -54,32 +56,36 @@ export function KickForm() {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">or custom</span>
+          <span className="bg-card px-2 text-muted-foreground">
+            {t("kicks.orCustom")}
+          </span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="grid min-w-0 gap-3 sm:grid-cols-2">
         <div className="min-w-0 space-y-2">
-          <Label htmlFor="kick-date">Date</Label>
+          <Label htmlFor="kick-date">{t("kicks.date")}</Label>
           <DatePicker
             id="kick-date"
             value={fields.date}
             onChange={(date) => setFields((f) => ({ ...f, date }))}
+            placeholder={t("common.selectDate")}
           />
         </div>
         <div className="min-w-0 space-y-2">
-          <Label htmlFor="kick-time">Time</Label>
+          <Label htmlFor="kick-time">{t("kicks.time")}</Label>
           <TimePicker
             id="kick-time"
             value={fields.time}
             onChange={(time) => setFields((f) => ({ ...f, time }))}
+            placeholder={t("common.selectTime")}
           />
         </div>
         <Button
           type="submit"
           className="min-h-11 rounded-xl sm:col-span-2"
         >
-          Add kick
+          {t("kicks.addKick")}
         </Button>
       </form>
     </div>

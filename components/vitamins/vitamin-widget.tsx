@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { LoadingCard } from "@/components/layout/loading-card";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   countCompleted,
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 
 export function VitaminWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
+  const { locale, t } = useLocale();
 
   if (!mounted) return <LoadingCard />;
 
@@ -52,15 +54,13 @@ export function VitaminWidget({ className }: { className?: string }) {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Pill className="size-5 text-lilac-deep" />
-          Vitamins
+          {t("vitamins.title")}
         </CardTitle>
-        <CardDescription>Daily vitamin checklist</CardDescription>
+        <CardDescription>{t("vitamins.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-4">
         {total === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Add your vitamins to track what you take each day.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("vitamins.emptyHint")}</p>
         ) : (
           <>
             <div className="rounded-xl bg-card/80 px-4 py-3">
@@ -72,26 +72,28 @@ export function VitaminWidget({ className }: { className?: string }) {
                 </span>
               </p>
               <p className="text-sm text-muted-foreground">
-                taken today · {formatVitaminDate(todayRecord.date)}
+                {t("vitamins.takenToday", {
+                  date: formatVitaminDate(todayRecord.date, locale),
+                })}
               </p>
               <Progress value={progress} className="mt-3 h-2" />
             </div>
 
             {done === total ? (
               <p className="rounded-xl bg-lilac/30 px-3 py-2 text-center text-sm font-medium text-lilac-foreground">
-                All vitamins done for today
+                {t("vitamins.allDone")}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">
-                  {remaining.length} left:
+                  {t("vitamins.left", { count: remaining.length })}
                 </span>{" "}
                 {remaining
                   .slice(0, 3)
                   .map((v) => v.name)
                   .join(", ")}
                 {remaining.length > 3 &&
-                  ` +${remaining.length - 3} more`}
+                  ` ${t("vitamins.more", { count: remaining.length - 3 })}`}
               </p>
             )}
           </>
@@ -104,7 +106,7 @@ export function VitaminWidget({ className }: { className?: string }) {
             "mt-auto min-h-11 w-full rounded-xl",
           )}
         >
-          {total === 0 ? "Set up vitamins" : "Open vitamin tracker"}
+          {total === 0 ? t("vitamins.setup") : t("vitamins.open")}
           <ChevronRight className="size-4" />
         </Link>
       </CardContent>

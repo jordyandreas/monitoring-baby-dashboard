@@ -8,6 +8,8 @@ import {
   parseISO,
   startOfDay,
 } from "date-fns";
+import { enUS, id as idLocale } from "date-fns/locale";
+import type { Locale } from "@/lib/i18n/types";
 import { isBeforeDailySessionTime, parseTimeString } from "./time-utils";
 
 export const TOTAL_SOUNDS = 16;
@@ -76,8 +78,10 @@ export function isToday(date: Date, reference: Date = new Date()): boolean {
   return isSameDay(date, reference);
 }
 
-export function formatDisplayDate(date: Date): string {
-  return format(date, "EEE, MMM d");
+export function formatDisplayDate(date: Date, locale: Locale = "en"): string {
+  return format(date, "EEE, d MMM", {
+    locale: locale === "id" ? idLocale : enUS,
+  });
 }
 
 export function isBeforeProgram(date: Date, startDate: Date): boolean {

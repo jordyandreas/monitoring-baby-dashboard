@@ -3,6 +3,8 @@ export type Gender = "boy" | "girl" | "not-yet";
 export interface BabyProfile {
   name: string;
   gender: Gender;
+  /** Last menstrual period (LMP) / HPHT, stored as yyyy-MM-dd when set. */
+  lmpDate?: string;
   dueDate: string;
 }
 

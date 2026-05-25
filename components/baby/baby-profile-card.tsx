@@ -14,17 +14,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingCard } from "@/components/layout/loading-card";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   formatDueDate,
   getBabyGreeting,
   getDueDateCountdown,
   getPregnancyProgress,
-} from "@/lib/baby-utils";
+} from "@/lib/i18n/baby";
 import { cn } from "@/lib/utils";
 
 export function BabyProfileCard({ className }: { className?: string }) {
   const { data, mounted, setBaby } = useAppStorage();
+  const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
 
   if (!mounted) return <LoadingCard />;
@@ -42,12 +44,9 @@ export function BabyProfileCard({ className }: { className?: string }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Baby className="size-6 text-lilac-deep" />
-            Your little one
+            {t("baby.yourLittleOne")}
           </CardTitle>
-          <CardDescription>
-            Add your baby&apos;s name, gender, and expected delivery date to get
-            started.
-          </CardDescription>
+          <CardDescription>{t("baby.addProfileHint")}</CardDescription>
         </CardHeader>
         <CardContent>
           <BabyProfileForm
@@ -60,8 +59,8 @@ export function BabyProfileCard({ className }: { className?: string }) {
     );
   }
 
-  const pregnancy = getPregnancyProgress(baby.dueDate);
-  const greeting = getBabyGreeting(baby.name, baby.gender);
+  const pregnancy = getPregnancyProgress(baby.dueDate, t, locale);
+  const greeting = getBabyGreeting(baby.name, baby.gender, t);
 
   return (
     <>
@@ -84,7 +83,7 @@ export function BabyProfileCard({ className }: { className?: string }) {
             size="icon"
             className="shrink-0 rounded-full"
             onClick={() => setOpen(true)}
-            aria-label="Edit profile"
+            aria-label={t("baby.editProfile")}
           >
             <Pencil className="size-4" />
           </Button>
@@ -96,11 +95,16 @@ export function BabyProfileCard({ className }: { className?: string }) {
               <Heart className="mt-0.5 size-5 shrink-0 text-lilac-deep" />
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Pregnancy
+                  {t("baby.pregnancy")}
                 </p>
                 <p className="text-lg font-bold text-foreground">
                   {pregnancy.weekDisplay}
                 </p>
+                {pregnancy.trimesterLabel ? (
+                  <p className="text-sm font-medium text-lilac-deep">
+                    {pregnancy.trimesterLabel}
+                  </p>
+                ) : null}
                 <p className="text-sm text-muted-foreground">{pregnancy.label}</p>
               </div>
             </div>
@@ -109,17 +113,17 @@ export function BabyProfileCard({ className }: { className?: string }) {
               <Calendar className="mt-0.5 size-5 shrink-0 text-lilac-deep" />
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Due date
+                  {t("baby.expectedDelivery")}
                 </p>
                 <p className="text-sm font-semibold text-foreground">
-                  {formatDueDate(baby.dueDate)}
+                  {formatDueDate(baby.dueDate, locale)}
                 </p>
               </div>
             </div>
           </div>
 
           <p className="rounded-xl bg-lilac/40 px-4 py-3 text-center text-sm font-medium text-lilac-foreground">
-            {getDueDateCountdown(baby.dueDate)}
+            {getDueDateCountdown(baby.dueDate, t)}
           </p>
         </CardContent>
       </Card>
