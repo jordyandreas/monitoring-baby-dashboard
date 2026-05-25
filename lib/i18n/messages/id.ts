@@ -71,6 +71,7 @@ export const id: Messages = {
     gender: "Jenis kelamin",
     lmpCalculation: "Perhitungan HPHT",
     lmpHint: "HPHT = Hari Pertama Haid Terakhir",
+    or: "atau",
     expectedDelivery: "Perkiraan tanggal lahir",
     eddInfoAria: "Cara perhitungan hari perkiraan lahir",
     eddInfoTitle: "Hari Perkiraan Lahir (HPL)",

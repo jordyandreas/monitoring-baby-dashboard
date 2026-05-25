@@ -73,6 +73,7 @@ export const en = {
     gender: "Gender",
     lmpCalculation: "LMP Calculation",
     lmpHint: "LMP = Last Menstrual Period calculation",
+    or: "or",
     expectedDelivery: "Expected delivery date",
     eddInfoAria: "How expected delivery date is calculated",
     eddInfoTitle: "Expected Delivery Date (EDD)",

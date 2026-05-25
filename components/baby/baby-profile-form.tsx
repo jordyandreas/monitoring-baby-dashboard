@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -128,6 +129,14 @@ export function BabyProfileForm({
             placeholder={t("common.selectDate")}
             clearAriaLabel={t("common.clearDate")}
           />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span className="shrink-0 text-xs uppercase text-muted-foreground">
+            {t("baby.or")}
+          </span>
+          <Separator className="flex-1" />
         </div>
 
         <div className="min-w-0 space-y-2">
