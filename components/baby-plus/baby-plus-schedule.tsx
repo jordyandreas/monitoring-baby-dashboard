@@ -17,6 +17,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Progress } from "@/components/ui/progress";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   completionKey,
@@ -33,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export function BabyPlusSchedule() {
+  const { locale, t } = useLocale();
   const [resetOpen, setResetOpen] = useState(false);
   const { data, updateBabyPlus, resetBabyPlus } = useAppStorage();
   const babyPlus = data?.babyPlus ?? {
@@ -80,50 +82,42 @@ export function BabyPlusSchedule() {
       <section className="min-w-0 space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 space-y-1.5">
-            <Label htmlFor="start-date">Program start date</Label>
+            <Label htmlFor="start-date">{t("babyPlus.programStart")}</Label>
             <DatePicker
               id="start-date"
               value={startDate}
               onChange={handleStartDateChange}
-              placeholder="Select date"
+              placeholder={t("common.selectDate")}
               disabled={hasCompletions && !!startDate}
             />
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
-            <Label htmlFor="daily-time">Daily listening time</Label>
+            <Label htmlFor="daily-time">{t("babyPlus.dailyTime")}</Label>
             <TimePicker
               id="daily-time"
               value={dailyTime}
               onChange={handleDailyTimeChange}
-              placeholder="Select time"
+              placeholder={t("common.selectTime")}
               disabled={!parsedStart}
             />
           </div>
         </div>
         {hasCompletions && startDate && (
-          <p className="text-xs text-muted-foreground">
-            Start date is locked after your first check-in. Reset the program to
-            change it.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("babyPlus.startLocked")}</p>
         )}
         {!parsedStart && (
-          <p className="text-xs text-muted-foreground">
-            Set a start date first, then choose when you listen each day.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("babyPlus.setStartFirst")}</p>
         )}
         {parsedStart && (
           <div className="space-y-2 pt-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Overall progress</span>
+              <span className="text-muted-foreground">{t("babyPlus.overallProgress")}</span>
               <span className="font-semibold">
                 {completed} / {TOTAL_DAYS}
               </span>
             </div>
             <Progress value={(completed / TOTAL_DAYS) * 100} className="h-3" />
-            <ProgramEndsLine
-              startDate={parsedStart}
-              dailyTime={dailyTime}
-            />
+            <ProgramEndsLine startDate={parsedStart} dailyTime={dailyTime} />
           </div>
         )}
         {hasCompletions && (
@@ -135,12 +129,15 @@ export function BabyPlusSchedule() {
               onClick={() => setResetOpen(true)}
             >
               <RotateCcw className="size-4" />
-              Reset program
+              {t("babyPlus.resetProgram")}
             </Button>
             <ConfirmDialog
               open={resetOpen}
               onOpenChange={setResetOpen}
-              description="Reset the entire Baby Plus program? All checkmarks will be cleared."
+              title={t("common.confirmTitle")}
+              description={t("babyPlus.resetConfirm")}
+              cancelLabel={t("common.cancel")}
+              confirmLabel={t("common.ok")}
               onConfirm={resetBabyPlus}
               confirmVariant="destructive"
             />
@@ -150,7 +147,7 @@ export function BabyPlusSchedule() {
 
       {!parsedStart ? (
         <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-          Choose a start date above to see your 16-sound schedule.
+          {t("babyPlus.chooseStartHint")}
         </p>
       ) : (
         <Accordion
@@ -177,7 +174,7 @@ export function BabyPlusSchedule() {
                 <AccordionTrigger className="py-4 hover:no-underline">
                   <div className="flex flex-1 items-center gap-2 pr-2 text-left">
                     <span className="font-semibold">
-                      Sound {soundIndex + 1}
+                      {t("babyPlus.sound")} {soundIndex + 1}
                     </span>
                     {blockDone && (
                       <Badge
@@ -185,12 +182,12 @@ export function BabyPlusSchedule() {
                         className="border-mint/60 bg-mint/30 text-mint-foreground"
                       >
                         <Check className="size-3" />
-                        Done
+                        {t("common.done")}
                       </Badge>
                     )}
                     {isCurrent && (
                       <Badge className="bg-lilac/60 text-lilac-foreground">
-                        Current
+                        {t("common.current")}
                       </Badge>
                     )}
                   </div>
@@ -233,11 +230,11 @@ export function BabyPlusSchedule() {
                             )}
                           >
                             <span className="font-medium">
-                              Day {dayIndex + 1}
+                              {t("common.day")} {dayIndex + 1}
                             </span>
                             <span className="text-muted-foreground">
-                              {formatDisplayDate(date)}
-                              {today && " · Today"}
+                              {formatDisplayDate(date, locale)}
+                              {today && ` · ${t("common.today")}`}
                             </span>
                           </label>
                         </li>

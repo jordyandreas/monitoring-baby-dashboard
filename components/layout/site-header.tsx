@@ -3,74 +3,47 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Baby, Footprints, Home, Music, Pill } from "lucide-react";
+import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { useLocale } from "@/components/providers/locale-provider";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/vitamins", label: "Vitamins", icon: Pill },
-  { href: "/baby-plus", label: "Baby Plus", icon: Music },
-  { href: "/kicks", label: "Kicks", icon: Footprints },
+const navRoutes = [
+  { href: "/", labelKey: "nav.home", icon: Home },
+  { href: "/vitamins", labelKey: "nav.vitamins", icon: Pill },
+  { href: "/baby-plus", labelKey: "nav.babyPlus", icon: Music },
+  { href: "/kicks", labelKey: "nav.kicks", icon: Footprints },
 ] as const;
-
-const pageMeta: Record<
-  string,
-  { title: string; description?: string; icon: typeof Home }
-> = {
-  "/": {
-    title: "Baby Monitor",
-    description: "Your pregnancy companion — saved on this device only",
-    icon: Baby,
-  },
-  "/baby-plus": {
-    title: "Baby Plus",
-    description:
-      "Play one sound daily for 9 days, then move to the next — 16 sounds over 144 days.",
-    icon: Music,
-  },
-  "/kicks": {
-    title: "Kick monitor",
-    description:
-      "Log each kick to discover when your baby is most active.",
-    icon: Footprints,
-  },
-  "/vitamins": {
-    title: "Vitamin tracker",
-    description:
-      "Track daily vitamins — only today and yesterday are kept in history.",
-    icon: Pill,
-  },
-};
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const meta = pageMeta[pathname] ?? pageMeta["/"];
-  const PageIcon = meta.icon;
+  const { t } = useLocale();
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border/80 bg-card/95 backdrop-blur-md md:hidden">
-        <div className="mx-auto max-w-3xl space-y-1 px-4 py-4">
-          <h1 className="flex items-center gap-2 text-xl font-bold">
-            <PageIcon className="size-6 text-lilac-deep" />
-            {meta.title}
-          </h1>
-          {meta.description && (
-            <p className="text-sm text-muted-foreground">{meta.description}</p>
-          )}
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-2 font-bold text-foreground"
+          >
+            <Baby className="size-6 shrink-0 text-lilac-deep" aria-hidden />
+            <span className="truncate">{t("pages.home.title")}</span>
+          </Link>
+          <LocaleSwitcher />
         </div>
       </header>
 
       <header className="sticky top-0 z-40 hidden border-b border-border/80 bg-card/90 backdrop-blur-md md:block">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+        <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-x-10 px-8 py-4 lg:gap-x-16 lg:px-10">
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-foreground"
+            className="flex shrink-0 items-center gap-2 font-bold text-foreground justify-self-start"
           >
-            <Baby className="size-6 text-lilac-deep" />
-            <span>Baby Monitor</span>
+            <Baby className="size-6 text-lilac-deep" aria-hidden />
+            <span>{t("pages.home.title")}</span>
           </Link>
-          <nav className="flex items-center gap-1">
-            {navItems.map(({ href, label, icon: Icon }) => {
+          <nav className="flex items-center justify-center gap-1 justify-self-center">
+            {navRoutes.map(({ href, labelKey, icon: Icon }) => {
               const active =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
@@ -84,12 +57,15 @@ export function SiteHeader() {
                       : "text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  <Icon className="size-4" />
-                  {label}
+                  <Icon className="size-4" aria-hidden />
+                  {t(labelKey)}
                 </Link>
               );
             })}
           </nav>
+          <div className="justify-self-end">
+            <LocaleSwitcher />
+          </div>
         </div>
       </header>
     </>

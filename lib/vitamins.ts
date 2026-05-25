@@ -1,4 +1,6 @@
 import { format, parseISO, startOfDay, subDays } from "date-fns";
+import { enUS, id as idLocale } from "date-fns/locale";
+import type { Locale } from "@/lib/i18n/types";
 import type { VitaminDayRecord, VitaminItem, VitaminState } from "./types";
 
 export function getTodayDateStr(reference: Date = new Date()): string {
@@ -9,8 +11,10 @@ export function getYesterdayDateStr(reference: Date = new Date()): string {
   return format(subDays(startOfDay(reference), 1), "yyyy-MM-dd");
 }
 
-export function formatVitaminDate(dateStr: string): string {
-  return format(parseISO(dateStr), "EEEE, MMM d");
+export function formatVitaminDate(dateStr: string, locale: Locale = "en"): string {
+  return format(parseISO(dateStr), "EEEE, d MMM", {
+    locale: locale === "id" ? idLocale : enUS,
+  });
 }
 
 export function createEmptyVitaminState(reference: Date = new Date()): VitaminState {

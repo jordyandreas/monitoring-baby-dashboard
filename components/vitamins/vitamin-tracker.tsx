@@ -1,6 +1,7 @@
 "use client";
 
 import { LoadingCard } from "@/components/layout/loading-card";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   formatVitaminDate,
@@ -13,6 +14,7 @@ import { VitaminNameForm } from "./vitamin-name-form";
 
 export function VitaminTracker() {
   const { data, mounted, setVitaminItems, toggleVitamin } = useAppStorage();
+  const { locale, t } = useLocale();
 
   if (!mounted) return <LoadingCard />;
 
@@ -35,13 +37,13 @@ export function VitaminTracker() {
 
       {named.length === 0 ? (
         <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-          Save your vitamin names above to start daily tracking.
+          {t("vitamins.saveNamesHint")}
         </p>
       ) : (
         <>
           <VitaminChecklist
-            title="Today"
-            subtitle={formatVitaminDate(vitamins.today.date || todayStr)}
+            title={t("common.today")}
+            subtitle={formatVitaminDate(vitamins.today.date || todayStr, locale)}
             record={
               vitamins.today.date
                 ? vitamins.today
@@ -53,8 +55,8 @@ export function VitaminTracker() {
 
           {vitamins.yesterday ? (
             <VitaminChecklist
-              title="Yesterday"
-              subtitle={formatVitaminDate(vitamins.yesterday.date)}
+              title={t("common.yesterday")}
+              subtitle={formatVitaminDate(vitamins.yesterday.date, locale)}
               record={vitamins.yesterday}
               items={vitamins.items}
               onToggle={(id, checked) =>
@@ -64,8 +66,9 @@ export function VitaminTracker() {
             />
           ) : (
             <p className="text-center text-sm text-muted-foreground">
-              No record for {formatVitaminDate(yesterdayStr)} yet — yesterday
-              appears after your first full day of tracking.
+              {t("vitamins.noYesterday", {
+                date: formatVitaminDate(yesterdayStr, locale),
+              })}
             </p>
           )}
         </>

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   formatLiveClockLine,
   getTimeOfDayGreeting,
-} from "@/lib/greeting-utils";
+} from "@/lib/i18n/greeting";
 import { cn } from "@/lib/utils";
 
 type LiveGreetingClockProps = {
@@ -12,6 +13,7 @@ type LiveGreetingClockProps = {
 };
 
 export function LiveGreetingClock({ className }: LiveGreetingClockProps) {
+  const { locale, t } = useLocale();
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -24,12 +26,12 @@ export function LiveGreetingClock({ className }: LiveGreetingClockProps) {
     };
   }, []);
 
-  const greeting = now ? getTimeOfDayGreeting(now) : null;
-  const clockLine = now ? formatLiveClockLine(now) : null;
+  const greeting = now ? getTimeOfDayGreeting(now, t) : null;
+  const clockLine = now ? formatLiveClockLine(now, locale) : null;
 
   return (
     <div
-      className={cn("space-y-0.5 ml-4", className)}
+      className={cn("ml-4 space-y-0.5", className)}
       aria-live="polite"
       aria-atomic="true"
     >
@@ -40,14 +42,14 @@ export function LiveGreetingClock({ className }: LiveGreetingClockProps) {
           </>
         ) : (
           <span className="invisible" aria-hidden>
-            Good Morning ☀️
+            {t("greeting.goodMorning")} ☀️
           </span>
         )}
       </p>
       <p className="text-sm font-medium text-muted-foreground">
         {clockLine ?? (
           <span className="invisible" aria-hidden>
-            00:00 AM • Monday
+            00:00 • Monday
           </span>
         )}
       </p>

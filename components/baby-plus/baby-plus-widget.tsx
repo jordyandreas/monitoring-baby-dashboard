@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { LoadingCard } from "@/components/layout/loading-card";
+import { useLocale } from "@/components/providers/locale-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   countCompletions,
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 
 export function BabyPlusWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
+  const { t } = useLocale();
 
   if (!mounted) return <LoadingCard />;
 
@@ -46,24 +48,23 @@ export function BabyPlusWidget({ className }: { className?: string }) {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Music className="size-5 text-lilac-deep" />
-          Baby Plus
+          {t("babyPlus.title")}
         </CardTitle>
-        <CardDescription>
-          16 sounds · 9 days each · belly learning program
-        </CardDescription>
+        <CardDescription>{t("babyPlus.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-4">
         {!parsedStart ? (
-          <p className="text-sm text-muted-foreground">
-            Set a start date to begin your 144-day listening journey.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("babyPlus.setStartHint")}</p>
         ) : (
           <>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{t("common.progress")}</span>
                 <span className="font-semibold">
-                  {completed} / {TOTAL_DAYS} days
+                  {t("babyPlus.daysProgress", {
+                    completed,
+                    total: TOTAL_DAYS,
+                  })}
                 </span>
               </div>
               <Progress value={progressPercent} className="h-2.5" />
@@ -73,11 +74,7 @@ export function BabyPlusWidget({ className }: { className?: string }) {
               dailyTime={dailyTime}
               completions={completions}
             />
-            <ProgramEndsLine
-              startDate={parsedStart}
-              dailyTime={dailyTime}
-              dateFormat="MMM d, yyyy"
-            />
+            <ProgramEndsLine startDate={parsedStart} dailyTime={dailyTime} />
           </>
         )}
         <Link
@@ -87,7 +84,7 @@ export function BabyPlusWidget({ className }: { className?: string }) {
             "mt-auto min-h-11 w-full rounded-xl",
           )}
         >
-          Open Baby Plus
+          {t("babyPlus.open")}
           <ChevronRight className="size-4" />
         </Link>
       </CardContent>

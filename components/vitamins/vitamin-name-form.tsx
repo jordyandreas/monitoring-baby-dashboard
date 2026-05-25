@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/components/providers/locale-provider";
 import type { VitaminItem } from "@/lib/types";
 
 const MIN_SLOTS = 3;
@@ -29,20 +30,26 @@ function namedItemsFromSlots(slots: VitaminItem[]): VitaminItem[] {
     .filter((slot) => slot.name.length > 0);
 }
 
+function savedItemsKey(items: VitaminItem[]): string {
+  return items.map((item) => `${item.id}:${item.name}`).join("|");
+}
+
 interface VitaminNameFormProps {
   savedItems: VitaminItem[];
   onSave: (items: VitaminItem[]) => void;
 }
 
 export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
-  const [slots, setSlots] = useState<VitaminItem[]>(() =>
-    toFormSlots(savedItems),
-  );
+  const { t } = useLocale();
+  const savedKey = savedItemsKey(savedItems);
+  const [slots, setSlots] = useState(() => toFormSlots(savedItems));
+  const [syncedKey, setSyncedKey] = useState(savedKey);
   const [slotToRemove, setSlotToRemove] = useState<string | null>(null);
 
-  useEffect(() => {
+  if (savedKey !== syncedKey) {
+    setSyncedKey(savedKey);
     setSlots(toFormSlots(savedItems));
-  }, [savedItems]);
+  }
 
   const updateName = (id: string, name: string) => {
     setSlots((prev) =>
@@ -69,16 +76,13 @@ export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
   const pendingSlot = slotToRemove
     ? slots.find((slot) => slot.id === slotToRemove)
     : null;
-  const removeLabel = pendingSlot?.name.trim() || "this vitamin";
+  const removeLabel = pendingSlot?.name.trim() || t("vitamins.thisVitamin");
 
   return (
     <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
       <div className="space-y-1">
-        <Label className="text-base font-semibold">Your vitamins</Label>
-        <p className="text-sm text-muted-foreground">
-          Add the vitamins you take daily. Start with three slots, or add more as
-          needed.
-        </p>
+        <Label className="text-base font-semibold">{t("vitamins.yourVitamins")}</Label>
+        <p className="text-sm text-muted-foreground">{t("vitamins.formHint")}</p>
       </div>
 
       <ul className="space-y-2">
@@ -87,7 +91,7 @@ export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
             <Input
               value={slot.name}
               onChange={(e) => updateName(slot.id, e.target.value)}
-              placeholder={`Vitamin ${index + 1}`}
+              placeholder={t("vitamins.placeholder", { index: index + 1 })}
               className="min-h-11 flex-1 rounded-xl"
             />
             {slots.length > MIN_SLOTS && (
@@ -97,9 +101,9 @@ export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
                 size="icon"
                 className="size-11 shrink-0 rounded-xl"
                 onClick={() => setSlotToRemove(slot.id)}
-                aria-label="Remove vitamin"
+                aria-label={t("vitamins.removeAria")}
               >
-                <Minus className="size-4" />
+                <Trash2 className="size-4" />
               </Button>
             )}
           </li>
@@ -114,14 +118,14 @@ export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
           onClick={addSlot}
         >
           <Plus className="size-4" />
-          Add vitamin
+          {t("vitamins.add")}
         </Button>
         <Button
           type="button"
           className="min-h-11 flex-1 rounded-xl sm:ml-auto"
           onClick={handleSave}
         >
-          Save vitamins
+          {t("vitamins.save")}
         </Button>
       </div>
 
@@ -130,7 +134,10 @@ export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
         onOpenChange={(open) => {
           if (!open) setSlotToRemove(null);
         }}
-        description={`Remove ${removeLabel} from your list? It will also be removed from today and yesterday tracking.`}
+        title={t("common.confirmTitle")}
+        description={t("vitamins.removeConfirm", { name: removeLabel })}
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("common.ok")}
         onConfirm={() => {
           if (slotToRemove) removeSlot(slotToRemove);
         }}

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -23,6 +23,9 @@ export interface DatePickerProps {
   fromDate?: Date;
   /** Latest selectable day (inclusive). */
   toDate?: Date;
+  /** Show clear (X) control when a date is set. Default true. */
+  clearable?: boolean;
+  clearAriaLabel?: string;
 }
 
 export function DatePicker({
@@ -34,49 +37,79 @@ export function DatePicker({
   className,
   fromDate,
   toDate,
+  clearable = true,
+  clearAriaLabel = "Clear date",
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const selected = parseDateString(value);
+  const showClear = clearable && Boolean(value) && !disabled;
+
+  const handleClear = (e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange("");
+    setOpen(false);
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
+    <div className="relative min-w-0">
+      <Popover open={disabled ? false : open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            data-empty={!value}
+            className={cn(
+              "h-11 w-full justify-between rounded-xl px-2.5 font-normal",
+              "data-[empty=true]:text-muted-foreground",
+              showClear && "pr-10",
+              className,
+            )}
+          >
+            <span className="min-w-0 flex-1 truncate text-left">
+              {value ? formatDateLabel(value) : placeholder}
+            </span>
+            {!showClear && (
+              <CalendarIcon
+                className="size-4 shrink-0 opacity-60"
+                aria-hidden
+              />
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            defaultMonth={selected}
+            captionLayout="dropdown"
+            startMonth={fromDate}
+            endMonth={toDate}
+            disabled={[
+              ...(fromDate ? [{ before: fromDate }] : []),
+              ...(toDate ? [{ after: toDate }] : []),
+            ]}
+            onSelect={(date) => {
+              onChange(toDateString(date));
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+      {showClear && (
+        <button
           type="button"
-          variant="outline"
+          aria-label={clearAriaLabel}
           disabled={disabled}
-          data-empty={!value}
-          className={cn(
-            "h-11 w-full justify-between rounded-xl px-2.5 font-normal",
-            "data-[empty=true]:text-muted-foreground",
-            className,
-          )}
+          onClick={handleClear}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-1/2 right-2.5 z-10 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-        <span className="truncate">
-          {value ? formatDateLabel(value) : placeholder}
-        </span>
-        <CalendarIcon className="size-4 shrink-0 opacity-60" aria-hidden />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selected}
-          defaultMonth={selected}
-          captionLayout="dropdown"
-          startMonth={fromDate}
-          endMonth={toDate}
-          disabled={[
-            ...(fromDate ? [{ before: fromDate }] : []),
-            ...(toDate ? [{ after: toDate }] : []),
-          ]}
-          onSelect={(date) => {
-            onChange(toDateString(date));
-            setOpen(false);
-          }}
-        />
-      </PopoverContent>
-    </Popover>
+          <XIcon className="size-4" aria-hidden />
+        </button>
+      )}
+    </div>
   );
 }
