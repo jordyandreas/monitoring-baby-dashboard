@@ -5,6 +5,8 @@ import { PageShell } from "@/components/layout/page-shell";
 import { SiteHeader } from "@/components/layout/site-header";
 import { AppStorageProvider } from "@/components/providers/app-storage-provider";
 import { LocaleProvider } from "@/components/providers/locale-provider";
+import { ReminderProvider } from "@/components/providers/reminder-provider";
+import { ReminderToast } from "@/components/reminders/reminder-toast";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -29,9 +31,12 @@ export default function RootLayout({
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <LocaleProvider>
           <AppStorageProvider>
-            <SiteHeader />
-            <PageShell>{children}</PageShell>
-            <BottomNav />
+            <ReminderProvider>
+              <SiteHeader />
+              <PageShell>{children}</PageShell>
+              <BottomNav />
+              <ReminderToast />
+            </ReminderProvider>
           </AppStorageProvider>
         </LocaleProvider>
       </body>

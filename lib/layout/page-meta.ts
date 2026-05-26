@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Baby, Footprints, Music, Pill } from "lucide-react";
+import { Baby, Droplets, Footprints, Music, Pill } from "lucide-react";
 
 export type PageMeta = {
   titleKey: string;
@@ -27,6 +27,11 @@ export const pageMetaByPath: Record<string, PageMeta> = {
     titleKey: "pages.vitamins.title",
     descriptionKey: "pages.vitamins.description",
     icon: Pill,
+  },
+  "/water": {
+    titleKey: "pages.water.title",
+    descriptionKey: "pages.water.description",
+    icon: Droplets,
   },
 };
 

@@ -37,13 +37,33 @@ export interface VitaminState {
   yesterday: VitaminDayRecord | null;
 }
 
+export interface WaterEntry {
+  id: string;
+  date: string;
+  time: string;
+  amountMl: number;
+}
+
+export interface WaterState {
+  /** Quick-add glass size in ml (default 250). */
+  glassSizeMl: number;
+  entries: WaterEntry[];
+}
+
+import type { RemindersState } from "./reminders/types";
+import { DEFAULT_REMINDERS } from "./reminders/types";
+
 export interface AppStorage {
   version: 1;
   baby: BabyProfile | null;
   babyPlus: BabyPlusState;
   kicks: KickEntry[];
   vitamins: VitaminState;
+  water: WaterState;
+  reminders: RemindersState;
 }
+
+export { DEFAULT_REMINDERS };
 
 export const STORAGE_KEY = "baby-monitor-v1";
 
@@ -61,4 +81,9 @@ export const DEFAULT_STORAGE: AppStorage = {
     today: { date: "", completed: {} },
     yesterday: null,
   },
+  water: {
+    glassSizeMl: 250,
+    entries: [],
+  },
+  reminders: DEFAULT_REMINDERS,
 };

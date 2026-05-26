@@ -14,6 +14,7 @@ import {
   subscribeAppStorage,
   updateAppStorage,
 } from "@/lib/storage";
+import type { RemindersState } from "@/lib/reminders/types";
 import type {
   AppStorage,
   BabyPlusState,
@@ -21,8 +22,10 @@ import type {
   KickEntry,
   VitaminItem,
   VitaminState,
+  WaterEntry,
 } from "@/lib/types";
 import { rolloverVitaminState, syncVitaminItems } from "@/lib/vitamins";
+import { normalizeGlassSize } from "@/lib/water";
 
 interface AppStorageContextValue {
   data: AppStorage;
@@ -40,6 +43,10 @@ interface AppStorageContextValue {
     vitaminId: string,
     checked: boolean,
   ) => void;
+  updateReminders: (updater: (prev: RemindersState) => RemindersState) => void;
+  addWater: (entry: Omit<WaterEntry, "id">) => void;
+  removeWater: (id: string) => void;
+  setGlassSizeMl: (glassSizeMl: number) => void;
 }
 
 const AppStorageContext = createContext<AppStorageContextValue | null>(null);
@@ -127,6 +134,55 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
     [updateVitamins],
   );
 
+  const updateReminders = useCallback(
+    (updater: (prev: RemindersState) => RemindersState) => {
+      persist((prev) => ({
+        ...prev,
+        reminders: updater(prev.reminders),
+      }));
+    },
+    [persist],
+  );
+
+  const addWater = useCallback(
+    (entry: Omit<WaterEntry, "id">) => {
+      persist((prev) => ({
+        ...prev,
+        water: {
+          ...prev.water,
+          entries: [{ ...entry, id: crypto.randomUUID() }, ...prev.water.entries],
+        },
+      }));
+    },
+    [persist],
+  );
+
+  const removeWater = useCallback(
+    (id: string) => {
+      persist((prev) => ({
+        ...prev,
+        water: {
+          ...prev.water,
+          entries: prev.water.entries.filter((e) => e.id !== id),
+        },
+      }));
+    },
+    [persist],
+  );
+
+  const setGlassSizeMl = useCallback(
+    (glassSizeMl: number) => {
+      persist((prev) => ({
+        ...prev,
+        water: {
+          ...prev.water,
+          glassSizeMl: normalizeGlassSize(glassSizeMl),
+        },
+      }));
+    },
+    [persist],
+  );
+
   const toggleVitamin = useCallback(
     (day: "today" | "yesterday", vitaminId: string, checked: boolean) => {
       updateVitamins((prev) => {
@@ -169,6 +225,10 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
       resetBabyPlus,
       setVitaminItems,
       toggleVitamin,
+      updateReminders,
+      addWater,
+      removeWater,
+      setGlassSizeMl,
     }),
     [
       data,
@@ -181,6 +241,10 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
       resetBabyPlus,
       setVitaminItems,
       toggleVitamin,
+      updateReminders,
+      addWater,
+      removeWater,
+      setGlassSizeMl,
     ],
   );
 
