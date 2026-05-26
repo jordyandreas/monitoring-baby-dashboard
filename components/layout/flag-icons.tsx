@@ -8,7 +8,7 @@ export function FlagEn({ className }: FlagIconProps) {
   return (
     <svg
       viewBox="0 0 60 40"
-      className={cn("h-3.5 w-5 shrink-0 overflow-hidden rounded-[2px]", className)}
+      className={cn("h-4 w-6 shrink-0 overflow-hidden rounded-[2px]", className)}
       aria-hidden
     >
       <rect width="60" height="40" fill="#012169" />
@@ -24,7 +24,7 @@ export function FlagId({ className }: FlagIconProps) {
   return (
     <svg
       viewBox="0 0 24 16"
-      className={cn("h-3.5 w-5 shrink-0 overflow-hidden rounded-[2px]", className)}
+      className={cn("h-4 w-6 shrink-0 overflow-hidden rounded-[2px]", className)}
       aria-hidden
     >
       <rect width="24" height="8" y="0" fill="#E70011" />

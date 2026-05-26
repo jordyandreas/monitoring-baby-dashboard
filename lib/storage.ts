@@ -1,11 +1,16 @@
 import { rolloverVitaminState } from "./vitamins";
+import { normalizeGlassSize } from "./water";
+import { DEFAULT_REMINDERS } from "./reminders/types";
 import {
   DEFAULT_STORAGE,
   STORAGE_KEY,
   type AppStorage,
   type Gender,
   type VitaminState,
+  type WaterEntry,
+  type WaterState,
 } from "./types";
+import type { RemindersState } from "./reminders/types";
 
 function normalizeGender(gender: string): Gender {
   if (gender === "boy" || gender === "girl") return gender;
@@ -13,11 +18,33 @@ function normalizeGender(gender: string): Gender {
   return "not-yet";
 }
 
+function normalizeReminders(reminders?: Partial<RemindersState>): RemindersState {
+  return {
+    vitamins: {
+      ...DEFAULT_REMINDERS.vitamins,
+      ...reminders?.vitamins,
+    },
+    babyPlus: {
+      ...DEFAULT_REMINDERS.babyPlus,
+      ...reminders?.babyPlus,
+    },
+    kicks: {
+      ...DEFAULT_REMINDERS.kicks,
+      ...reminders?.kicks,
+    },
+    hydration: {
+      ...DEFAULT_REMINDERS.hydration,
+      ...reminders?.hydration,
+    },
+  };
+}
+
 function normalizeStorage(parsed: Partial<AppStorage>): AppStorage {
   return {
     ...DEFAULT_STORAGE,
     ...parsed,
     version: 1,
+    reminders: normalizeReminders(parsed.reminders),
     baby: parsed.baby
       ? {
           ...parsed.baby,
@@ -30,6 +57,66 @@ function normalizeStorage(parsed: Partial<AppStorage>): AppStorage {
     },
     kicks: (parsed.kicks ?? []).filter((kick) => !kick.id.startsWith("sample-")),
     vitamins: normalizeVitamins(parsed.vitamins),
+    water: normalizeWater(parsed.water),
+  };
+}
+
+function normalizeWaterEntry(
+  entry: Partial<WaterEntry>,
+  fallbackDate?: string,
+): WaterEntry | null {
+  if (!entry?.id || typeof entry.amountMl !== "number") return null;
+  const amountMl = Math.round(entry.amountMl);
+  if (amountMl <= 0 || amountMl > 2000) return null;
+  const date =
+    typeof entry.date === "string" && entry.date
+      ? entry.date
+      : fallbackDate ?? "";
+  if (!date) return null;
+  return {
+    id: entry.id,
+    date,
+    time: typeof entry.time === "string" ? entry.time : "",
+    amountMl,
+  };
+}
+
+/** Migrate legacy today/yesterday buckets into a flat entry list. */
+function migrateLegacyWaterEntries(water: Record<string, unknown>): WaterEntry[] {
+  const entries: WaterEntry[] = [];
+  const today = water.today as
+    | { date?: string; entries?: Partial<WaterEntry>[] }
+    | undefined;
+  const yesterday = water.yesterday as
+    | { date?: string; entries?: Partial<WaterEntry>[] }
+    | undefined;
+
+  for (const day of [yesterday, today]) {
+    if (!day?.date) continue;
+    for (const raw of day.entries ?? []) {
+      const normalized = normalizeWaterEntry(raw, day.date);
+      if (normalized) entries.push(normalized);
+    }
+  }
+
+  return entries;
+}
+
+function normalizeWater(water?: unknown): WaterState {
+  const raw = water as (Partial<WaterState> & Record<string, unknown>) | undefined;
+  let entries: WaterEntry[] = [];
+
+  if (Array.isArray(raw?.entries)) {
+    entries = raw.entries
+      .map((e) => normalizeWaterEntry(e))
+      .filter((e): e is WaterEntry => e !== null);
+  } else if (raw && ("today" in raw || "yesterday" in raw)) {
+    entries = migrateLegacyWaterEntries(raw);
+  }
+
+  return {
+    glassSizeMl: normalizeGlassSize(raw?.glassSizeMl),
+    entries,
   };
 }
 
@@ -58,7 +145,14 @@ export function readStorage(): AppStorage {
     const parsed = JSON.parse(raw) as Partial<AppStorage>;
     const normalized = normalizeStorage(parsed);
 
-    if ((parsed.kicks?.length ?? 0) !== normalized.kicks.length) {
+    const hadSampleKicks =
+      (parsed.kicks?.length ?? 0) !== normalized.kicks.length;
+    const hadLegacyWater =
+      parsed.water != null &&
+      typeof parsed.water === "object" &&
+      "today" in parsed.water;
+
+    if (hadSampleKicks || hadLegacyWater) {
       writeStorage(normalized);
     }
 

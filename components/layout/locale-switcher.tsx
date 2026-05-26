@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Check } from "lucide-react";
 import { FlagEn, FlagId } from "@/components/layout/flag-icons";
+import { headerIconButtonClassName } from "@/components/layout/header-icon-button";
 import {
   Popover,
   PopoverContent,
@@ -32,20 +33,12 @@ export function LocaleSwitcher({ className }: { className?: string }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={cn(
-            "inline-flex shrink-0 items-center gap-2 rounded-full border border-border/80 bg-card px-4 py-2 text-foreground shadow-sm transition-colors hover:bg-muted/40",
-            className,
-          )}
+          className={headerIconButtonClassName(className)}
           aria-label={t("locale.aria")}
           aria-expanded={open}
           aria-haspopup="listbox"
         >
           <CurrentFlag />
-          {open ? (
-            <ChevronUp className="size-4 text-muted-foreground" aria-hidden />
-          ) : (
-            <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
-          )}
         </button>
       </PopoverTrigger>
       <PopoverContent
