@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Baby Monitor — pregnancy tracking (vitamins, Baby Plus, kicks, water, reminders). Data is stored in **localStorage** by default; optional **Supabase** backend is supported for gradual migration.
+
+See **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** for schema, env vars, and phased rollout.
 
 ## Getting Started
 

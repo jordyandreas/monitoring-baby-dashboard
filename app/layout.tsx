@@ -5,6 +5,8 @@ import { PageShell } from "@/components/layout/page-shell";
 import { SiteHeader } from "@/components/layout/site-header";
 import { AppStorageProvider } from "@/components/providers/app-storage-provider";
 import { LocaleProvider } from "@/components/providers/locale-provider";
+import { SupabaseSyncStatus } from "@/components/dev/supabase-sync-status";
+import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { ReminderProvider } from "@/components/providers/reminder-provider";
 import { ReminderToast } from "@/components/reminders/reminder-toast";
 import "./globals.css";
@@ -30,14 +32,17 @@ export default function RootLayout({
     <html lang="en" className={`${nunito.variable} h-full`}>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <LocaleProvider>
-          <AppStorageProvider>
-            <ReminderProvider>
+          <SupabaseProvider>
+            <AppStorageProvider>
+              <ReminderProvider>
+              <SupabaseSyncStatus />
               <SiteHeader />
               <PageShell>{children}</PageShell>
               <BottomNav />
               <ReminderToast />
-            </ReminderProvider>
-          </AppStorageProvider>
+              </ReminderProvider>
+            </AppStorageProvider>
+          </SupabaseProvider>
         </LocaleProvider>
       </body>
     </html>
