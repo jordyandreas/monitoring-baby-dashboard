@@ -225,7 +225,9 @@ export function ChildHome() {
           onPage={setLogPage}
           onEdit={(id) => {
             const parsed = parseTimelineId(id);
-            if (parsed && isQuickKind(parsed.kind)) setEditingLog(parsed);
+            if (parsed && isQuickKind(parsed.kind)) {
+              setEditingLog({ kind: parsed.kind, id: parsed.id });
+            }
           }}
           onDelete={(id) => {
             const parsed = parseTimelineId(id);
