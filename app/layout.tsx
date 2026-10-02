@@ -40,12 +40,12 @@ export default function RootLayout({
             <AppStorageProvider>
               <ChildStorageProvider>
               <ReminderProvider>
-              <SupabaseSyncStatus />
               <SiteHeader />
               <SaveToaster />
               <PageShell>{children}</PageShell>
               <BottomNav />
               <ReminderToast />
+              <SupabaseSyncStatus />
               </ReminderProvider>
               </ChildStorageProvider>
             </AppStorageProvider>

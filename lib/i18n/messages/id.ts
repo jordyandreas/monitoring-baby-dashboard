@@ -106,6 +106,7 @@ export const id: Messages = {
     deleted: "Berhasil dihapus",
     deleteFailed: "Gagal menghapus",
     close: "Tutup",
+    retry: "Coba lagi",
   },
   common: {
     cancel: "Batal",

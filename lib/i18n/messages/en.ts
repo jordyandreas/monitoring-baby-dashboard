@@ -108,6 +108,7 @@ export const en = {
     deleted: "Deleted",
     deleteFailed: "Couldn't delete",
     close: "Close",
+    retry: "Retry",
   },
   common: {
     cancel: "Cancel",

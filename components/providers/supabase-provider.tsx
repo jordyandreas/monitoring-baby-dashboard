@@ -25,7 +25,7 @@ import {
   signUpWithEmail as signUpWithEmailRequest,
 } from "@/lib/supabase/email-auth";
 import { isSupabaseEnabled, isSupabaseSyncEnabled } from "@/lib/supabase/env";
-import { armLiveSync, holdLiveSync, stopLiveSync } from "@/lib/supabase/live-sync";
+import { armLiveSync, discardQueuedWrites, holdLiveSync, stopLiveSync } from "@/lib/supabase/live-sync";
 import { hasSyncableLocalStorage, runLocalStorageMigration, type MigrationResult } from "@/lib/supabase/migrate-local";
 import { fetchRemoteAppSlice } from "@/lib/supabase/repositories/app-data";
 import { fetchRemoteChild } from "@/lib/supabase/repositories/child-sync";
@@ -97,7 +97,11 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         }
       }
       pullRemote = remoteHas;
-      if (!remoteHas && hasSyncableLocalStorage()) {
+      if (remoteHas) {
+        localStorage.removeItem(LOCAL_DIRTY_KEY);
+        localStorage.removeItem(CHILD_DIRTY_KEY);
+        discardQueuedWrites();
+      } else if (hasSyncableLocalStorage()) {
         localStorage.setItem(LOCAL_DIRTY_KEY, "1");
         localStorage.setItem(CHILD_DIRTY_KEY, "1");
       }
@@ -176,11 +180,13 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       if (!active) return;
       setMigration(result);
 
-      if (result.status === "skipped" && result.reason !== "no local data") {
+      const freshDevice = result.status === "skipped" && result.reason === "no local data";
+      if (result.status === "skipped" && !freshDevice) {
         stopLiveSync();
       } else {
         await armLiveSync(nextSession.user.id, {
-          pullRemote: result.status === "success" && result.direction === "none",
+          pullRemote:
+            freshDevice || (result.status === "success" && result.direction === "none"),
         });
       }
     }
