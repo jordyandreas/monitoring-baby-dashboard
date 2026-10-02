@@ -18,7 +18,7 @@ import {
   getSupabaseBrowserClient,
   resetSupabaseBrowserClient,
 } from "@/lib/supabase/client";
-import { childStorageHasData } from "@/lib/child/storage";
+import { childStorageHasData, resetChildStorage } from "@/lib/child/storage";
 import {
   signInWithEmail as signInWithEmailRequest,
   signOutToGuest as signOutToGuestRequest,
@@ -30,6 +30,8 @@ import { hasSyncableLocalStorage, runLocalStorageMigration, type MigrationResult
 import { fetchRemoteAppSlice } from "@/lib/supabase/repositories/app-data";
 import { fetchRemoteChild } from "@/lib/supabase/repositories/child-sync";
 import { CHILD_DIRTY_KEY, LOCAL_DIRTY_KEY } from "@/lib/supabase/sync-constants";
+import { REMINDER_FIRED_KEY } from "@/lib/reminders/fired-storage";
+import { resetAppStorage } from "@/lib/storage";
 
 export type AccountActionResult = {
   error: string | null;
@@ -76,6 +78,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     if (mode === "keep") return;
 
     holdLiveSync();
+    if (mode === "guest") {
+      discardQueuedWrites();
+      localStorage.removeItem(LOCAL_DIRTY_KEY);
+      localStorage.removeItem(CHILD_DIRTY_KEY);
+      localStorage.removeItem(REMINDER_FIRED_KEY);
+      resetAppStorage();
+      resetChildStorage();
+    }
     let pullRemote = false;
     if (mode === "switch") {
       const supabase = getSupabaseBrowserClient();

@@ -212,3 +212,12 @@ export function updateAppStorage(
   writeStorage(next);
   notifyAppStorageListeners();
 }
+
+/** Drop pregnancy logs on this device and show the empty defaults. */
+export function resetAppStorage(): void {
+  const next = structuredClone(DEFAULT_STORAGE);
+  cached = next;
+  hydrated = true;
+  writeStorage(next);
+  notifyAppStorageListeners();
+}

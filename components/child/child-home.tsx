@@ -16,6 +16,7 @@ import {
   Moon,
   Pencil,
   Ruler,
+  Trash2,
   Weight,
   Thermometer,
   Utensils,
@@ -30,7 +31,9 @@ import { GenderIcon } from "@/components/baby/gender-icon";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { formatChildAge } from "@/lib/child/age";
 import {
@@ -73,8 +76,20 @@ const LOG_TONE: Record<TimelineKind, string> = {
 
 export function ChildHome() {
   const { t, locale } = useLocale();
-  const { data, mounted, saveProfile } = useChildStorage();
+  const {
+    data,
+    mounted,
+    saveProfile,
+    removeFeed,
+    removeDiaper,
+    removeSleep,
+    removeSolid,
+    removeHealth,
+    removePotty,
+    removeMeal,
+  } = useChildStorage();
   const [editing, setEditing] = useState(false);
+  const [editingLog, setEditingLog] = useState<{ kind: QuickKind; id: string } | null>(null);
   const [quick, setQuick] = useState<QuickKind | null>(null);
   const [logFilter, setLogFilter] = useState<LogFilter>("all");
   const [logPage, setLogPage] = useState(1);
@@ -208,7 +223,23 @@ export function ChildHome() {
           filter={logFilter}
           page={logPage}
           onPage={setLogPage}
+          onEdit={(id) => {
+            const parsed = parseTimelineId(id);
+            if (parsed && isQuickKind(parsed.kind)) setEditingLog(parsed);
+          }}
+          onDelete={(id) => {
+            const parsed = parseTimelineId(id);
+            if (!parsed) return;
+            if (parsed.kind === "feed") removeFeed(parsed.id);
+            else if (parsed.kind === "diaper") removeDiaper(parsed.id);
+            else if (parsed.kind === "sleep") removeSleep(parsed.id);
+            else if (parsed.kind === "solid") removeSolid(parsed.id);
+            else if (parsed.kind === "health") removeHealth(parsed.id);
+            else if (parsed.kind === "potty") removePotty(parsed.id);
+            else removeMeal(parsed.id);
+          }}
         />
+        <LogEditDialog editing={editingLog} onClose={() => setEditingLog(null)} />
       </section>
 
       <section className="space-y-3">
@@ -233,18 +264,38 @@ export function ChildHome() {
   );
 }
 
+const QUICK_KINDS: QuickKind[] = ["feed", "diaper", "sleep"];
+
+function isQuickKind(kind: TimelineKind): kind is QuickKind {
+  return QUICK_KINDS.includes(kind as QuickKind);
+}
+
+function parseTimelineId(value: string): { kind: TimelineKind; id: string } | null {
+  const splitAt = value.indexOf("-");
+  if (splitAt <= 0) return null;
+  const kind = value.slice(0, splitAt);
+  const id = value.slice(splitAt + 1);
+  if (!id || !(kind in LOG_ICONS)) return null;
+  return { kind: kind as TimelineKind, id };
+}
+
 function TodayLogList({
   items,
   filter,
   page,
   onPage,
+  onEdit,
+  onDelete,
 }: {
   items: ReturnType<typeof todayTimeline>;
   filter: LogFilter;
   page: number;
   onPage: (page: number) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const { t } = useLocale();
+  const [pending, setPending] = useState<string | null>(null);
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const current = Math.min(page, pageCount);
   const start = (current - 1) * PAGE_SIZE;
@@ -260,28 +311,69 @@ function TodayLogList({
 
   return (
     <div className="space-y-3">
-      <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-card">
+      <ul className="space-y-2">
         {visible.map((item) => {
           const Icon = LOG_ICONS[item.kind];
           return (
-            <li key={item.id} className="flex items-center gap-3 px-4 py-3">
+            <li
+              key={item.id}
+              className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm"
+            >
+              <span className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
+                {formatTimeLabel(item.time)}
+              </span>
+              <span className="h-8 w-px shrink-0 bg-border" aria-hidden />
               <span
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-full",
+                  "flex size-8 shrink-0 items-center justify-center rounded-full",
                   LOG_TONE[item.kind],
                 )}
               >
-                <Icon className="size-5" aria-hidden />
+                <Icon className="size-4" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="truncate text-sm font-semibold">{item.title}</p>
                 <EmphasizedDetail text={item.detail} />
               </div>
-              <p className="shrink-0 text-sm font-medium tabular-nums">{formatTimeLabel(item.time)}</p>
+              <div className="flex shrink-0 items-center gap-0.5">
+                {isQuickKind(item.kind) ? (
+                  <button
+                    type="button"
+                    aria-label={t("child.edit")}
+                    onClick={() => onEdit(item.id)}
+                    className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  aria-label={t("child.remove")}
+                  onClick={() => setPending(item.id)}
+                  className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
             </li>
           );
         })}
       </ul>
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(open) => {
+          if (!open) setPending(null);
+        }}
+        title={t("child.deleteTitle")}
+        description={t("child.deleteBody")}
+        confirmLabel={t("child.remove")}
+        cancelLabel={t("common.cancel")}
+        confirmVariant="destructive"
+        onConfirm={() => {
+          if (pending) onDelete(pending);
+          setPending(null);
+        }}
+      />
       {pageCount > 1 ? (
         <div className="flex items-center justify-between gap-3">
           <button
@@ -317,6 +409,38 @@ function visibleTimeline(
 ) {
   if (filter === "all") return items;
   return items.filter((item) => item.kind === filter);
+}
+
+function LogEditDialog({
+  editing,
+  onClose,
+}: {
+  editing: { kind: QuickKind; id: string } | null;
+  onClose: () => void;
+}) {
+  const { t } = useLocale();
+  const { data } = useChildStorage();
+  const feed = editing?.kind === "feed" ? data.feeds.find((entry) => entry.id === editing.id) : null;
+  const diaper = editing?.kind === "diaper" ? data.diapers.find((entry) => entry.id === editing.id) : null;
+  const sleep = editing?.kind === "sleep" ? data.sleeps.find((entry) => entry.id === editing.id) : null;
+  const open = Boolean(feed || diaper || sleep);
+  const title = feed ? t("feed.edit") : diaper ? t("diaper.edit") : t("sleep.edit");
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <DialogContent className="max-h-[min(90vh,760px)] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        {feed ? <FeedLogForm key={feed.id} initial={feed} onSaved={onClose} /> : null}
+        {diaper ? <DiaperLogForm key={diaper.id} initial={diaper} onSaved={onClose} /> : null}
+        {sleep ? <SleepLogForm key={sleep.id} initial={sleep} onSaved={onClose} /> : null}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function LogEmpty({ filter }: { filter: LogFilter }) {
