@@ -51,7 +51,7 @@ export async function syncChildProfile(
 }
 
 export async function syncFeedInsert(supabase: Client, userId: string, entry: FeedEntry) {
-  await throwOnError(supabase.from("feed_logs").insert(feedToRow(userId, entry)));
+  await throwOnError(supabase.from("feed_logs").upsert(feedToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncFeedUpdate(supabase: Client, userId: string, entry: FeedEntry) {
@@ -63,7 +63,7 @@ export async function syncFeedDelete(supabase: Client, userId: string, id: strin
 }
 
 export async function syncDiaperInsert(supabase: Client, userId: string, entry: DiaperEntry) {
-  await throwOnError(supabase.from("diaper_logs").insert(diaperToRow(userId, entry)));
+  await throwOnError(supabase.from("diaper_logs").upsert(diaperToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncDiaperUpdate(supabase: Client, userId: string, entry: DiaperEntry) {
@@ -75,7 +75,7 @@ export async function syncDiaperDelete(supabase: Client, userId: string, id: str
 }
 
 export async function syncSleepInsert(supabase: Client, userId: string, entry: SleepEntry) {
-  await throwOnError(supabase.from("sleep_logs").insert(sleepToRow(userId, entry)));
+  await throwOnError(supabase.from("sleep_logs").upsert(sleepToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncSleepUpdate(supabase: Client, userId: string, entry: SleepEntry) {
@@ -95,7 +95,7 @@ export async function syncGrowthDelete(supabase: Client, userId: string, id: str
 }
 
 export async function syncSolidInsert(supabase: Client, userId: string, entry: SolidEntry) {
-  await throwOnError(supabase.from("solid_logs").insert(solidToRow(userId, entry)));
+  await throwOnError(supabase.from("solid_logs").upsert(solidToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncSolidDelete(supabase: Client, userId: string, id: string) {
@@ -103,7 +103,7 @@ export async function syncSolidDelete(supabase: Client, userId: string, id: stri
 }
 
 export async function syncHealthInsert(supabase: Client, userId: string, entry: HealthEntry) {
-  await throwOnError(supabase.from("health_logs").insert(healthToRow(userId, entry)));
+  await throwOnError(supabase.from("health_logs").upsert(healthToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncHealthDelete(supabase: Client, userId: string, id: string) {
@@ -111,7 +111,7 @@ export async function syncHealthDelete(supabase: Client, userId: string, id: str
 }
 
 export async function syncPottyInsert(supabase: Client, userId: string, entry: PottyEntry) {
-  await throwOnError(supabase.from("potty_logs").insert(pottyToRow(userId, entry)));
+  await throwOnError(supabase.from("potty_logs").upsert(pottyToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncPottyDelete(supabase: Client, userId: string, id: string) {
@@ -119,7 +119,7 @@ export async function syncPottyDelete(supabase: Client, userId: string, id: stri
 }
 
 export async function syncMealInsert(supabase: Client, userId: string, entry: MealEntry) {
-  await throwOnError(supabase.from("meal_logs").insert(mealToRow(userId, entry)));
+  await throwOnError(supabase.from("meal_logs").upsert(mealToRow(userId, entry), { onConflict: "id" }));
 }
 
 export async function syncMealDelete(supabase: Client, userId: string, id: string) {
@@ -199,54 +199,83 @@ export async function replaceRemoteChild(
 
   await throwOnError(supabase.from("feed_logs").delete().eq("user_id", userId));
   if (data.feeds.length) {
-    await throwOnError(supabase.from("feed_logs").insert(data.feeds.map((entry) => feedToRow(userId, entry))));
+    await throwOnError(
+      supabase.from("feed_logs").upsert(
+        data.feeds.map((entry) => feedToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
+    );
   }
   await throwOnError(supabase.from("diaper_logs").delete().eq("user_id", userId));
   if (data.diapers.length) {
     await throwOnError(
-      supabase.from("diaper_logs").insert(data.diapers.map((entry) => diaperToRow(userId, entry))),
+      supabase.from("diaper_logs").upsert(
+        data.diapers.map((entry) => diaperToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("sleep_logs").delete().eq("user_id", userId));
   if (data.sleeps.length) {
     await throwOnError(
-      supabase.from("sleep_logs").insert(data.sleeps.map((entry) => sleepToRow(userId, entry))),
+      supabase.from("sleep_logs").upsert(
+        data.sleeps.map((entry) => sleepToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("growth_logs").delete().eq("user_id", userId));
   if (data.growth.length) {
     await throwOnError(
-      supabase.from("growth_logs").insert(data.growth.map((entry) => growthToRow(userId, entry))),
+      supabase.from("growth_logs").upsert(
+        data.growth.map((entry) => growthToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("solid_logs").delete().eq("user_id", userId));
   if (data.solids.length) {
     await throwOnError(
-      supabase.from("solid_logs").insert(data.solids.map((entry) => solidToRow(userId, entry))),
+      supabase.from("solid_logs").upsert(
+        data.solids.map((entry) => solidToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("health_logs").delete().eq("user_id", userId));
   if (data.health.length) {
     await throwOnError(
-      supabase.from("health_logs").insert(data.health.map((entry) => healthToRow(userId, entry))),
+      supabase.from("health_logs").upsert(
+        data.health.map((entry) => healthToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("potty_logs").delete().eq("user_id", userId));
   if (data.potty.length) {
     await throwOnError(
-      supabase.from("potty_logs").insert(data.potty.map((entry) => pottyToRow(userId, entry))),
+      supabase.from("potty_logs").upsert(
+        data.potty.map((entry) => pottyToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("meal_logs").delete().eq("user_id", userId));
   if (data.meals.length) {
     await throwOnError(
-      supabase.from("meal_logs").insert(data.meals.map((entry) => mealToRow(userId, entry))),
+      supabase.from("meal_logs").upsert(
+        data.meals.map((entry) => mealToRow(userId, entry)),
+        { onConflict: "id" },
+      ),
     );
   }
   await throwOnError(supabase.from("milestone_logs").delete().eq("user_id", userId));
   if (data.milestones.length) {
     await throwOnError(
-      supabase.from("milestone_logs").insert(data.milestones.map((entry) => milestoneToRow(userId, entry))),
+      supabase.from("milestone_logs").upsert(
+        data.milestones.map((entry) => milestoneToRow(userId, entry)),
+        { onConflict: "user_id,milestone_key" },
+      ),
     );
   }
 }

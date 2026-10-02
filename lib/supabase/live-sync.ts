@@ -219,6 +219,11 @@ export function holdLiveSync() {
   activeUserId = null;
 }
 
+/** Drop writes queued for the previous session before applying another account. */
+export function discardQueuedWrites() {
+  queue = [];
+}
+
 export function stopLiveSync() {
   epoch += 1;
   gate = "stopped";
@@ -280,9 +285,7 @@ export async function armLiveSync(
   const preferLocal = isChildDirty() || queue.some((item) => item.domain === "child");
   queue = queue.filter((item) => item.domain !== "child");
   try {
-    if (preferLocal || childStorageHasData(readChildStorage())) {
-      await reconcileChild(userId, preferLocal);
-    }
+    await reconcileChild(userId, preferLocal);
   } catch (err) {
     if (myEpoch !== epoch) return;
     const message = err instanceof Error ? err.message : "Sync failed";
