@@ -1,4 +1,4 @@
-Baby Monitor — pregnancy tracking (vitamins, Baby Plus, kicks, water, reminders). Data is stored in **localStorage** by default; optional **Supabase** backend is supported for gradual migration.
+Baby Monitor — pregnancy tracking (vitamins, Baby Plus, kicks, water, reminders). Data is stored in **localStorage**. With Supabase enabled, the same data syncs to your project under an anonymous session.
 
 See **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** for schema, env vars, and phased rollout.
 

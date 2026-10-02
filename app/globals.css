@@ -119,3 +119,18 @@
   }
 
 }
+
+/* Keep save toasts at the top-right under the header, including phones. */
+@media (max-width: 600px) {
+  [data-sonner-toaster].app-toaster {
+    left: auto !important;
+    width: max-content !important;
+    max-width: calc(100vw - 1rem);
+  }
+
+  [data-sonner-toaster].app-toaster [data-sonner-toast] {
+    left: auto !important;
+    right: 0 !important;
+    width: max-content !important;
+  }
+}

@@ -1,57 +1,32 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useSupabase } from "@/hooks/use-supabase";
+import { getSyncNotice, subscribeSyncNotice } from "@/lib/supabase/live-sync";
 
-/**
- * Dev-only banner for Supabase auth + Phase 1 migration status.
- * Surfaces errors that were previously invisible in the UI.
- */
+/** Compact notice only when auth or sync actually fails. Quiet on the happy path. */
 export function SupabaseSyncStatus() {
-  const { enabled, authStatus, authError, migration, user, retryAuth } = useSupabase();
+  const { enabled, authStatus, authError, migration, retryAuth } = useSupabase();
+  const syncNotice = useSyncExternalStore(subscribeSyncNotice, getSyncNotice, () => null);
 
   if (!enabled) return null;
-  if (process.env.NODE_ENV === "production" && authStatus === "ready" && migration?.status === "success") {
-    return null;
-  }
 
-  const migrationLine =
-    migration == null
-      ? "Migration: pending…"
-      : migration.status === "skipped"
-        ? `Migration: skipped (${migration.reason})`
-        : migration.status === "error"
-          ? `Migration: error — ${migration.message}`
-          : `Migration: ${migration.status} (${"direction" in migration ? migration.direction : ""})`;
+  const message =
+    syncNotice ??
+    (authStatus === "error" ? authError ?? "Sign-in did not finish" : null) ??
+    (migration?.status === "error" ? migration.message : null);
 
-  const tone =
-    authStatus === "error" || migration?.status === "error"
-      ? "border-red-300 bg-red-50 text-red-900"
-      : authStatus === "ready" && migration?.status === "success"
-        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-        : "border-amber-300 bg-amber-50 text-amber-900";
+  if (!message) return null;
 
   return (
     <div
-      className={`mx-4 mt-2 rounded-lg border px-3 py-2 text-xs leading-relaxed ${tone}`}
+      className="mx-4 mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
       role="status"
     >
-      <p className="font-semibold">Supabase (dev)</p>
-      <p>Auth: {authStatus}{authError ? ` — ${authError}` : ""}</p>
-      <p>{migrationLine}</p>
-      {user ? <p className="truncate">User: {user.id}</p> : null}
-      {authStatus === "loading" ? (
-        <p className="mt-1 opacity-80">
-          If this stays longer than ~15s, open DevTools → Network and look for
-          blocked or pending requests to supabase.co.
-        </p>
-      ) : null}
+      <p>{message}</p>
       {authStatus === "error" ? (
-        <button
-          type="button"
-          className="mt-1 underline"
-          onClick={() => retryAuth()}
-        >
-          Retry auth
+        <button type="button" className="mt-1 underline" onClick={() => retryAuth()}>
+          Retry
         </button>
       ) : null}
     </div>

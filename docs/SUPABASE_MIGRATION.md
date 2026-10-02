@@ -66,14 +66,14 @@ cp .env.example .env.local
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `NEXT_PUBLIC_SUPABASE_ENABLED` | `false` | Master switch |
-| `NEXT_PUBLIC_SUPABASE_SYNC_BABY` | `false` | Read/write baby profile via Supabase |
-| `NEXT_PUBLIC_SUPABASE_SYNC_KICKS` | … | Per-domain rollout |
-| `NEXT_PUBLIC_SUPABASE_SYNC_WATER` | … | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_VITAMINS` | … | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_BABY_PLUS` | … | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_REMINDERS` | … | |
+| `NEXT_PUBLIC_SUPABASE_SYNC_BABY` | on when master is on | Read/write baby profile via Supabase |
+| `NEXT_PUBLIC_SUPABASE_SYNC_KICKS` | on when master is on | |
+| `NEXT_PUBLIC_SUPABASE_SYNC_WATER` | on when master is on | |
+| `NEXT_PUBLIC_SUPABASE_SYNC_VITAMINS` | on when master is on | |
+| `NEXT_PUBLIC_SUPABASE_SYNC_BABY_PLUS` | on when master is on | |
+| `NEXT_PUBLIC_SUPABASE_SYNC_REMINDERS` | on when master is on | |
 
-Flip **one domain at a time** after the one-time migration succeeds.
+Omit a `SYNC_*` flag to sync that domain. Set it to `false` to keep that domain on localStorage only.
 
 ## Folder structure
 
@@ -117,18 +117,16 @@ supabase/migrations/
 
 **Conflict rule (MVP):** local data wins on first sync if both sides have data.
 
-### Phase 2 — Read-through per domain
+### Phase 2 — Live read/write (wired)
 
-For each feature (start with **kicks** or **water** — append-only logs):
+`AppStorageProvider` still updates localStorage immediately. When Supabase is enabled, each mutation also schedules a write in `lib/supabase/live-sync.ts`:
 
-1. Enable `NEXT_PUBLIC_SUPABASE_SYNC_KICKS=true`.
-2. In `AppStorageProvider` methods (`addKick`, `removeKick`):
-   - Update local state immediately (optimistic).
-   - `await supabase.from('kick_logs').insert/delete` in background.
-   - On error: revert local state + toast.
-3. On app load (after migration): `fetchRemoteAppSlice` → merge into `updateAppStorage`.
+- Kicks and water entries insert or delete one row.
+- Baby profile, Baby Plus, glass size, reminders, and vitamins upsert their rows.
+- On load, after the one-time migration, a device that already migrated pulls remote data into the local cache.
+- If a write fails, local data is kept and pushed again on the next load.
 
-Keep localStorage writes during Phase 2 so offline still works.
+Set a domain flag to `false` to pause that domain. localStorage stays on either way.
 
 ### Phase 3 — Supabase primary
 
@@ -196,17 +194,9 @@ Insert reminder_fired_events + update next_run_at
 
 **Do not** move the 15s client poll to the server until you need push when the app is closed.
 
-## Incremental repository API (Phase 2 example)
+## Incremental repository API
 
-```typescript
-// lib/supabase/repositories/kicks.ts (add when enabling SYNC_KICKS)
-export async function insertKick(supabase, userId, kick: KickEntry) {
-  const { error } = await supabase.from("kick_logs").insert(kickToRow(userId, kick));
-  if (error) throw error;
-}
-```
-
-Wire inside `addKick` in `app-storage-provider.tsx` — pattern repeats for water, vitamins, etc.
+Writes live in `lib/supabase/repositories/domain-sync.ts` and are scheduled from `AppStorageProvider` through `scheduleRemoteWrite`.
 
 ## Vercel deployment
 

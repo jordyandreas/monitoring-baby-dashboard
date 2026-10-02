@@ -6,6 +6,7 @@ import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/providers/locale-provider";
 import { REMINDER_TOAST_EVENT } from "@/lib/reminders/foreground";
+import { REMINDERS_VISIBLE } from "@/lib/reminders/visibility";
 import type { DueReminder } from "@/lib/reminders/types";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +33,7 @@ export function ReminderToast() {
     return () => window.clearTimeout(timer);
   }, [reminder]);
 
-  if (!reminder) return null;
+  if (!REMINDERS_VISIBLE || !reminder) return null;
 
   const open = () => {
     const url = reminder.url;

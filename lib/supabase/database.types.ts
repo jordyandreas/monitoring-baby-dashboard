@@ -1,7 +1,14 @@
 /**
- * Hand-maintained types matching supabase/migrations/20260526000000_initial_schema.sql
+ * Hand-maintained types matching supabase/migrations.
  * Regenerate later with: supabase gen types typescript --local > lib/supabase/database.types.ts
  */
+
+type TableShape<T extends { user_id: string }> = {
+  Row: T & { created_at: string };
+  Insert: Partial<T & { created_at: string }> & Pick<T, "user_id">;
+  Update: Partial<T & { created_at: string }>;
+  Relationships: [];
+};
 export type Json =
   | string
   | number
@@ -325,6 +332,85 @@ export interface Database {
         };
         Relationships: [];
       };
+      child_profiles: TableShape<{
+        user_id: string;
+        name: string;
+        gender: string;
+        birth_date: string | null;
+        updated_at: string;
+      }>;
+      feed_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        kind: string;
+        side: string | null;
+        duration_min: number | null;
+        amount_ml: number | null;
+      }>;
+      diaper_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        kind: string;
+        poop_color: string | null;
+        poop_texture: string | null;
+      }>;
+      sleep_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        start_time: string;
+        end_time: string;
+        period: string;
+      }>;
+      growth_logs: TableShape<{
+        user_id: string;
+        id: string;
+        measured_on: string;
+        weight_kg: number | null;
+        length_cm: number | null;
+        head_cm: number | null;
+      }>;
+      solid_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        name: string;
+        allergy_note: string | null;
+      }>;
+      health_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        name: string;
+        dose: string;
+        temperature_c: number | null;
+      }>;
+      potty_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        kind: string;
+      }>;
+      meal_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        slot: string;
+        note: string;
+      }>;
+      milestone_logs: TableShape<{
+        user_id: string;
+        milestone_key: string;
+        achieved_on: string;
+      }>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

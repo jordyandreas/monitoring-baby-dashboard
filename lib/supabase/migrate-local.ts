@@ -1,4 +1,7 @@
+import { childStorageHasData, readChildStorage } from "@/lib/child/storage";
+import { CHILD_STORAGE_KEY } from "@/lib/child/types";
 import { readStorage, updateAppStorage } from "@/lib/storage";
+import { STORAGE_KEY, type AppStorage } from "@/lib/types";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { mergeRemoteIntoAppStorage } from "@/lib/supabase/mappers";
 import {
@@ -9,14 +12,39 @@ import {
   setDeviceMigrationFlag,
   upsertAppStorageToRemote,
 } from "@/lib/supabase/repositories/app-data";
+import { CHILD_DIRTY_KEY, LOCAL_DIRTY_KEY } from "@/lib/supabase/sync-constants";
 
 export type MigrationResult =
   | { status: "skipped"; reason: string }
   | { status: "success"; direction: "upload" | "download" | "none" }
   | { status: "error"; message: string };
 
+function pregnancyHasSyncableData(local: AppStorage): boolean {
+  return (
+    local.baby !== null ||
+    local.kicks.length > 0 ||
+    local.water.entries.length > 0 ||
+    local.vitamins.items.some((item) => item.name.trim()) ||
+    Boolean(local.babyPlus.startDate)
+  );
+}
+
+/** True when this browser already has pregnancy or child data worth uploading. */
+export function hasSyncableLocalStorage(): boolean {
+  if (typeof window === "undefined") return false;
+  if (localStorage.getItem(LOCAL_DIRTY_KEY) === "1" || localStorage.getItem(CHILD_DIRTY_KEY) === "1") {
+    return true;
+  }
+  if (localStorage.getItem(STORAGE_KEY) && pregnancyHasSyncableData(readStorage())) return true;
+  if (localStorage.getItem(CHILD_STORAGE_KEY) && childStorageHasData(readChildStorage())) return true;
+  return false;
+}
+
 /**
  * One-time (per device) sync between localStorage and Supabase.
+ *
+ * Runs only when this browser already has data to upload, or a previous upload
+ * was marked dirty. A new visitor with an empty device skips the remote migration.
  *
  * Strategy:
  * - If remote has migrated_at and local flag is set → no-op
@@ -28,6 +56,10 @@ export async function runLocalStorageMigration(userId: string): Promise<Migratio
   const supabase = getSupabaseBrowserClient();
   if (!supabase) {
     return { status: "skipped", reason: "Supabase not configured" };
+  }
+
+  if (!hasSyncableLocalStorage()) {
+    return { status: "skipped", reason: "no local data" };
   }
 
   if (hasDeviceMigrationFlag()) {
@@ -65,12 +97,7 @@ export async function runLocalStorageMigration(userId: string): Promise<Migratio
       reminders: local.reminders,
     };
 
-    const localHasData =
-      local.baby !== null ||
-      local.kicks.length > 0 ||
-      local.water.entries.length > 0 ||
-      local.vitamins.items.some((v) => v.name.trim()) ||
-      Boolean(local.babyPlus.startDate);
+    const localHasData = pregnancyHasSyncableData(local);
 
     const remoteHasData =
       remote.baby !== null ||
@@ -88,6 +115,10 @@ export async function runLocalStorageMigration(userId: string): Promise<Migratio
 
     if (localHasData) {
       await upsertAppStorageToRemote(supabase, userId, local);
+      const latest = readStorage();
+      if (JSON.stringify(latest) !== JSON.stringify(local)) {
+        await upsertAppStorageToRemote(supabase, userId, latest);
+      }
       await markMigrated(supabase, userId);
       setDeviceMigrationFlag();
       return { status: "success", direction: "upload" };

@@ -2,7 +2,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/env";
 
-/** Avoid Web Locks deadlocks in local dev (single-tab MVP). */
+/**
+ * Skip navigator.locks. A stuck lock makes getSession() wait forever
+ * without sending any request.
+ */
 async function noOpAuthLock<T>(
   _name: string,
   _acquireTimeout: number,
@@ -26,16 +29,14 @@ export function createSupabaseBrowserClient() {
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
     );
   }
-  const isDev = process.env.NODE_ENV === "development";
-
   return createClient<Database>(url, anonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
-      lockAcquireTimeout: 5000,
-      // Prevents getSession() hanging forever when a lock is orphaned (common in dev).
-      ...(isDev ? { lock: noOpAuthLock } : {}),
+      detectSessionInUrl: false,
+      lock: noOpAuthLock,
+      // Constructor init takes the auth lock and can deadlock before any request.
+      skipAutoInitialize: true,
     },
   });
 }

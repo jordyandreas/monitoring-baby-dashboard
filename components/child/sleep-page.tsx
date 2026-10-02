@@ -1,0 +1,60 @@
+"use client";
+
+import { useState } from "react";
+import { ChildDayHistory } from "@/components/child/day-history";
+import { SleepRangeSummary } from "@/components/child/page-summary";
+import { SleepLogForm } from "@/components/child/quick-log-forms";
+import { LogScreen } from "@/components/child/form-bits";
+import { useChildStorage } from "@/components/providers/child-storage-provider";
+import { useLocale } from "@/components/providers/locale-provider";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { getChildStage } from "@/lib/child/age";
+import { sleepHistoryParts } from "@/lib/child/summary";
+
+export function SleepPageContent() {
+  const { t } = useLocale();
+  const { data, mounted, removeSleep } = useChildStorage();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = data.sleeps.find((entry) => entry.id === editingId) ?? null;
+
+  if (!mounted) return null;
+
+  const stage = data.profile ? getChildStage(data.profile.birthDate) : null;
+
+  return (
+    <LogScreen
+      intro={t("sleep.intro")}
+      extra={
+        stage === "toddler" ? (
+          <p className="text-sm text-muted-foreground">{t("child.hintToddlerSleep")}</p>
+        ) : null
+      }
+    >
+      <SleepLogForm />
+      <SleepRangeSummary entries={data.sleeps} />
+      <ChildDayHistory
+        entries={data.sleeps.map((entry) => ({
+          ...entry,
+          time: entry.startTime,
+          ...sleepHistoryParts(entry, t),
+        }))}
+        emptyLabel={t("sleep.empty")}
+        onDelete={removeSleep}
+        onEdit={setEditingId}
+      />
+      <Dialog
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingId(null);
+        }}
+      >
+        <DialogContent className="max-h-[min(90vh,760px)] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{t("sleep.edit")}</DialogTitle>
+          {editing ? (
+            <SleepLogForm key={editing.id} initial={editing} onSaved={() => setEditingId(null)} />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </LogScreen>
+  );
+}

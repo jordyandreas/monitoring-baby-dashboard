@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { isNavActive, navRoutes } from "@/components/layout/nav-routes";
+import { isNavActive, navRoutesFor } from "@/components/layout/nav-routes";
+import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { cn } from "@/lib/utils";
 
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useLocale();
+  const { mode } = useAppMode();
+  const routes = navRoutesFor(mode);
 
   return (
     <nav
@@ -16,7 +19,7 @@ export function BottomNav() {
       aria-label={t("nav.main")}
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
-        {navRoutes.map(({ href, labelKey, mobileLabelKey, icon: Icon }) => {
+        {routes.map(({ href, labelKey, mobileLabelKey, icon: Icon }) => {
           const active = isNavActive(pathname, href);
           return (
             <Link
