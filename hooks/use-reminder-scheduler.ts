@@ -14,6 +14,7 @@ import {
   showReminderNotification,
 } from "@/lib/reminders/notify";
 import { REMINDER_CHECK_EVENT } from "@/lib/reminders/scheduler-events";
+import { REMINDERS_VISIBLE } from "@/lib/reminders/visibility";
 
 /** Poll often enough that a 1–2 minute test feels responsive. */
 const CHECK_INTERVAL_MS = 15_000;
@@ -24,6 +25,7 @@ export function useReminderScheduler() {
   const checkingRef = useRef(false);
 
   const runCheck = useCallback(async () => {
+    if (!REMINDERS_VISIBLE) return;
     if (checkingRef.current) return;
     if (!mounted) return;
     if (getNotificationPermissionState() !== "granted") return;
@@ -48,7 +50,7 @@ export function useReminderScheduler() {
   }, [data, mounted, t]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!REMINDERS_VISIBLE || !mounted) return;
 
     void runCheck();
 

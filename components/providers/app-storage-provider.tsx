@@ -24,6 +24,19 @@ import type {
   VitaminState,
   WaterEntry,
 } from "@/lib/types";
+import { scheduleRemoteWrite } from "@/lib/supabase/live-sync";
+import { reportSave } from "@/components/ui/save-toast";
+import {
+  syncBabyPlus,
+  syncBabyProfile,
+  syncGlassSize,
+  syncKickDelete,
+  syncKickInsert,
+  syncReminders,
+  syncVitamins,
+  syncWaterDelete,
+  syncWaterInsert,
+} from "@/lib/supabase/repositories/domain-sync";
 import { rolloverVitaminState, syncVitaminItems } from "@/lib/vitamins";
 import { normalizeGlassSize } from "@/lib/water";
 
@@ -69,12 +82,19 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
 
   const updateVitamins = useCallback(
     (updater: (prev: VitaminState) => VitaminState) => {
-      persist((prev) => ({
-        ...prev,
-        vitamins: rolloverVitaminState(
+      const box: { next?: VitaminState } = {};
+      persist((prev) => {
+        box.next = rolloverVitaminState(
           updater(rolloverVitaminState(prev.vitamins)),
-        ),
-      }));
+        );
+        return { ...prev, vitamins: box.next };
+      });
+      if (box.next) {
+        const vitamins = box.next;
+        reportSave("vitamins", (supabase, userId) =>
+          syncVitamins(supabase, userId, vitamins),
+        );
+      }
     },
     [persist],
   );
@@ -82,6 +102,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   const setBaby = useCallback(
     (baby: BabyProfile | null) => {
       persist((prev) => ({ ...prev, baby }));
+      reportSave("baby", (supabase, userId) => syncBabyProfile(supabase, userId, baby));
     },
     [persist],
   );
@@ -89,26 +110,38 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   const setBabyPlus = useCallback(
     (babyPlus: BabyPlusState) => {
       persist((prev) => ({ ...prev, babyPlus }));
+      reportSave("babyPlus", (supabase, userId) =>
+        syncBabyPlus(supabase, userId, babyPlus),
+      );
     },
     [persist],
   );
 
   const updateBabyPlus = useCallback(
     (updater: (prev: BabyPlusState) => BabyPlusState) => {
-      persist((prev) => ({
-        ...prev,
-        babyPlus: updater(prev.babyPlus),
-      }));
+      const box: { next?: BabyPlusState } = {};
+      persist((prev) => {
+        box.next = updater(prev.babyPlus);
+        return { ...prev, babyPlus: box.next };
+      });
+      if (box.next) {
+        const babyPlus = box.next;
+        reportSave("babyPlus", (supabase, userId) =>
+          syncBabyPlus(supabase, userId, babyPlus),
+        );
+      }
     },
     [persist],
   );
 
   const addKick = useCallback(
     (kick: Omit<KickEntry, "id">) => {
+      const entry: KickEntry = { ...kick, id: crypto.randomUUID() };
       persist((prev) => ({
         ...prev,
-        kicks: [{ ...kick, id: crypto.randomUUID() }, ...prev.kicks],
+        kicks: [entry, ...prev.kicks],
       }));
+      reportSave("kicks", (supabase, userId) => syncKickInsert(supabase, userId, entry));
     },
     [persist],
   );
@@ -119,6 +152,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
         ...prev,
         kicks: prev.kicks.filter((k) => k.id !== id),
       }));
+      reportSave("kicks", (supabase, userId) => syncKickDelete(supabase, userId, id), "delete");
     },
     [persist],
   );
@@ -136,23 +170,32 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
 
   const updateReminders = useCallback(
     (updater: (prev: RemindersState) => RemindersState) => {
-      persist((prev) => ({
-        ...prev,
-        reminders: updater(prev.reminders),
-      }));
+      const box: { next?: RemindersState } = {};
+      persist((prev) => {
+        box.next = updater(prev.reminders);
+        return { ...prev, reminders: box.next };
+      });
+      if (box.next) {
+        const reminders = box.next;
+        scheduleRemoteWrite("reminders", (supabase, userId) =>
+          syncReminders(supabase, userId, reminders),
+        );
+      }
     },
     [persist],
   );
 
   const addWater = useCallback(
     (entry: Omit<WaterEntry, "id">) => {
+      const next: WaterEntry = { ...entry, id: crypto.randomUUID() };
       persist((prev) => ({
         ...prev,
         water: {
           ...prev.water,
-          entries: [{ ...entry, id: crypto.randomUUID() }, ...prev.water.entries],
+          entries: [next, ...prev.water.entries],
         },
       }));
+      reportSave("water", (supabase, userId) => syncWaterInsert(supabase, userId, next));
     },
     [persist],
   );
@@ -166,19 +209,22 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
           entries: prev.water.entries.filter((e) => e.id !== id),
         },
       }));
+      reportSave("water", (supabase, userId) => syncWaterDelete(supabase, userId, id), "delete");
     },
     [persist],
   );
 
   const setGlassSizeMl = useCallback(
     (glassSizeMl: number) => {
+      const normalized = normalizeGlassSize(glassSizeMl);
       persist((prev) => ({
         ...prev,
         water: {
           ...prev.water,
-          glassSizeMl: normalizeGlassSize(glassSizeMl),
+          glassSizeMl: normalized,
         },
       }));
+      reportSave("water", (supabase, userId) => syncGlassSize(supabase, userId, normalized));
     },
     [persist],
   );

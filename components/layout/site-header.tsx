@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Baby } from "lucide-react";
+import { AccountDialog } from "@/components/layout/account-dialog";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
-import { isNavActive, navRoutes } from "@/components/layout/nav-routes";
+import { ModeSwitch } from "@/components/layout/mode-switch";
+import { isNavActive, navRoutesFor } from "@/components/layout/nav-routes";
 import { ReminderSettingsDialog } from "@/components/reminders/reminder-settings-dialog";
+import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useLocale } from "@/components/providers/locale-provider";
+import { REMINDERS_VISIBLE } from "@/lib/reminders/visibility";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { t } = useLocale();
+  const { mode } = useAppMode();
+  const routes = navRoutesFor(mode);
 
   return (
     <>
@@ -25,8 +31,10 @@ export function SiteHeader() {
             <span className="truncate">{t("pages.home.title")}</span>
           </Link>
           <div className="flex items-center gap-2">
-            <ReminderSettingsDialog />
+            <ModeSwitch />
+            {REMINDERS_VISIBLE ? <ReminderSettingsDialog /> : null}
             <LocaleSwitcher />
+            <AccountDialog />
           </div>
         </div>
       </header>
@@ -44,7 +52,7 @@ export function SiteHeader() {
             className="flex flex-wrap items-center justify-center gap-0.5 justify-self-center lg:gap-1"
             aria-label={t("nav.main")}
           >
-            {navRoutes.map(({ href, labelKey, icon: Icon }) => {
+            {routes.map(({ href, labelKey, icon: Icon }) => {
               const active = isNavActive(pathname, href);
               return (
                 <Link
@@ -64,8 +72,10 @@ export function SiteHeader() {
             })}
           </nav>
           <div className="flex items-center justify-end gap-2 justify-self-end">
-            <ReminderSettingsDialog />
+            <ModeSwitch />
+            {REMINDERS_VISIBLE ? <ReminderSettingsDialog /> : null}
             <LocaleSwitcher />
+            <AccountDialog />
           </div>
         </div>
       </header>
