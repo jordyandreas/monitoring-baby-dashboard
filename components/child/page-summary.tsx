@@ -3,12 +3,10 @@
 import { useState, type ComponentType, type ReactNode } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
-import { Baby, ChartLine, Milk, Moon, Ruler, Weight } from "lucide-react";
+import { Baby, Milk, Moon, Ruler, Weight } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
-import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -419,31 +417,23 @@ export function GrowthCompareSummary({
   entries,
   birthDate,
   sex,
-  onViewCharts,
 }: {
   entries: GrowthEntry[];
   birthDate: string | null;
   sex: Gender | null;
-  onViewCharts: () => void;
 }) {
   const { t } = useLocale();
   const compared = growthComparison(entries);
   const hasAny = Boolean(compared.weight || compared.height || compared.head);
   const canCompare = Boolean(birthDate && whoSex(sex));
   return (
-    <Card className="rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Ruler className="size-5 text-lilac-deep" />
           {t("growth.summaryTitle")}
         </CardTitle>
         <CardDescription>{t("growth.summarySubtitle")}</CardDescription>
-        <CardAction>
-          <Button type="button" variant="outline" className="rounded-full" onClick={onViewCharts}>
-            <ChartLine />
-            {t("growth.viewCharts")}
-          </Button>
-        </CardAction>
       </CardHeader>
       <CardContent className="space-y-3">
         {!hasAny ? (

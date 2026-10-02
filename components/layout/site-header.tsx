@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Baby } from "lucide-react";
 import { AccountDialog } from "@/components/layout/account-dialog";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ModeSwitch } from "@/components/layout/mode-switch";
 import { isNavActive, navRoutesFor } from "@/components/layout/nav-routes";
@@ -55,7 +56,7 @@ export function SiteHeader() {
             {routes.map(({ href, labelKey, icon: Icon }) => {
               const active = isNavActive(pathname, href);
               return (
-                <Link
+                <FeatureLink
                   key={href}
                   href={href}
                   className={cn(
@@ -67,7 +68,7 @@ export function SiteHeader() {
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
                   {t(labelKey)}
-                </Link>
+                </FeatureLink>
               );
             })}
           </nav>

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { usePathname } from "next/navigation";
 import { isNavActive, navRoutesFor } from "@/components/layout/nav-routes";
 import { useAppMode } from "@/components/providers/app-mode-provider";
@@ -15,14 +15,14 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-card/95 backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-card md:hidden"
       aria-label={t("nav.main")}
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         {routes.map(({ href, labelKey, mobileLabelKey, icon: Icon }) => {
           const active = isNavActive(pathname, href);
           return (
-            <Link
+            <FeatureLink
               key={href}
               href={href}
               className={cn(
@@ -36,7 +36,7 @@ export function BottomNav() {
               <span className="max-w-full truncate">
                 {t(mobileLabelKey ?? labelKey)}
               </span>
-            </Link>
+            </FeatureLink>
           );
         })}
       </div>

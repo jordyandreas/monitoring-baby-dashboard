@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
@@ -18,20 +19,14 @@ import {
   getSupabaseBrowserClient,
   resetSupabaseBrowserClient,
 } from "@/lib/supabase/client";
-import { childStorageHasData, resetChildStorage } from "@/lib/child/storage";
 import {
+  isEmailAccount,
   signInWithEmail as signInWithEmailRequest,
-  signOutToGuest as signOutToGuestRequest,
+  signOut as signOutRequest,
   signUpWithEmail as signUpWithEmailRequest,
 } from "@/lib/supabase/email-auth";
-import { isSupabaseEnabled, isSupabaseSyncEnabled } from "@/lib/supabase/env";
-import { armLiveSync, discardQueuedWrites, holdLiveSync, stopLiveSync } from "@/lib/supabase/live-sync";
-import { hasSyncableLocalStorage, runLocalStorageMigration, type MigrationResult } from "@/lib/supabase/migrate-local";
-import { fetchRemoteAppSlice } from "@/lib/supabase/repositories/app-data";
-import { fetchRemoteChild } from "@/lib/supabase/repositories/child-sync";
-import { CHILD_DIRTY_KEY, LOCAL_DIRTY_KEY } from "@/lib/supabase/sync-constants";
-import { REMINDER_FIRED_KEY } from "@/lib/reminders/fired-storage";
-import { resetAppStorage } from "@/lib/storage";
+import { isSupabaseEnabled } from "@/lib/supabase/env";
+import type { MigrationResult } from "@/lib/supabase/migrate-local";
 
 export type AccountActionResult = {
   error: string | null;
@@ -43,12 +38,17 @@ interface SupabaseContextValue {
   authStatus: AuthStatus;
   session: Session | null;
   user: User | null;
+  signedIn: boolean;
+  loginOpen: boolean;
   migration: MigrationResult | null;
   authError: string | null;
   retryAuth: () => void;
+  requestLogin: (nextPath?: string) => void;
+  dismissLogin: () => void;
+  takePendingPath: () => string | null;
   signUpWithEmail: (email: string, password: string) => Promise<AccountActionResult>;
   signInWithEmail: (email: string, password: string) => Promise<AccountActionResult>;
-  signOutToGuest: () => Promise<AccountActionResult>;
+  signOut: () => Promise<AccountActionResult>;
 }
 
 const SupabaseContext = createContext<SupabaseContextValue | null>(null);
@@ -63,6 +63,10 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [migration, setMigration] = useState<MigrationResult | null>(null);
   const [authAttempt, setAuthAttempt] = useState(0);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const pendingPath = useRef<string | null>(null);
+
+  const signedIn = isEmailAccount(user);
 
   const retryAuth = useCallback(() => {
     resetEnsureSupabaseSession();
@@ -70,60 +74,44 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     setAuthAttempt((n) => n + 1);
   }, []);
 
-  const adoptSession = useCallback(async (next: Session, mode: "keep" | "switch" | "guest") => {
+  const adoptSession = useCallback((next: Session) => {
     setSession(next);
     setUser(next.user);
     setAuthStatus("ready");
     setAuthError(null);
-    if (mode === "keep") return;
+  }, []);
 
-    holdLiveSync();
-    if (mode === "guest") {
-      discardQueuedWrites();
-      localStorage.removeItem(LOCAL_DIRTY_KEY);
-      localStorage.removeItem(CHILD_DIRTY_KEY);
-      localStorage.removeItem(REMINDER_FIRED_KEY);
-      resetAppStorage();
-      resetChildStorage();
-    }
-    let pullRemote = false;
-    if (mode === "switch") {
-      const supabase = getSupabaseBrowserClient();
-      let remoteHas = false;
-      if (supabase) {
-        try {
-          const slice = await fetchRemoteAppSlice(supabase, next.user.id);
-          remoteHas =
-            slice.baby !== null ||
-            slice.kicks.length > 0 ||
-            slice.water.entries.length > 0 ||
-            slice.vitamins.items.length > 0 ||
-            Boolean(slice.babyPlus.startDate);
-          if (!remoteHas && isSupabaseSyncEnabled("child")) {
-            remoteHas = childStorageHasData(await fetchRemoteChild(supabase, next.user.id));
-          }
-        } catch {
-          remoteHas = false;
-        }
-      }
-      pullRemote = remoteHas;
-      if (remoteHas) {
-        localStorage.removeItem(LOCAL_DIRTY_KEY);
-        localStorage.removeItem(CHILD_DIRTY_KEY);
-        discardQueuedWrites();
-      } else if (hasSyncableLocalStorage()) {
-        localStorage.setItem(LOCAL_DIRTY_KEY, "1");
-        localStorage.setItem(CHILD_DIRTY_KEY, "1");
-      }
-    }
-    await armLiveSync(next.user.id, { pullRemote });
+  const requestLogin = useCallback(
+    (nextPath?: string) => {
+      if (!enabled || signedIn || authStatus === "loading") return;
+      pendingPath.current = nextPath ?? null;
+      setLoginOpen(true);
+    },
+    [authStatus, enabled, signedIn],
+  );
+
+  const dismissLogin = useCallback(() => {
+    pendingPath.current = null;
+    setLoginOpen(false);
+  }, []);
+
+  const takePendingPath = useCallback(() => {
+    const next = pendingPath.current;
+    pendingPath.current = null;
+    setLoginOpen(false);
+    return next;
   }, []);
 
   const signUpWithEmail = useCallback(
     async (email: string, password: string): Promise<AccountActionResult> => {
       const result = await signUpWithEmailRequest(email, password);
-      if (!result.ok) return { error: result.message, notice: null };
-      await adoptSession(result.session, "keep");
+      if (!result.ok) {
+        if (result.message.toLowerCase().includes("confirm")) {
+          return { error: null, notice: "confirm-email" };
+        }
+        return { error: result.message, notice: null };
+      }
+      adoptSession(result.session);
       return { error: null, notice: result.pendingConfirmation ? "confirm-email" : null };
     },
     [adoptSession],
@@ -133,18 +121,21 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string): Promise<AccountActionResult> => {
       const result = await signInWithEmailRequest(email, password);
       if (!result.ok) return { error: result.message, notice: null };
-      await adoptSession(result.session, "switch");
+      adoptSession(result.session);
       return { error: null, notice: null };
     },
     [adoptSession],
   );
 
-  const signOutToGuest = useCallback(async (): Promise<AccountActionResult> => {
-    const result = await signOutToGuestRequest();
+  const signOut = useCallback(async (): Promise<AccountActionResult> => {
+    const result = await signOutRequest();
     if (!result.ok) return { error: result.message, notice: null };
-    await adoptSession(result.session, "guest");
-    return { error: null, notice: "signed-out" };
-  }, [adoptSession]);
+    setSession(null);
+    setUser(null);
+    setAuthStatus("ready");
+    setAuthError(null);
+    return { error: null, notice: null };
+  }, []);
 
   useEffect(() => {
     if (!enabled) {
@@ -154,7 +145,6 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
     let active = true;
     let authSubscription: { unsubscribe: () => void } | undefined;
-    holdLiveSync();
 
     async function run() {
       setAuthStatus("loading");
@@ -164,48 +154,34 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       const { session: nextSession, error } = await ensureSupabaseSession();
       if (!active) return;
 
-      if (error || !nextSession?.user) {
-        stopLiveSync();
+      if (error) {
         setAuthStatus("error");
-        setAuthError(error ?? "No session");
+        setAuthError(error);
         setSession(null);
         setUser(null);
         return;
       }
 
       setSession(nextSession);
-      setUser(nextSession.user);
+      setUser(nextSession?.user ?? null);
       setAuthStatus("ready");
 
       const supabase = getSupabaseBrowserClient();
-      if (supabase) {
-        const { data } = supabase.auth.onAuthStateChange((_event, next) => {
-          setSession(next);
-          setUser(next?.user ?? null);
-        });
-        authSubscription = data.subscription;
-      }
-
-      const result = await runLocalStorageMigration(nextSession.user.id);
-      if (!active) return;
-      setMigration(result);
-
-      const freshDevice = result.status === "skipped" && result.reason === "no local data";
-      if (result.status === "skipped" && !freshDevice) {
-        stopLiveSync();
-      } else {
-        await armLiveSync(nextSession.user.id, {
-          pullRemote:
-            freshDevice || (result.status === "success" && result.direction === "none"),
-        });
-      }
+      if (!supabase) return;
+      const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+        if (!active) return;
+        if (next && !isEmailAccount(next.user)) return;
+        setSession(next);
+        setUser(next?.user ?? null);
+        setAuthStatus("ready");
+      });
+      authSubscription = data.subscription;
     }
 
     void run();
 
     return () => {
       active = false;
-      holdLiveSync();
       authSubscription?.unsubscribe();
     };
   }, [enabled, authAttempt]);
@@ -216,24 +192,34 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       authStatus,
       session,
       user,
+      signedIn,
+      loginOpen,
       migration,
       authError,
       retryAuth,
+      requestLogin,
+      dismissLogin,
+      takePendingPath,
       signUpWithEmail,
       signInWithEmail,
-      signOutToGuest,
+      signOut,
     }),
     [
       enabled,
       authStatus,
       session,
       user,
+      signedIn,
+      loginOpen,
       migration,
       authError,
       retryAuth,
+      requestLogin,
+      dismissLogin,
+      takePendingPath,
       signUpWithEmail,
       signInWithEmail,
-      signOutToGuest,
+      signOut,
     ],
   );
 

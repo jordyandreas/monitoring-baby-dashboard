@@ -10,9 +10,6 @@ export function WaterPageContent() {
 
   return (
     <div className="space-y-6">
-      <p className="rounded-2xl bg-lilac/20 px-4 py-3 text-sm text-muted-foreground">
-        {t("water.intro")}
-      </p>
       <WaterQuickAdd />
       <WaterSummary />
       <section className="space-y-3">

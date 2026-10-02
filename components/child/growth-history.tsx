@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
-import { Baby, Pencil, Plus, Ruler, Trash2, Weight } from "lucide-react";
+import { Baby, Pencil, Ruler, Trash2, Weight } from "lucide-react";
 import { DateField, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -81,6 +80,17 @@ function DeltaText({
       {rounded} {unit}
     </span>
   );
+}
+
+function ageLabel(
+  t: (key: "growth.ageDay" | "growth.ageDays", values?: { days: number }) => string,
+  birthDate: string | null,
+  date: string,
+): string {
+  const ageDays = birthDate ? measurementAgeDays(birthDate, date) : null;
+  if (ageDays == null) return "—";
+  if (ageDays === 1) return t("growth.ageDay");
+  return t("growth.ageDays", { days: ageDays });
 }
 
 function optionalNumber(value: string): number | undefined {
@@ -155,13 +165,11 @@ export function GrowthHistoryTable({
   days,
   birthDate,
   onDelete,
-  onAdd,
   onReplace,
 }: {
   days: GrowthDay[];
   birthDate: string | null;
   onDelete: (id: string) => void;
-  onAdd: () => void;
   onReplace: (sourceIds: string[], entry: Omit<GrowthEntry, "id">) => void;
 }) {
   const { t, locale } = useLocale();
@@ -171,24 +179,114 @@ export function GrowthHistoryTable({
   const dfLocale = locale === "id" ? idLocale : enUS;
 
   return (
-    <Card className="rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg">{t("child.history")}</CardTitle>
         <CardDescription>{t("growth.historyHint")}</CardDescription>
-        <CardAction>
-          <Button type="button" variant="outline" className="rounded-full" onClick={onAdd}>
-            <Plus />
-            {t("growth.add")}
-          </Button>
-        </CardAction>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0">
         {days.length === 0 ? (
           <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
             {t("growth.empty")}
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <ul className="space-y-3 md:hidden">
+              {days.map((day, index) => {
+                const previous = days[index + 1];
+                const metrics: {
+                  key: string;
+                  label: string;
+                  value?: number;
+                  previous?: number;
+                  digits: number;
+                  unit: string;
+                }[] = [
+                  {
+                    key: "weight",
+                    label: t("child.measureWeight"),
+                    value: day.weightKg,
+                    previous: previous?.weightKg,
+                    digits: 2,
+                    unit: "kg",
+                  },
+                  {
+                    key: "height",
+                    label: t("child.measureHeight"),
+                    value: day.lengthCm,
+                    previous: previous?.lengthCm,
+                    digits: 1,
+                    unit: "cm",
+                  },
+                  {
+                    key: "head",
+                    label: t("child.measureHead"),
+                    value: day.headCm,
+                    previous: previous?.headCm,
+                    digits: 1,
+                    unit: "cm",
+                  },
+                ];
+                return (
+                  <li key={day.id} className="rounded-2xl bg-muted/50 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">
+                          {format(parseISO(day.date), "d MMM yyyy", { locale: dfLocale })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {ageLabel(t, birthDate, day.date)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("child.edit")}
+                          onClick={() => setEditingId(day.id)}
+                        >
+                          <Pencil />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("child.remove")}
+                          onClick={() => setPending(day.id)}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {metrics.map((metric) => (
+                        <div key={metric.key} className="min-w-0">
+                          <p className="truncate text-[11px] text-muted-foreground">{metric.label}</p>
+                          <p className="mt-1 text-sm font-semibold tabular-nums">
+                            {metric.value === undefined
+                              ? "—"
+                              : `${formatMeasure(metric.value, metric.digits)} ${metric.unit}`}
+                          </p>
+                          {metric.value !== undefined && metric.previous !== undefined ? (
+                            <p className="text-xs">
+                              <DeltaText
+                                current={metric.value}
+                                previous={metric.previous}
+                                digits={metric.digits}
+                                unit={metric.unit}
+                              />
+                            </p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="hidden md:block">
+          <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] overflow-x-auto">
             <table className="w-full min-w-[760px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
@@ -206,19 +304,13 @@ export function GrowthHistoryTable({
               <tbody>
                 {days.map((day, index) => {
                   const previous = days[index + 1];
-                  const ageDays = birthDate ? measurementAgeDays(birthDate, day.date) : null;
-                  const ageLabel =
-                    ageDays == null
-                      ? "—"
-                      : ageDays === 1
-                        ? t("growth.ageDay")
-                        : t("growth.ageDays", { days: ageDays });
+                  const ageText = ageLabel(t, birthDate, day.date);
                   return (
                     <tr key={day.id} className="border-b border-border/40 last:border-0">
                       <td className="px-2 py-3 font-semibold whitespace-nowrap">
                         {format(parseISO(day.date), "d MMM yyyy", { locale: dfLocale })}
                       </td>
-                      <td className="px-2 py-3 whitespace-nowrap text-muted-foreground">{ageLabel}</td>
+                      <td className="px-2 py-3 whitespace-nowrap text-muted-foreground">{ageText}</td>
                       <td className="px-2 py-3">
                         <MetricCell
                           value={day.weightKg}
@@ -296,6 +388,8 @@ export function GrowthHistoryTable({
               </tbody>
             </table>
           </div>
+            </div>
+          </>
         )}
       </CardContent>
       <Dialog

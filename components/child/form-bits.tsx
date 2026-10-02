@@ -242,17 +242,14 @@ export function TextField({
 }
 
 export function LogScreen({
-  intro,
   extra,
   children,
 }: {
-  intro: string;
   extra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-6">
-      <p className="rounded-2xl bg-lilac/20 px-4 py-3 text-sm text-muted-foreground">{intro}</p>
+    <div className="w-full min-w-0 space-y-6">
       {extra}
       {children}
     </div>

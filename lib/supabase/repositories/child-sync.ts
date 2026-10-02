@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ChildProfile, ChildStorage, MilestoneKey } from "@/lib/child/types";
-import { childStorageHasData } from "@/lib/child/storage";
+import { childStorageHasData, updateChildStorage } from "@/lib/child/storage";
 import type { Database } from "@/lib/supabase/database.types";
 import {
   childProfileToRow,
@@ -36,6 +36,47 @@ async function throwOnError<T extends { error: { message: string } | null }>(
   return result;
 }
 
+type LogList = "feeds" | "diapers" | "sleeps" | "growth" | "solids" | "health" | "potty" | "meals";
+type WriteMode = "upsert" | "insert";
+type RowWrite<T> = (
+  entry: T,
+  mode: WriteMode,
+) => PromiseLike<{ error: { message: string } | null }>;
+
+/** Upsert took the update path on a primary key that belongs to another account. */
+function idTakenByAnotherAccount(message: string) {
+  return /duplicate key|row-level security policy \(USING expression\)/i.test(message);
+}
+
+async function saveWithOwnId<T extends { id: string }>(entry: T, write: RowWrite<T>): Promise<T> {
+  const first = await write(entry, "upsert");
+  if (!first.error) return entry;
+  if (!idTakenByAnotherAccount(first.error.message)) throw new Error(first.error.message);
+  const next = { ...entry, id: crypto.randomUUID() };
+  const second = await write(next, "insert");
+  if (second.error) throw new Error(second.error.message);
+  return next;
+}
+
+function rememberOwnId(list: LogList, from: string, to: string) {
+  if (from === to) return;
+  updateChildStorage((prev) => ({
+    ...prev,
+    [list]: prev[list].map((item) => (item.id === from ? { ...item, id: to } : item)),
+  }));
+}
+
+async function keepLocalId<T extends { id: string }>(list: LogList, entry: T, write: RowWrite<T>) {
+  const saved = await saveWithOwnId(entry, write);
+  rememberOwnId(list, entry.id, saved.id);
+}
+
+async function saveOwnedList<T extends { id: string }>(entries: T[], write: RowWrite<T>): Promise<T[]> {
+  const saved: T[] = [];
+  for (const entry of entries) saved.push(await saveWithOwnId(entry, write));
+  return saved;
+}
+
 export async function syncChildProfile(
   supabase: Client,
   userId: string,
@@ -50,76 +91,132 @@ export async function syncChildProfile(
   await throwOnError(supabase.from("child_profiles").delete().eq("user_id", userId));
 }
 
+function writeFeed(supabase: Client, userId: string, entry: FeedEntry, mode: WriteMode) {
+  const row = feedToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("feed_logs").insert(row)
+    : supabase.from("feed_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncFeedInsert(supabase: Client, userId: string, entry: FeedEntry) {
-  await throwOnError(supabase.from("feed_logs").upsert(feedToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("feeds", entry, (item, mode) => writeFeed(supabase, userId, item, mode));
 }
 
 export async function syncFeedUpdate(supabase: Client, userId: string, entry: FeedEntry) {
-  await throwOnError(supabase.from("feed_logs").upsert(feedToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("feeds", entry, (item, mode) => writeFeed(supabase, userId, item, mode));
 }
 
 export async function syncFeedDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("feed_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writeDiaper(supabase: Client, userId: string, entry: DiaperEntry, mode: WriteMode) {
+  const row = diaperToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("diaper_logs").insert(row)
+    : supabase.from("diaper_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncDiaperInsert(supabase: Client, userId: string, entry: DiaperEntry) {
-  await throwOnError(supabase.from("diaper_logs").upsert(diaperToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("diapers", entry, (item, mode) => writeDiaper(supabase, userId, item, mode));
 }
 
 export async function syncDiaperUpdate(supabase: Client, userId: string, entry: DiaperEntry) {
-  await throwOnError(supabase.from("diaper_logs").upsert(diaperToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("diapers", entry, (item, mode) => writeDiaper(supabase, userId, item, mode));
 }
 
 export async function syncDiaperDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("diaper_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writeSleep(supabase: Client, userId: string, entry: SleepEntry, mode: WriteMode) {
+  const row = sleepToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("sleep_logs").insert(row)
+    : supabase.from("sleep_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncSleepInsert(supabase: Client, userId: string, entry: SleepEntry) {
-  await throwOnError(supabase.from("sleep_logs").upsert(sleepToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("sleeps", entry, (item, mode) => writeSleep(supabase, userId, item, mode));
 }
 
 export async function syncSleepUpdate(supabase: Client, userId: string, entry: SleepEntry) {
-  await throwOnError(supabase.from("sleep_logs").upsert(sleepToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("sleeps", entry, (item, mode) => writeSleep(supabase, userId, item, mode));
 }
 
 export async function syncSleepDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("sleep_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writeGrowth(supabase: Client, userId: string, entry: GrowthEntry, mode: WriteMode) {
+  const row = growthToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("growth_logs").insert(row)
+    : supabase.from("growth_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncGrowthInsert(supabase: Client, userId: string, entry: GrowthEntry) {
-  await throwOnError(supabase.from("growth_logs").upsert(growthToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("growth", entry, (item, mode) => writeGrowth(supabase, userId, item, mode));
 }
 
 export async function syncGrowthDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("growth_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writeSolid(supabase: Client, userId: string, entry: SolidEntry, mode: WriteMode) {
+  const row = solidToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("solid_logs").insert(row)
+    : supabase.from("solid_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncSolidInsert(supabase: Client, userId: string, entry: SolidEntry) {
-  await throwOnError(supabase.from("solid_logs").upsert(solidToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("solids", entry, (item, mode) => writeSolid(supabase, userId, item, mode));
 }
 
 export async function syncSolidDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("solid_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writeHealth(supabase: Client, userId: string, entry: HealthEntry, mode: WriteMode) {
+  const row = healthToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("health_logs").insert(row)
+    : supabase.from("health_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncHealthInsert(supabase: Client, userId: string, entry: HealthEntry) {
-  await throwOnError(supabase.from("health_logs").upsert(healthToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("health", entry, (item, mode) => writeHealth(supabase, userId, item, mode));
 }
 
 export async function syncHealthDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("health_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writePotty(supabase: Client, userId: string, entry: PottyEntry, mode: WriteMode) {
+  const row = pottyToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("potty_logs").insert(row)
+    : supabase.from("potty_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncPottyInsert(supabase: Client, userId: string, entry: PottyEntry) {
-  await throwOnError(supabase.from("potty_logs").upsert(pottyToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("potty", entry, (item, mode) => writePotty(supabase, userId, item, mode));
 }
 
 export async function syncPottyDelete(supabase: Client, userId: string, id: string) {
   await throwOnError(supabase.from("potty_logs").delete().eq("user_id", userId).eq("id", id));
 }
 
+function writeMeal(supabase: Client, userId: string, entry: MealEntry, mode: WriteMode) {
+  const row = mealToRow(userId, entry);
+  return mode === "insert"
+    ? supabase.from("meal_logs").insert(row)
+    : supabase.from("meal_logs").upsert(row, { onConflict: "id" });
+}
+
 export async function syncMealInsert(supabase: Client, userId: string, entry: MealEntry) {
-  await throwOnError(supabase.from("meal_logs").upsert(mealToRow(userId, entry), { onConflict: "id" }));
+  await keepLocalId("meals", entry, (item, mode) => writeMeal(supabase, userId, item, mode));
 }
 
 export async function syncMealDelete(supabase: Client, userId: string, id: string) {
@@ -194,81 +291,31 @@ export async function replaceRemoteChild(
   supabase: Client,
   userId: string,
   data: ChildStorage,
-): Promise<void> {
+): Promise<ChildStorage> {
   await syncChildProfile(supabase, userId, data.profile);
 
   await throwOnError(supabase.from("feed_logs").delete().eq("user_id", userId));
-  if (data.feeds.length) {
-    await throwOnError(
-      supabase.from("feed_logs").upsert(
-        data.feeds.map((entry) => feedToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const feeds = await saveOwnedList(data.feeds, (entry, mode) => writeFeed(supabase, userId, entry, mode));
   await throwOnError(supabase.from("diaper_logs").delete().eq("user_id", userId));
-  if (data.diapers.length) {
-    await throwOnError(
-      supabase.from("diaper_logs").upsert(
-        data.diapers.map((entry) => diaperToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const diapers = await saveOwnedList(data.diapers, (entry, mode) =>
+    writeDiaper(supabase, userId, entry, mode),
+  );
   await throwOnError(supabase.from("sleep_logs").delete().eq("user_id", userId));
-  if (data.sleeps.length) {
-    await throwOnError(
-      supabase.from("sleep_logs").upsert(
-        data.sleeps.map((entry) => sleepToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const sleeps = await saveOwnedList(data.sleeps, (entry, mode) => writeSleep(supabase, userId, entry, mode));
   await throwOnError(supabase.from("growth_logs").delete().eq("user_id", userId));
-  if (data.growth.length) {
-    await throwOnError(
-      supabase.from("growth_logs").upsert(
-        data.growth.map((entry) => growthToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const growth = await saveOwnedList(data.growth, (entry, mode) =>
+    writeGrowth(supabase, userId, entry, mode),
+  );
   await throwOnError(supabase.from("solid_logs").delete().eq("user_id", userId));
-  if (data.solids.length) {
-    await throwOnError(
-      supabase.from("solid_logs").upsert(
-        data.solids.map((entry) => solidToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const solids = await saveOwnedList(data.solids, (entry, mode) => writeSolid(supabase, userId, entry, mode));
   await throwOnError(supabase.from("health_logs").delete().eq("user_id", userId));
-  if (data.health.length) {
-    await throwOnError(
-      supabase.from("health_logs").upsert(
-        data.health.map((entry) => healthToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const health = await saveOwnedList(data.health, (entry, mode) =>
+    writeHealth(supabase, userId, entry, mode),
+  );
   await throwOnError(supabase.from("potty_logs").delete().eq("user_id", userId));
-  if (data.potty.length) {
-    await throwOnError(
-      supabase.from("potty_logs").upsert(
-        data.potty.map((entry) => pottyToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const potty = await saveOwnedList(data.potty, (entry, mode) => writePotty(supabase, userId, entry, mode));
   await throwOnError(supabase.from("meal_logs").delete().eq("user_id", userId));
-  if (data.meals.length) {
-    await throwOnError(
-      supabase.from("meal_logs").upsert(
-        data.meals.map((entry) => mealToRow(userId, entry)),
-        { onConflict: "id" },
-      ),
-    );
-  }
+  const meals = await saveOwnedList(data.meals, (entry, mode) => writeMeal(supabase, userId, entry, mode));
   await throwOnError(supabase.from("milestone_logs").delete().eq("user_id", userId));
   if (data.milestones.length) {
     await throwOnError(
@@ -278,6 +325,8 @@ export async function replaceRemoteChild(
       ),
     );
   }
+
+  return { ...data, feeds, diapers, sleeps, growth, solids, health, potty, meals };
 }
 
 export { childStorageHasData };

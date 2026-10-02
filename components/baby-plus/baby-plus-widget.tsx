@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { ChevronRight, Music } from "lucide-react";
 import { ProgramEndsLine } from "@/components/baby-plus/program-ends-line";
 import { TodayListeningStatus } from "@/components/baby-plus/today-listening-status";
@@ -77,7 +77,7 @@ export function BabyPlusWidget({ className }: { className?: string }) {
             <ProgramEndsLine startDate={parsedStart} dailyTime={dailyTime} />
           </>
         )}
-        <Link
+        <FeatureLink
           href="/baby-plus"
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -86,7 +86,7 @@ export function BabyPlusWidget({ className }: { className?: string }) {
         >
           {t("babyPlus.open")}
           <ChevronRight className="size-4" />
-        </Link>
+        </FeatureLink>
       </CardContent>
     </Card>
   );

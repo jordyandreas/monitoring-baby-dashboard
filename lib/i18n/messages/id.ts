@@ -14,8 +14,7 @@ export const id: Messages = {
   account: {
     open: "Akun",
     title: "Akun",
-    guestHint:
-      "Tidak wajib. Catatan tetap di perangkat ini. Daftar hanya kalau mau membukanya di ponsel lain.",
+    guestHint: "Masuk dulu untuk memakai susu, popok, tidur, tumbuh, dan fitur lainnya.",
     signUp: "Daftar",
     signIn: "Masuk",
     email: "Email",
@@ -100,6 +99,10 @@ export const id: Messages = {
       description: "Satu centang dan tanggal — bukan catatan harian.",
     },
   },
+  fab: {
+    open: "Tambah catatan",
+    close: "Tutup",
+  },
   toast: {
     saved: "Berhasil disimpan",
     failed: "Gagal menyimpan",
@@ -107,6 +110,7 @@ export const id: Messages = {
     deleteFailed: "Gagal menghapus",
     close: "Tutup",
     retry: "Coba lagi",
+    whatsapp: "Kirim ke WhatsApp",
   },
   common: {
     cancel: "Batal",
@@ -507,7 +511,7 @@ export const id: Messages = {
     length: "Tinggi (cm)",
     head: "Kepala (cm)",
     summaryTitle: "Ringkasan tumbuh",
-    summarySubtitle: "Ukuran terakhir dibanding grafik tumbuh WHO.",
+    summarySubtitle: "Ukuran terakhir.",
     noPrevious: "Belum ada ukuran sebelumnya",
     previousValue: "Sebelumnya {value}",
     sinceLast: "sejak ukuran sebelumnya",

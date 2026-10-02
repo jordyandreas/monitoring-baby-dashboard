@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { LoadingCard } from "@/components/layout/loading-card";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useSupabase } from "@/components/providers/supabase-provider";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   formatDueDate,
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 export function BabyProfileCard({ className }: { className?: string }) {
   const { data, mounted, setBaby } = useAppStorage();
   const { locale, t } = useLocale();
+  const { signedIn, requestLogin } = useSupabase();
   const [open, setOpen] = useState(false);
 
   if (!mounted) return <LoadingCard />;
@@ -49,11 +51,17 @@ export function BabyProfileCard({ className }: { className?: string }) {
           <CardDescription>{t("baby.addProfileHint")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <BabyProfileForm
-            onSave={(profile) => {
-              setBaby(profile);
-            }}
-          />
+          {signedIn ? (
+            <BabyProfileForm
+              onSave={(profile) => {
+                setBaby(profile);
+              }}
+            />
+          ) : (
+            <Button type="button" className="min-h-11 rounded-full" onClick={() => requestLogin()}>
+              {t("account.signIn")}
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -82,7 +90,13 @@ export function BabyProfileCard({ className }: { className?: string }) {
             variant="ghost"
             size="icon"
             className="shrink-0 rounded-full"
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              if (!signedIn) {
+                requestLogin();
+                return;
+              }
+              setOpen(true);
+            }}
             aria-label={t("baby.editProfile")}
           >
             <Pencil className="size-4" />

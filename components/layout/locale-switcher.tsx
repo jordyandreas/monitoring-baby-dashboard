@@ -18,8 +18,8 @@ const options: {
   labelKey: "locale.en" | "locale.id";
   Flag: typeof FlagEn;
 }[] = [
-  { value: "en", labelKey: "locale.en", Flag: FlagEn },
   { value: "id", labelKey: "locale.id", Flag: FlagId },
+  { value: "en", labelKey: "locale.en", Flag: FlagEn },
 ];
 
 export function LocaleSwitcher({ className }: { className?: string }) {

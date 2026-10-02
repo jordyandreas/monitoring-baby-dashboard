@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import {
@@ -30,6 +30,7 @@ import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { GenderIcon } from "@/components/baby/gender-icon";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useSupabase } from "@/components/providers/supabase-provider";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -38,7 +39,7 @@ import { Label } from "@/components/ui/label";
 import { formatChildAge } from "@/lib/child/age";
 import {
   formatDuration,
-  latestGrowth,
+  growthComparison,
   todayTimeline,
   todayTotals,
   type TimelineKind,
@@ -76,6 +77,7 @@ const LOG_TONE: Record<TimelineKind, string> = {
 
 export function ChildHome() {
   const { t, locale } = useLocale();
+  const { signedIn, requestLogin } = useSupabase();
   const {
     data,
     mounted,
@@ -144,13 +146,19 @@ export function ChildHome() {
               size="icon"
               aria-label={t("child.editProfile")}
               className="shrink-0 gap-2 rounded-full md:w-auto md:px-3.5"
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                if (!signedIn) {
+                  requestLogin();
+                  return;
+                }
+                setEditing(true);
+              }}
             >
               <Pencil className="size-4" aria-hidden />
               <span className="sr-only md:not-sr-only">{t("child.editProfile")}</span>
             </Button>
           </div>
-        ) : (
+        ) : signedIn ? (
           <div className="space-y-4">
             <div>
               <h2 className="text-base font-semibold">{t("child.profileTitle")}</h2>
@@ -164,6 +172,16 @@ export function ChildHome() {
               }}
               onCancel={profile ? () => setEditing(false) : undefined}
             />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold">{t("child.profileTitle")}</h2>
+              <p className="text-sm text-muted-foreground">{t("child.profileHint")}</p>
+            </div>
+            <Button type="button" className="min-h-11 rounded-full" onClick={() => requestLogin()}>
+              {t("account.signIn")}
+            </Button>
           </div>
         )}
       </section>
@@ -182,7 +200,13 @@ export function ChildHome() {
                 key={item.kind}
                 type="button"
                 aria-pressed={active}
-                onClick={() => setQuick(active ? null : item.kind)}
+                onClick={() => {
+                  if (!signedIn) {
+                    requestLogin();
+                    return;
+                  }
+                  setQuick(active ? null : item.kind);
+                }}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-2xl px-2 py-3.5 text-sm font-semibold",
                   active
@@ -224,12 +248,20 @@ export function ChildHome() {
           page={logPage}
           onPage={setLogPage}
           onEdit={(id) => {
+            if (!signedIn) {
+              requestLogin();
+              return;
+            }
             const parsed = parseTimelineId(id);
             if (parsed && isQuickKind(parsed.kind)) {
               setEditingLog({ kind: parsed.kind, id: parsed.id });
             }
           }}
           onDelete={(id) => {
+            if (!signedIn) {
+              requestLogin();
+              return;
+            }
             const parsed = parseTimelineId(id);
             if (!parsed) return;
             if (parsed.kind === "feed") removeFeed(parsed.id);
@@ -250,14 +282,14 @@ export function ChildHome() {
           {more.map((item) => {
             const Icon = item.icon;
             return (
-              <Link
+              <FeatureLink
                 key={item.href}
                 href={item.href}
                 className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm font-semibold hover:bg-muted/50"
               >
                 <Icon className="size-4 text-lilac-deep" aria-hidden />
                 {item.label}
-              </Link>
+              </FeatureLink>
             );
           })}
         </div>
@@ -510,12 +542,29 @@ function optionalNumber(value: string): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
+function growthChange(
+  current: number,
+  previous: number | undefined,
+  digits: number,
+  unit: string,
+): { text: string; tone: "up" | "down" | "same" } | null {
+  if (previous === undefined) return null;
+  const rounded = Number((current - previous).toFixed(digits));
+  const prefix = rounded > 0 ? "+" : "";
+  return {
+    text: `${prefix}${rounded} ${unit}`,
+    tone: rounded > 0 ? "up" : rounded < 0 ? "down" : "same",
+  };
+}
+
 function GrowthSnapshot({ name }: { name?: string }) {
   const { t, locale } = useLocale();
+  const { signedIn, requestLogin } = useSupabase();
   const { data, addGrowth } = useChildStorage();
-  const weight = latestGrowth(data.growth, "weightKg");
-  const height = latestGrowth(data.growth, "lengthCm");
-  const head = latestGrowth(data.growth, "headCm");
+  const compared = growthComparison(data.growth);
+  const weight = compared.weight;
+  const height = compared.height;
+  const head = compared.head;
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(getTodayDateStr);
   const [weightInput, setWeightInput] = useState("");
@@ -523,6 +572,10 @@ function GrowthSnapshot({ name }: { name?: string }) {
   const [headInput, setHeadInput] = useState("");
 
   function openForm() {
+    if (!signedIn) {
+      requestLogin("/growth");
+      return;
+    }
     setDate(getTodayDateStr());
     setWeightInput("");
     setHeightInput("");
@@ -573,6 +626,11 @@ function GrowthSnapshot({ name }: { name?: string }) {
               ? t("child.measureUpdated", { date: formatLogWhen(weight.date, "", locale) })
               : t("child.measureEmpty")
           }
+          change={
+            weight
+              ? growthChange(weight.value, weight.previous, 2, "kg")
+              : null
+          }
         />
         <MeasureStat
           icon={Ruler}
@@ -584,6 +642,11 @@ function GrowthSnapshot({ name }: { name?: string }) {
               ? t("child.measureUpdated", { date: formatLogWhen(height.date, "", locale) })
               : t("child.measureEmpty")
           }
+          change={
+            height
+              ? growthChange(height.value, height.previous, 1, "cm")
+              : null
+          }
         />
         <MeasureStat
           icon={Baby}
@@ -594,6 +657,11 @@ function GrowthSnapshot({ name }: { name?: string }) {
             head
               ? t("child.measureUpdated", { date: formatLogWhen(head.date, "", locale) })
               : t("child.measureEmpty")
+          }
+          change={
+            head
+              ? growthChange(head.value, head.previous, 1, "cm")
+              : null
           }
         />
       </div>
@@ -661,12 +729,14 @@ function MeasureStat({
   label,
   value,
   when,
+  change,
 }: {
   icon: LucideIcon;
   iconClass: string;
   label: string;
   value: string;
   when: string;
+  change?: { text: string; tone: "up" | "down" | "same" } | null;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-muted/40 px-3 py-3">
@@ -676,6 +746,18 @@ function MeasureStat({
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-xl font-bold tabular-nums">{value}</p>
+        {change ? (
+          <p
+            className={cn(
+              "text-xs font-semibold tabular-nums",
+              change.tone === "up" && "text-emerald-600",
+              change.tone === "down" && "text-destructive",
+              change.tone === "same" && "text-muted-foreground",
+            )}
+          >
+            {change.text}
+          </p>
+        ) : null}
         <p className="text-xs text-muted-foreground">{when}</p>
       </div>
     </div>
@@ -736,7 +818,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
         {cards.map((card) => {
           const Icon = LOG_ICONS[card.kind];
           return (
-            <Link
+            <FeatureLink
               key={card.href}
               href={card.href}
               className={cn(
@@ -760,7 +842,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
                 ) : null}
               </span>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            </Link>
+            </FeatureLink>
           );
         })}
       </div>

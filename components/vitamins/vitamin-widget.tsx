@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { ChevronRight, Pill } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -99,7 +99,7 @@ export function VitaminWidget({ className }: { className?: string }) {
           </>
         )}
 
-        <Link
+        <FeatureLink
           href="/vitamins"
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -108,7 +108,7 @@ export function VitaminWidget({ className }: { className?: string }) {
         >
           {total === 0 ? t("vitamins.setup") : t("vitamins.open")}
           <ChevronRight className="size-4" />
-        </Link>
+        </FeatureLink>
       </CardContent>
     </Card>
   );

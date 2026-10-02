@@ -25,6 +25,7 @@ import type {
 } from "@/lib/child/types";
 import { getCurrentTimeString } from "@/lib/time-utils";
 import { getTodayDateStr } from "@/lib/vitamins";
+import { diaperShareText, feedShareText } from "@/lib/whatsapp-share";
 
 /** Per-feed shortcuts. Steps grow from a newborn feed toward a typical feed by age 2. */
 const NURSING_MINUTES = [5, 10, 15, 20, 30, 45];
@@ -33,9 +34,11 @@ const BOTTLE_ML = [30, 45, 60, 90, 120, 180, 240];
 export function FeedLogForm({
   onSaved,
   initial,
+  embedded,
 }: {
   onSaved?: () => void;
   initial?: FeedEntry;
+  embedded?: boolean;
 }) {
   const { t } = useLocale();
   const { addFeed, updateFeed } = useChildStorage();
@@ -57,23 +60,22 @@ export function FeedLogForm({
   return (
     <LogForm
       title={editing ? t("feed.edit") : t("feed.add")}
-      description={editing ? undefined : t("pages.feed.description")}
-      embedded={editing}
+      embedded={embedded ?? editing}
       onSubmit={(event) => {
         event.preventDefault();
         if (!canSave) return;
-        if (kind === "breast") {
-          const next = { date, time, kind, side, durationMin: Math.round(duration) };
-          if (initial) updateFeed(initial.id, next);
-          else addFeed(next);
-          if (!initial) setMinutes("");
+        const next =
+          kind === "breast"
+            ? { date, time, kind, side, durationMin: Math.round(duration) }
+            : { date, time, kind, amountMl: Math.round(ml) };
+        if (initial) {
+          updateFeed(initial.id, next);
         } else {
-          const next = { date, time, kind, amountMl: Math.round(ml) };
-          if (initial) updateFeed(initial.id, next);
-          else addFeed(next);
-          if (!initial) setAmount("");
+          addFeed(next, feedShareText(next, t));
+          if (kind === "breast") setMinutes("");
+          else setAmount("");
+          setTime(getCurrentTimeString());
         }
-        if (!initial) setTime(getCurrentTimeString());
         onSaved?.();
       }}
     >
@@ -134,9 +136,11 @@ export function FeedLogForm({
 export function DiaperLogForm({
   onSaved,
   initial,
+  embedded,
 }: {
   onSaved?: () => void;
   initial?: DiaperEntry;
+  embedded?: boolean;
 }) {
   const { t } = useLocale();
   const { addDiaper, updateDiaper } = useChildStorage();
@@ -151,8 +155,7 @@ export function DiaperLogForm({
   return (
     <LogForm
       title={editing ? t("diaper.edit") : t("diaper.add")}
-      description={editing ? undefined : t("pages.diapers.description")}
-      embedded={editing}
+      embedded={embedded ?? editing}
       onSubmit={(event) => {
         event.preventDefault();
         if (!date || !time) return;
@@ -162,9 +165,12 @@ export function DiaperLogForm({
           kind,
           ...(needsPoop ? { poopColor: color, poopTexture: texture } : {}),
         };
-        if (initial) updateDiaper(initial.id, next);
-        else addDiaper(next);
-        if (!initial) setTime(getCurrentTimeString());
+        if (initial) {
+          updateDiaper(initial.id, next);
+        } else {
+          addDiaper(next, diaperShareText(next, t));
+          setTime(getCurrentTimeString());
+        }
         onSaved?.();
       }}
     >
@@ -218,9 +224,11 @@ export function DiaperLogForm({
 export function SleepLogForm({
   onSaved,
   initial,
+  embedded,
 }: {
   onSaved?: () => void;
   initial?: SleepEntry;
+  embedded?: boolean;
 }) {
   const { t } = useLocale();
   const { addSleep, updateSleep } = useChildStorage();
@@ -238,8 +246,7 @@ export function SleepLogForm({
   return (
     <LogForm
       title={editing ? t("sleep.edit") : t("sleep.add")}
-      description={editing ? undefined : t("pages.sleep.description")}
-      embedded={editing}
+      embedded={embedded ?? editing}
       onSubmit={(event) => {
         event.preventDefault();
         if (duration <= 0) return;
