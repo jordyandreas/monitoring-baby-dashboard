@@ -130,14 +130,16 @@ function MetricChart({
   const xTicks = monthTicks(toDay);
 
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <p className="text-sm font-medium">{label}</p>
-      <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="h-auto w-full"
-        role="img"
-        aria-label={t("growth.chartAria", { metric: label })}
-      >
+      <div className="w-full min-w-0 overflow-hidden [contain:inline-size]">
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          width="100%"
+          className="block h-auto max-w-full"
+          role="img"
+          aria-label={t("growth.chartAria", { metric: label })}
+        >
         {yTicks.map((tick) => (
           <g key={tick}>
             <line
@@ -196,7 +198,8 @@ function MetricChart({
             {Math.round(day / 30.4375)}
           </text>
         ))}
-      </svg>
+        </svg>
+      </div>
       <p className="text-xs text-muted-foreground">
         {t("growth.curveLegend")}
         {" · "}
@@ -224,7 +227,7 @@ export function GrowthChartsSection({
   ];
 
   return (
-    <Card id="growth-charts" className="scroll-mt-24 rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card id="growth-charts" className="w-full min-w-0 max-w-full scroll-mt-24 overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg">{t("growth.chartsTitle")}</CardTitle>
         <CardDescription>{t("growth.chartsHint")}</CardDescription>

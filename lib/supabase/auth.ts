@@ -1,11 +1,11 @@
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, resetSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isEmailAccount } from "@/lib/supabase/email-auth";
 import { withTimeout } from "@/lib/supabase/with-timeout";
 
 export type AuthStatus = "disabled" | "loading" | "ready" | "error";
 
 const GET_SESSION_TIMEOUT_MS = 2_000;
-const AUTH_TIMEOUT_MS = 15_000;
 
 type SessionResult = {
   session: Session | null;
@@ -14,12 +14,7 @@ type SessionResult = {
 
 let inflight: Promise<SessionResult> | null = null;
 
-/**
- * Ensures a Supabase session exists. For MVP, uses anonymous auth (no login UI).
- * Enable "Anonymous sign-ins" in Supabase Dashboard → Authentication → Providers.
- *
- * One shared attempt so React Strict Mode does not sign in twice.
- */
+/** Restore an email session. Logged out is a normal state, not an error. */
 export function ensureSupabaseSession(): Promise<SessionResult> {
   if (!inflight) {
     inflight = runEnsureSupabaseSession().then((result) => {
@@ -43,27 +38,12 @@ async function runEnsureSupabaseSession(): Promise<SessionResult> {
 
   try {
     const existing = await readSessionQuickly(supabase);
-    if (existing) {
-      return { session: existing, error: null };
-    }
+    if (!existing) return { session: null, error: null };
+    if (isEmailAccount(existing.user)) return { session: existing, error: null };
 
-    const { data: signInData, error: signInError } = await withTimeout(
-      supabase.auth.signInAnonymously(),
-      AUTH_TIMEOUT_MS,
-      "signInAnonymously",
-    );
-
-    if (signInError) {
-      return { session: null, error: signInError.message };
-    }
-    if (signInData.session?.user) {
-      return { session: signInData.session, error: null };
-    }
-
-    return {
-      session: null,
-      error: "Anonymous sign-in returned no session",
-    };
+    const { error } = await supabase.auth.signOut();
+    if (error) return { session: null, error: error.message };
+    return { session: null, error: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Auth failed";
     return { session: null, error: message };

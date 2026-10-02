@@ -13,8 +13,7 @@ export const en = {
   account: {
     open: "Account",
     title: "Account",
-    guestHint:
-      "Optional. Logs stay on this device. Sign up only if you want them on another phone too.",
+    guestHint: "Log in to use milk, diapers, sleep, growth, and the other tools.",
     signUp: "Sign up",
     signIn: "Log in",
     email: "Email",
@@ -102,6 +101,10 @@ export const en = {
       description: "One check and a date — not a daily log.",
     },
   },
+  fab: {
+    open: "Add a log",
+    close: "Close",
+  },
   toast: {
     saved: "Saved",
     failed: "Couldn't save",
@@ -109,6 +112,7 @@ export const en = {
     deleteFailed: "Couldn't delete",
     close: "Close",
     retry: "Retry",
+    whatsapp: "Send to WhatsApp",
   },
   common: {
     cancel: "Cancel",
@@ -530,7 +534,7 @@ export const en = {
     length: "Height (cm)",
     head: "Head (cm)",
     summaryTitle: "Growth summary",
-    summarySubtitle: "Latest measurement compared to WHO growth charts.",
+    summarySubtitle: "Latest measurements.",
     noPrevious: "No earlier measurement",
     previousValue: "Was {value}",
     sinceLast: "since last measurement",

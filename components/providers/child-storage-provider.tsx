@@ -60,18 +60,19 @@ function newId(): string {
 function reportChildSave(
   write: Parameters<typeof reportSave>[1],
   action: "save" | "delete" = "save",
+  whatsappText?: string,
 ) {
-  reportSave("child", write, action);
+  reportSave("child", write, action, whatsappText);
 }
 
 type ChildStorageContextValue = {
   data: ChildStorage;
   mounted: boolean;
   saveProfile: (profile: ChildProfile) => void;
-  addFeed: (entry: Omit<FeedEntry, "id">) => void;
+  addFeed: (entry: Omit<FeedEntry, "id">, whatsappText?: string) => void;
   updateFeed: (id: string, entry: Omit<FeedEntry, "id">) => void;
   removeFeed: (id: string) => void;
-  addDiaper: (entry: Omit<DiaperEntry, "id">) => void;
+  addDiaper: (entry: Omit<DiaperEntry, "id">, whatsappText?: string) => void;
   updateDiaper: (id: string, entry: Omit<DiaperEntry, "id">) => void;
   removeDiaper: (id: string) => void;
   addSleep: (entry: Omit<SleepEntry, "id">) => void;
@@ -110,10 +111,10 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
     reportChildSave((supabase, userId) => syncChildProfile(supabase, userId, profile));
   }, []);
 
-  const addFeed = useCallback((entry: Omit<FeedEntry, "id">) => {
+  const addFeed = useCallback((entry: Omit<FeedEntry, "id">, whatsappText?: string) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, feeds: [next, ...prev.feeds] }));
-    reportChildSave((supabase, userId) => syncFeedInsert(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncFeedInsert(supabase, userId, next), "save", whatsappText);
   }, []);
 
   const updateFeed = useCallback((id: string, entry: Omit<FeedEntry, "id">) => {
@@ -133,10 +134,14 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
     reportChildSave((supabase, userId) => syncFeedDelete(supabase, userId, id), "delete");
   }, []);
 
-  const addDiaper = useCallback((entry: Omit<DiaperEntry, "id">) => {
+  const addDiaper = useCallback((entry: Omit<DiaperEntry, "id">, whatsappText?: string) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, diapers: [next, ...prev.diapers] }));
-    reportChildSave((supabase, userId) => syncDiaperInsert(supabase, userId, next));
+    reportChildSave(
+      (supabase, userId) => syncDiaperInsert(supabase, userId, next),
+      "save",
+      whatsappText,
+    );
   }, []);
 
   const updateDiaper = useCallback((id: string, entry: Omit<DiaperEntry, "id">) => {

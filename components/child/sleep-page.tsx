@@ -8,7 +8,6 @@ import { LogScreen } from "@/components/child/form-bits";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { getChildStage } from "@/lib/child/age";
 import { sleepHistoryParts } from "@/lib/child/summary";
 
 export function SleepPageContent() {
@@ -19,17 +18,8 @@ export function SleepPageContent() {
 
   if (!mounted) return null;
 
-  const stage = data.profile ? getChildStage(data.profile.birthDate) : null;
-
   return (
-    <LogScreen
-      intro={t("sleep.intro")}
-      extra={
-        stage === "toddler" ? (
-          <p className="text-sm text-muted-foreground">{t("child.hintToddlerSleep")}</p>
-        ) : null
-      }
-    >
+    <LogScreen>
       <SleepLogForm />
       <SleepRangeSummary entries={data.sleeps} />
       <ChildDayHistory

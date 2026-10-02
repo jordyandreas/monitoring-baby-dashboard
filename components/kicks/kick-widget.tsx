@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { ChevronRight, Footprints } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -75,7 +75,7 @@ export function KickWidget({ className }: { className?: string }) {
             </ul>
           </div>
         )}
-        <Link
+        <FeatureLink
           href="/kicks"
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -84,7 +84,7 @@ export function KickWidget({ className }: { className?: string }) {
         >
           {t("kicks.open")}
           <ChevronRight className="size-4" />
-        </Link>
+        </FeatureLink>
       </CardContent>
     </Card>
   );

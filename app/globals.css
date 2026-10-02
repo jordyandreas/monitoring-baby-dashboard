@@ -117,7 +117,6 @@
   html {
     @apply font-sans;
   }
-
 }
 
 /* Keep save toasts at the top-right under the header, including phones. */

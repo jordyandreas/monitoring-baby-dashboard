@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { FeatureLink } from "@/components/layout/feature-link";
 import { ChevronRight, Droplets } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -76,7 +76,7 @@ export function WaterWidget({ className }: { className?: string }) {
           </p>
         </div>
 
-        <Link
+        <FeatureLink
           href="/water"
           className={cn(
             buttonVariants({ variant: "outline" }),
@@ -85,7 +85,7 @@ export function WaterWidget({ className }: { className?: string }) {
         >
           {t("water.open")}
           <ChevronRight className="size-4" />
-        </Link>
+        </FeatureLink>
       </CardContent>
     </Card>
   );

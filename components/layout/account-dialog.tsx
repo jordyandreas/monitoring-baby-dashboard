@@ -18,7 +18,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,22 +66,13 @@ function initialsFrom(label: string): string {
 
 export function AccountDialog() {
   const { t } = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
-  const emailId = useId();
-  const passwordId = useId();
   const { mode: appMode } = useAppMode();
   const { data: appData } = useAppStorage();
   const { data: childData } = useChildStorage();
-  const { enabled, user, signUpWithEmail, signInWithEmail, signOutToGuest } = useSupabase();
+  const { enabled, user, signedIn, requestLogin, signOut: signOutAccount } = useSupabase();
   const [freshUser, setFreshUser] = useState<User | null>(null);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<AuthMode>("sign-up");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -100,45 +90,12 @@ export function AccountDialog() {
 
   if (!enabled) return null;
 
-  const signedIn = isEmailAccount(user);
   const authUser = freshUser ?? user;
 
-  const resetFeedback = () => {
-    setError(null);
-    setNotice(null);
-  };
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    resetFeedback();
-    if (password.length < 6) {
-      setError(t("account.passwordShort"));
-      return;
-    }
-    setBusy(true);
-    const result =
-      authMode === "sign-up"
-        ? await signUpWithEmail(email.trim(), password)
-        : await signInWithEmail(email.trim(), password);
-    setBusy(false);
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-    setPassword("");
-    if (result.notice === "confirm-email") {
-      setNotice(t("account.confirmEmail"));
-      return;
-    }
-    setLoginOpen(false);
-    setMenuOpen(true);
-    if (pathname !== "/") router.push("/");
-  };
-
   const signOut = async () => {
-    resetFeedback();
+    setError(null);
     setBusy(true);
-    const result = await signOutToGuest();
+    const result = await signOutAccount();
     setBusy(false);
     if (result.error) {
       setError(result.error);
@@ -159,7 +116,7 @@ export function AccountDialog() {
         open={menuOpen}
         onOpenChange={(next) => {
           setMenuOpen(next);
-          if (!next) resetFeedback();
+          if (!next) setError(null);
         }}
       >
         <PopoverTrigger asChild>
@@ -206,23 +163,74 @@ export function AccountDialog() {
   }
 
   return (
-    <Dialog
-      open={loginOpen}
-      onOpenChange={(next) => {
-        setLoginOpen(next);
-        if (!next) resetFeedback();
-      }}
+    <button
+      type="button"
+      className={headerIconButtonClassName()}
+      aria-label={t("account.open")}
+      onClick={() => requestLogin()}
     >
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className={headerIconButtonClassName()}
-          aria-label={t("account.open")}
-        >
-          <UserRound className="size-5" aria-hidden />
-        </button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <UserRound className="size-5" aria-hidden />
+    </button>
+  );
+}
+
+export function LoginDialog() {
+  const { t } = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const emailId = useId();
+  const passwordId = useId();
+  const { enabled, signedIn, takePendingPath, signUpWithEmail, signInWithEmail } = useSupabase();
+  const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  if (!enabled) return null;
+
+  const resetFeedback = () => {
+    setError(null);
+    setNotice(null);
+  };
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    resetFeedback();
+    if (password.length < 6) {
+      setError(t("account.passwordShort"));
+      return;
+    }
+    setBusy(true);
+    const result =
+      authMode === "sign-up"
+        ? await signUpWithEmail(email.trim(), password)
+        : await signInWithEmail(email.trim(), password);
+    setBusy(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setPassword("");
+    if (result.notice === "confirm-email") {
+      setNotice(t("account.confirmEmail"));
+      return;
+    }
+    const next = takePendingPath();
+    if (next && next !== pathname) router.push(next);
+  };
+
+  return (
+    <Dialog open={enabled && !signedIn}>
+      <DialogContent
+        className="z-[80] sm:max-w-md"
+        overlayClassName="z-[80] bg-black/25 backdrop-blur-lg!"
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onPointerDownOutside={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t("account.title")}</DialogTitle>
           <DialogDescription>{t("account.guestHint")}</DialogDescription>

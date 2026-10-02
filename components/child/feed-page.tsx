@@ -19,7 +19,7 @@ export function FeedPageContent() {
   if (!mounted) return null;
 
   return (
-    <LogScreen intro={t("feed.intro")}>
+    <LogScreen>
       <FeedLogForm />
       <FeedRangeSummary entries={data.feeds} />
       <ChildDayHistory

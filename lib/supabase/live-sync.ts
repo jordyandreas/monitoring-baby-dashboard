@@ -109,10 +109,36 @@ async function pushLocalSnapshot(userId: string) {
   clearNoticeIfClean();
 }
 
+function remapSavedIds<T extends { id: string }>(latest: T[], uploaded: T[], saved: T[]): T[] {
+  const nextId = new Map<string, string>();
+  uploaded.forEach((entry, index) => {
+    const written = saved[index];
+    if (written && written.id !== entry.id) nextId.set(entry.id, written.id);
+  });
+  if (nextId.size === 0) return latest;
+  return latest.map((entry) => {
+    const id = nextId.get(entry.id);
+    return id ? { ...entry, id } : entry;
+  });
+}
+
 async function pushChildSnapshot(userId: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("Supabase client not configured");
-  await replaceRemoteChild(supabase, userId, readChildStorage());
+  const uploaded = readChildStorage();
+  const saved = await replaceRemoteChild(supabase, userId, uploaded);
+  const latest = readChildStorage();
+  replaceChildStorage({
+    ...latest,
+    feeds: remapSavedIds(latest.feeds, uploaded.feeds, saved.feeds),
+    diapers: remapSavedIds(latest.diapers, uploaded.diapers, saved.diapers),
+    sleeps: remapSavedIds(latest.sleeps, uploaded.sleeps, saved.sleeps),
+    growth: remapSavedIds(latest.growth, uploaded.growth, saved.growth),
+    solids: remapSavedIds(latest.solids, uploaded.solids, saved.solids),
+    health: remapSavedIds(latest.health, uploaded.health, saved.health),
+    potty: remapSavedIds(latest.potty, uploaded.potty, saved.potty),
+    meals: remapSavedIds(latest.meals, uploaded.meals, saved.meals),
+  });
   clearChildDirty();
   clearNoticeIfClean();
 }
@@ -307,20 +333,9 @@ export async function armLiveSync(
 }
 
 export function scheduleRemoteWrite(
-  domain: SupabaseSyncDomain,
-  write: WriteFn,
-  onError?: () => void,
+  _domain: SupabaseSyncDomain,
+  _write: WriteFn,
+  _onError?: () => void,
 ) {
-  if (!isSupabaseSyncEnabled(domain)) return;
-  if (gate === "stopped") {
-    markDirtyFor(domain);
-    return;
-  }
-  if (gate !== "live" || !activeUserId) {
-    queue.push({ domain, write, onError });
-    return;
-  }
-  const userId = activeUserId;
-  const myEpoch = epoch;
-  runSerial(execute(write, userId, myEpoch, domain, onError));
+  // Account sync is off. Saves stay on this device.
 }

@@ -19,7 +19,7 @@ export function DiaperPageContent() {
   if (!mounted) return null;
 
   return (
-    <LogScreen intro={t("diaper.intro")}>
+    <LogScreen>
       <DiaperLogForm />
       <DiaperRangeSummary entries={data.diapers} />
       <ChildDayHistory

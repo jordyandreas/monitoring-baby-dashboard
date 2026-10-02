@@ -41,7 +41,7 @@ export function SolidsPageContent() {
     detail: describeSolid(entry, t),
   }));
   return (
-    <LogScreen intro={t("solids.intro")}>
+    <LogScreen>
       <LogForm
         title={t("solids.add")}
         onSubmit={(event) => {
@@ -88,7 +88,7 @@ export function HealthPageContent() {
     detail: describeHealth(entry, t),
   }));
   return (
-    <LogScreen intro={t("health.intro")}>
+    <LogScreen>
       <LogForm
         title={t("health.add")}
         onSubmit={(event) => {
@@ -133,7 +133,7 @@ export function PottyPageContent() {
     detail: describePotty(entry, t),
   }));
   return (
-    <LogScreen intro={t("potty.intro")}>
+    <LogScreen>
       <LogForm
         title={t("potty.add")}
         onSubmit={(event) => {
@@ -178,7 +178,7 @@ export function MealsPageContent() {
     detail: describeMeal(entry, t),
   }));
   return (
-    <LogScreen intro={t("meals.intro")}>
+    <LogScreen>
       <LogForm
         title={t("meals.add")}
         onSubmit={(event) => {
@@ -238,7 +238,7 @@ export function MilestonesPageContent() {
   const { data, mounted, setMilestone } = useChildStorage();
   if (!mounted) return null;
   return (
-    <LogScreen intro={t("milestones.hint")}>
+    <LogScreen>
       <ul className="space-y-3">
         {MILESTONE_KEYS.map((key) => {
           const saved = data.milestones.find((entry) => entry.key === key);

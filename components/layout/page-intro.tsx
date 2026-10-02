@@ -19,9 +19,6 @@ export function PageIntro() {
         <PageIcon className="size-6 text-lilac-deep" aria-hidden />
         {t(meta.titleKey)}
       </h1>
-      {meta.descriptionKey ? (
-        <p className="text-sm text-muted-foreground">{t(meta.descriptionKey)}</p>
-      ) : null}
     </div>
   );
 }

@@ -5,9 +5,11 @@ import { toast, Toaster, type ExternalToast } from "sonner";
 import { useLocale } from "@/components/providers/locale-provider";
 import { scheduleRemoteWrite } from "@/lib/supabase/live-sync";
 import type { SupabaseSyncDomain } from "@/lib/supabase/env";
+import { openWhatsAppShare } from "@/lib/whatsapp-share";
 import { cn } from "@/lib/utils";
 
 const TOAST_MS = 5000;
+const WHATSAPP_TOAST_MS = 8000;
 
 type SaveToastKind = "success" | "error";
 type SaveToastAction = "save" | "delete";
@@ -16,10 +18,12 @@ function SaveToastCard({
   id,
   kind,
   action,
+  whatsappText,
 }: {
   id: string | number;
   kind: SaveToastKind;
   action: SaveToastAction;
+  whatsappText?: string;
 }) {
   const { t } = useLocale();
   const ok = kind === "success";
@@ -47,7 +51,21 @@ function SaveToastCard({
       >
         {ok ? <Check className="size-4" strokeWidth={2.5} /> : <CircleAlert className="size-4" />}
       </span>
-      <p className="min-w-0 flex-1 text-sm font-semibold">{message}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">{message}</p>
+        {ok && whatsappText ? (
+          <button
+            type="button"
+            className="mt-1 text-sm font-semibold text-lilac-deep hover:underline"
+            onClick={() => {
+              openWhatsAppShare(whatsappText);
+              toast.dismiss(id);
+            }}
+          >
+            {t("toast.whatsapp")}
+          </button>
+        ) : null}
+      </div>
       <button
         type="button"
         className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -64,14 +82,17 @@ export function showSaveToast(
   kind: SaveToastKind,
   id?: string | number,
   action: SaveToastAction = "save",
+  whatsappText?: string,
 ) {
   const options: ExternalToast = {
     id,
     unstyled: true,
-    duration: TOAST_MS,
+    duration: whatsappText ? WHATSAPP_TOAST_MS : TOAST_MS,
   };
   return toast.custom(
-    (toastId) => <SaveToastCard id={toastId} kind={kind} action={action} />,
+    (toastId) => (
+      <SaveToastCard id={toastId} kind={kind} action={action} whatsappText={whatsappText} />
+    ),
     options,
   );
 }
@@ -80,8 +101,9 @@ export function reportSave(
   domain: SupabaseSyncDomain,
   write: Parameters<typeof scheduleRemoteWrite>[1],
   action: SaveToastAction = "save",
+  whatsappText?: string,
 ) {
-  const id = showSaveToast("success", undefined, action);
+  const id = showSaveToast("success", undefined, action, whatsappText);
   scheduleRemoteWrite(domain, write, () => showSaveToast("error", id, action));
 }
 
