@@ -296,3 +296,12 @@ export function replaceChildStorage(data: ChildStorage): void {
   writeChildStorage(next);
   notify();
 }
+
+/** Drop child logs on this device and show the empty defaults. */
+export function resetChildStorage(): void {
+  const next = structuredClone(DEFAULT_CHILD_STORAGE);
+  cached = next;
+  hydrated = true;
+  writeChildStorage(next);
+  notify();
+}
