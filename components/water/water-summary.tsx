@@ -67,12 +67,7 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
     : "";
 
   return (
-    <Card
-      className={cn(
-        "rounded-2xl border-border/60 shadow-sm",
-        compact ? "bg-gradient-to-br from-mint/20 to-card" : "bg-card",
-      )}
-    >
+    <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Droplets className="size-5 text-lilac-deep" />
@@ -84,7 +79,7 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="space-y-2">
-          <div className="flex gap-2">
+          <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
             {([7, 30] as RangeDays[]).map((days) => (
               <button
                 key={days}
@@ -93,8 +88,8 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
                 className={cn(
                   "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
                   range === days
-                    ? "bg-lilac-deep text-primary-foreground shadow-md"
-                    : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/60",
+                    ? "bg-lilac-deep text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-white/55",
                 )}
               >
                 {t("water.rangeDays", { count: days })}

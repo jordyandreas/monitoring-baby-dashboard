@@ -179,7 +179,7 @@ export function GrowthHistoryTable({
   const dfLocale = locale === "id" ? idLocale : enUS;
 
   return (
-    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg">{t("child.history")}</CardTitle>
         <CardDescription>{t("growth.historyHint")}</CardDescription>

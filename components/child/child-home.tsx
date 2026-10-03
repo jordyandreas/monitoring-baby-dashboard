@@ -124,7 +124,7 @@ export function ChildHome() {
   return (
     <div className="space-y-6">
       {profile ? <AgeCelebrationCard name={profile.name} birthDate={profile.birthDate} /> : null}
-      <section className="rounded-2xl border border-border/60 bg-card p-5">
+      <section className="rounded-2xl glass-regular p-5">
         {profile && !editing ? (
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -290,7 +290,7 @@ export function ChildHome() {
               <FeatureLink
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm font-semibold hover:bg-muted/50"
+                className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 text-sm font-semibold hover:bg-muted/50"
               >
                 <Icon className="size-4 text-lilac-deep" aria-hidden />
                 {item.label}
@@ -356,7 +356,7 @@ function TodayLogList({
           return (
             <li
               key={item.id}
-              className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm"
+              className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
             >
               <span className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
                 {formatTimeLabel(item.time)}
@@ -594,7 +594,7 @@ function GrowthSnapshot({ name }: { name?: string }) {
   const canSave = Boolean(date && (weightKg || lengthCm || headCm));
 
   return (
-    <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+    <section className="space-y-4 rounded-2xl glass-regular p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{t("child.measureTitle")}</h2>
@@ -807,7 +807,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
   ];
 
   return (
-    <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+    <section className="space-y-4 rounded-2xl glass-regular p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{t("child.activityTitle")}</h2>

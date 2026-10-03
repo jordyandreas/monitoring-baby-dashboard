@@ -52,7 +52,7 @@ export function ReminderToast() {
         "md:slide-in-from-top-2 md:slide-in-from-right-2 lg:right-10",
       )}
     >
-      <div className="flex gap-3 rounded-xl border border-lilac/40 bg-card p-4 shadow-lg ring-1 ring-foreground/10">
+      <div className="glass-clear flex gap-3 rounded-xl p-4 ring-1 ring-lilac/40">
         <Bell className="mt-0.5 size-5 shrink-0 text-lilac-deep" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="font-medium leading-snug">{reminder.title}</p>

@@ -31,7 +31,7 @@ function ChartBars({ className }: { className?: string }) {
 
 function LogRow() {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+    <div className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm">
       <Skeleton className="h-4 w-[4.5rem]" />
       <span className="h-8 w-px shrink-0 bg-border" />
       <Skeleton className="size-8 rounded-full" />
@@ -56,7 +56,7 @@ function DayStrip() {
 
 function FormCard({ fields = 3 }: { fields?: number }) {
   return (
-    <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-4">
+    <div className="space-y-4 rounded-2xl glass-regular p-4">
       <Skeleton className="h-5 w-36" />
       {Array.from({ length: fields }, (_, index) => (
         <div key={index} className="space-y-2">
@@ -72,7 +72,7 @@ function FormCard({ fields = 3 }: { fields?: number }) {
 export function ChildHomeSkeleton() {
   return (
     <SkeletonStatus className="space-y-6">
-      <section className="rounded-2xl border border-border/60 bg-card p-5">
+      <section className="rounded-2xl glass-regular p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
             <Skeleton className="h-8 w-40" />
@@ -82,7 +82,7 @@ export function ChildHomeSkeleton() {
           <Skeleton className="size-9 rounded-full" />
         </div>
       </section>
-      <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+      <section className="space-y-4 rounded-2xl glass-regular p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
             <Skeleton className="h-5 w-36" />
@@ -103,7 +103,7 @@ export function ChildHomeSkeleton() {
           ))}
         </div>
       </section>
-      <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+      <section className="space-y-4 rounded-2xl glass-regular p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
             <Skeleton className="h-5 w-40" />
@@ -160,7 +160,7 @@ export function LogPageSkeleton({ tiles = 4 }: { tiles?: number }) {
   return (
     <SkeletonStatus className="w-full min-w-0 space-y-6">
       <FormCard fields={3} />
-      <section className="space-y-5 rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <section className="space-y-5 rounded-2xl glass-regular p-5 shadow-sm">
         <div className="space-y-2">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-56" />
@@ -197,7 +197,7 @@ export function LogPageSkeleton({ tiles = 4 }: { tiles?: number }) {
 export function GrowthPageSkeleton() {
   return (
     <SkeletonStatus className="w-full min-w-0 space-y-6">
-      <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <section className="space-y-4 rounded-2xl glass-regular p-5 shadow-sm">
         <div className="space-y-2">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-56" />
@@ -214,7 +214,7 @@ export function GrowthPageSkeleton() {
         </div>
       </section>
       <FormCard fields={2} />
-      <section className="space-y-3 rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <section className="space-y-3 rounded-2xl glass-regular p-5 shadow-sm">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-4 w-48" />
         {Array.from({ length: 3 }, (_, index) => (
@@ -238,7 +238,7 @@ export function ListPageSkeleton() {
       <FormCard />
       <section className="space-y-3">
         <Skeleton className="h-5 w-24" />
-        <div className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-card">
+        <div className="divide-y divide-border/60 overflow-hidden rounded-2xl glass-regular">
           {Array.from({ length: 4 }, (_, index) => (
             <div key={index} className="flex items-center justify-between gap-3 px-4 py-3">
               <div className="space-y-2">
@@ -258,7 +258,7 @@ export function MilestonesSkeleton() {
   return (
     <SkeletonStatus className="w-full min-w-0 space-y-3">
       {Array.from({ length: 8 }, (_, index) => (
-        <div key={index} className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+        <div key={index} className="space-y-3 rounded-2xl glass-regular p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="size-4 rounded-sm" />
             <Skeleton className="h-4 w-32" />
@@ -274,7 +274,7 @@ export function ProfileCardSkeleton({ className }: { className?: string }) {
   return (
     <SkeletonStatus
       className={cn(
-        "h-full space-y-4 rounded-2xl border border-border/60 bg-gradient-to-br from-secondary/50 to-card p-5 shadow-sm",
+        "h-full space-y-4 rounded-2xl glass-regular bg-gradient-to-br from-secondary/40 to-white/20 p-5 shadow-sm",
         className,
       )}
     >
@@ -299,7 +299,7 @@ export function DashboardCardSkeleton({ className, lines = 3 }: { className?: st
   return (
     <SkeletonStatus
       className={cn(
-        "flex h-full flex-col space-y-4 rounded-2xl border border-border/60 bg-gradient-to-br from-secondary/40 to-card p-5 shadow-sm",
+        "flex h-full flex-col space-y-4 rounded-2xl glass-regular bg-gradient-to-br from-secondary/35 to-white/20 p-5 shadow-sm",
         className,
       )}
     >
@@ -322,7 +322,7 @@ export function DashboardCardSkeleton({ className, lines = 3 }: { className?: st
 
 export function SummaryChartSkeleton() {
   return (
-    <SkeletonStatus className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+    <SkeletonStatus className="space-y-4 rounded-2xl glass-regular p-5 shadow-sm">
       <div className="space-y-2">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-56" />
@@ -359,7 +359,7 @@ export function VitaminTrackerSkeleton() {
   return (
     <SkeletonStatus className="space-y-6">
       <FormCard fields={3} />
-      <section className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+      <section className="space-y-3 rounded-2xl glass-regular p-4">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-4 w-32" />
         {Array.from({ length: 4 }, (_, index) => (
@@ -376,7 +376,7 @@ export function VitaminTrackerSkeleton() {
 export function BabyPlusSkeleton() {
   return (
     <SkeletonStatus className="space-y-6">
-      <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+      <section className="space-y-4 rounded-2xl glass-regular p-4 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Skeleton className="h-4 w-24" />

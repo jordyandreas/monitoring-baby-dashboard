@@ -83,10 +83,10 @@ export function ExpandableFab({
                   }}
                   className="flex items-center gap-2"
                 >
-                  <span className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-lilac-foreground shadow-md ring-1 ring-border/70">
+                  <span className="glass-clear rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-lilac-foreground">
                     {action.label}
                   </span>
-                  <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-card text-lilac-foreground shadow-md ring-1 ring-border/70">
+                  <span className="glass-clear flex size-14 shrink-0 items-center justify-center rounded-full text-lilac-foreground">
                     <Icon className="size-6" aria-hidden />
                   </span>
                 </button>

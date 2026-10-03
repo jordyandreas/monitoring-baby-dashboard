@@ -28,7 +28,7 @@ export function HistoryList({
 
   return (
     <>
-      <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-card">
+      <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl glass-regular">
         {items.map((item) => (
           <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">

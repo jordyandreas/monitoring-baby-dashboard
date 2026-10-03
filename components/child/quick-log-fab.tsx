@@ -53,7 +53,7 @@ export function QuickLogFab() {
     <>
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-6 md:bottom-6",
+          "pointer-events-none fixed inset-x-0 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-6 md:bottom-6",
           kind !== null ? "z-40" : "z-[70]",
         )}
       >

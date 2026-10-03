@@ -27,7 +27,7 @@ export function SupabaseSyncStatus() {
       className="fixed right-4 bottom-[max(5.75rem,calc(4.75rem+env(safe-area-inset-bottom)))] z-[70] md:bottom-4"
       role="alert"
     >
-      <div className="pointer-events-auto flex w-[min(20rem,calc(100vw-2rem))] items-start gap-3 rounded-2xl border border-destructive/35 bg-card px-3 py-3 text-card-foreground shadow-lg">
+      <div className="glass-clear pointer-events-auto flex w-[min(20rem,calc(100vw-2rem))] items-start gap-3 rounded-2xl border-destructive/35 px-3 py-3 text-card-foreground">
         <span
           className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive"
           aria-hidden

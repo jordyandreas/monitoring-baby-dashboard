@@ -69,7 +69,7 @@ export function HistoryDayList({
           return (
           <li
             key={item.id}
-            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm"
+            className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
           >
             <span className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
               {item.time}

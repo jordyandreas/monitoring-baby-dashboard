@@ -127,7 +127,7 @@ export function LogForm({
       className={
         embedded
           ? "w-full min-w-0 space-y-4"
-          : "space-y-4 rounded-2xl border border-border/60 bg-card p-4"
+          : "space-y-4 rounded-2xl glass-regular p-4"
       }
     >
       <div className={embedded ? "pr-8" : undefined}>

@@ -41,7 +41,7 @@ export function KickForm() {
   };
 
   return (
-    <div className="min-w-0 space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="min-w-0 space-y-4 rounded-2xl glass-regular p-4 shadow-sm">
       <Button
         type="button"
         className="min-h-12 w-full rounded-xl text-base"
@@ -56,7 +56,7 @@ export function KickForm() {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">
+          <span className="bg-white/80 px-2 text-muted-foreground">
             {t("kicks.orCustom")}
           </span>
         </div>

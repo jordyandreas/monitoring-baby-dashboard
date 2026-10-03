@@ -38,7 +38,7 @@ export function VitaminChecklist({
   return (
     <section
       className={cn(
-        "space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm",
+        "space-y-3 rounded-2xl glass-regular p-4 shadow-sm",
         muted && "opacity-90",
       )}
     >
