@@ -180,6 +180,8 @@ export const id: Messages = {
     selectDate: "Pilih tanggal",
     clearDate: "Hapus tanggal",
     selectTime: "Pilih waktu",
+    hour: "Jam",
+    minute: "Menit",
     selectGender: "Pilih jenis kelamin",
     confirmTitle: "Yakin?",
     today: "Hari ini",

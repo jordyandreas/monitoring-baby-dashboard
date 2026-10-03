@@ -75,12 +75,12 @@ export function DateDayStrip({
   }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="glass-regular flex items-center gap-1.5 rounded-2xl px-1.5 py-1">
       <button
         type="button"
         aria-label={t("common.earlierDays")}
         onClick={() => nudge(-1)}
-        className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/60 hover:text-foreground"
       >
         <ChevronLeft className="size-4" />
       </button>
@@ -133,7 +133,7 @@ export function DateDayStrip({
         type="button"
         aria-label={t("common.laterDays")}
         onClick={() => nudge(1)}
-        className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/60 hover:text-foreground"
       >
         <ChevronRight className="size-4" />
       </button>

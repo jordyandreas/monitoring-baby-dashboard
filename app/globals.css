@@ -112,10 +112,89 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground min-h-dvh;
+    @apply text-foreground min-h-dvh;
+    background-color: transparent;
   }
   html {
     @apply font-sans;
+    background-color: var(--background);
+  }
+}
+
+/* Fixed color wash so glass surfaces have something to blur. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 78% 52% at 0% -6%, #d9ccfb 0%, transparent 58%),
+    radial-gradient(ellipse 68% 48% at 100% -4%, #c5d8f6 0%, transparent 54%),
+    radial-gradient(ellipse 62% 42% at 96% 108%, #c5e4d6 0%, transparent 50%),
+    radial-gradient(ellipse 54% 40% at -8% 78%, #e3d4fb 0%, transparent 52%);
+}
+
+@layer components {
+  .glass-clear,
+  .glass-regular,
+  .glass-bar {
+    -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    backdrop-filter: blur(22px) saturate(1.8);
+  }
+
+  .glass-pane {
+    background-color: color-mix(in srgb, white 96%, transparent);
+    border: 1px solid color-mix(in srgb, white 80%, var(--border));
+    -webkit-backdrop-filter: blur(18px) saturate(1.05);
+    backdrop-filter: blur(18px) saturate(1.05);
+    box-shadow:
+      inset 0 1px 0 white,
+      0 16px 40px color-mix(in srgb, #4c3d6e 14%, transparent);
+  }
+
+  .glass-clear {
+    background-color: color-mix(in srgb, white 52%, transparent);
+    border: 1px solid color-mix(in srgb, white 72%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 78%, transparent),
+      0 10px 28px color-mix(in srgb, #4c3d6e 10%, transparent);
+  }
+
+  .glass-regular {
+    background-color: color-mix(in srgb, white 76%, transparent);
+    border: 1px solid color-mix(in srgb, white 64%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 82%, transparent),
+      0 8px 24px color-mix(in srgb, #4c3d6e 7%, transparent);
+  }
+
+  .glass-bar {
+    background-color: color-mix(in srgb, white 58%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, white 62%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-clear,
+  .glass-regular,
+  .glass-bar,
+  .glass-pane {
+    background-color: var(--card);
+    border-color: var(--border);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-clear,
+  .glass-regular,
+  .glass-bar,
+  .glass-pane {
+    background-color: var(--card);
   }
 }
 

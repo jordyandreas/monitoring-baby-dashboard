@@ -247,12 +247,12 @@ export function LoginDialog() {
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 rounded-full bg-muted p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
             <button
               type="button"
               className={cn(
                 "rounded-full px-3 py-2 text-sm font-semibold",
-                authMode === "sign-up" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                authMode === "sign-up" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground",
               )}
               onClick={() => {
                 setAuthMode("sign-up");
@@ -265,7 +265,7 @@ export function LoginDialog() {
               type="button"
               className={cn(
                 "rounded-full px-3 py-2 text-sm font-semibold",
-                authMode === "sign-in" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                authMode === "sign-in" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground",
               )}
               onClick={() => {
                 setAuthMode("sign-in");

@@ -49,7 +49,7 @@ function SummaryShell({
   children: ReactNode;
 }) {
   return (
-    <Card className="rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Icon className="size-5 text-lilac-deep" />
@@ -72,7 +72,7 @@ function RangeToggle({
   const { t } = useLocale();
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
+      <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
         {([1, 7, 30] as RangeDays[]).map((days) => (
           <button
             key={days}
@@ -81,8 +81,8 @@ function RangeToggle({
             className={cn(
               "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
               range === days
-                ? "bg-lilac-deep text-primary-foreground shadow-md"
-                : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/60",
+                ? "bg-lilac-deep text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-white/55",
             )}
           >
             {days === 1 ? t("common.today") : t("child.rangeDays", { count: days })}
@@ -435,7 +435,7 @@ export function GrowthCompareSummary({
   const hasAny = Boolean(compared.weight || compared.height || compared.head);
   const canCompare = Boolean(birthDate && whoSex(sex));
   return (
-    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Ruler className="size-5 text-lilac-deep" />

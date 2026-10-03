@@ -15,7 +15,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-card md:hidden"
+      className="glass-clear fixed inset-x-3 bottom-[max(0.65rem,env(safe-area-inset-bottom))] z-50 rounded-[1.75rem] md:hidden"
       aria-label={t("nav.main")}
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
@@ -28,8 +28,8 @@ export function BottomNav() {
               className={cn(
                 "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-2 text-[10px] font-semibold transition-colors",
                 active
-                  ? "bg-lilac/50 text-lilac-foreground"
-                  : "text-muted-foreground hover:bg-muted/60",
+                  ? "bg-white/80 text-lilac-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-white/45",
               )}
             >
               <Icon className={cn("size-5 shrink-0", active && "text-lilac-deep")} />

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   formatTimeLabel,
   getCurrentTimeString,
@@ -39,10 +40,11 @@ export function TimePicker({
   id,
   value,
   onChange,
-  placeholder = "Select time",
+  placeholder,
   disabled,
   className,
 }: TimePickerProps) {
+  const { t } = useLocale();
   const [open, setOpen] = React.useState(false);
   const parts =
     parseTimeString(value) ??
@@ -68,7 +70,7 @@ export function TimePicker({
           )}
         >
         <span className="truncate">
-          {value ? formatTimeLabel(value) : placeholder}
+          {value ? formatTimeLabel(value) : placeholder ?? t("common.selectTime")}
         </span>
         <ClockIcon className="size-4 shrink-0 opacity-60" aria-hidden />
         </Button>
@@ -76,7 +78,7 @@ export function TimePicker({
       <PopoverContent className="w-auto p-3" align="start">
         <div className="flex gap-2">
           <div className="min-w-0 space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Hour</Label>
+            <Label className="text-xs text-muted-foreground">{t("common.hour")}</Label>
             <Select
               value={parts.hour}
               onValueChange={(hour) => hour && updateTime(hour, parts.minute)}
@@ -94,7 +96,7 @@ export function TimePicker({
             </Select>
           </div>
           <div className="min-w-0 space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Minute</Label>
+            <Label className="text-xs text-muted-foreground">{t("common.minute")}</Label>
             <Select
               value={parts.minute}
               onValueChange={(minute) =>
@@ -119,7 +121,7 @@ export function TimePicker({
           className="mt-3 h-9 w-full rounded-xl"
           onClick={() => setOpen(false)}
         >
-          Done
+          {t("common.done")}
         </Button>
       </PopoverContent>
     </Popover>

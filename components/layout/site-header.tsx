@@ -22,7 +22,7 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 h-20 border-b border-border/80 bg-card/95 backdrop-blur-md md:hidden">
+      <header className="glass-bar sticky top-0 z-40 h-20 md:hidden">
         <div className="mx-auto flex h-full max-w-3xl items-center justify-between gap-4 px-4">
           <Link
             href="/"
@@ -40,7 +40,7 @@ export function SiteHeader() {
         </div>
       </header>
 
-      <header className="sticky top-0 z-40 hidden h-20 border-b border-border/80 bg-card/90 backdrop-blur-md md:block">
+      <header className="glass-bar sticky top-0 z-40 hidden h-20 md:block">
         <div className="mx-auto grid h-full max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-x-6 px-6 lg:gap-x-10 lg:px-10">
           <Link
             href="/"
@@ -62,8 +62,8 @@ export function SiteHeader() {
                   className={cn(
                     "flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors lg:gap-2 lg:px-4",
                     active
-                      ? "bg-lilac/60 text-lilac-foreground"
-                      : "text-muted-foreground hover:bg-muted",
+                      ? "bg-white/80 text-lilac-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-white/45",
                   )}
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />

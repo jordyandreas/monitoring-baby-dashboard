@@ -10,7 +10,7 @@ export function ModeSwitch({ className }: { className?: string }) {
 
   return (
     <div
-      className={cn("flex h-9 items-center rounded-full bg-muted p-0.5", className)}
+      className={cn("flex h-9 items-center rounded-full bg-white/45 p-0.5 ring-1 ring-white/70", className)}
       role="group"
       aria-label={t("mode.switchAria")}
     >
@@ -25,7 +25,7 @@ export function ModeSwitch({ className }: { className?: string }) {
             className={cn(
               "flex h-full items-center rounded-full px-3 text-sm font-semibold transition-colors",
               active
-                ? "bg-card text-foreground shadow-sm"
+                ? "bg-white text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

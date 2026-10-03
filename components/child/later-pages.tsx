@@ -250,7 +250,7 @@ export function MilestonesPageContent() {
         {MILESTONE_KEYS.map((key) => {
           const saved = data.milestones.find((entry) => entry.key === key);
           return (
-            <li key={key} className="space-y-3 rounded-2xl border border-border/60 bg-card p-4">
+            <li key={key} className="space-y-3 rounded-2xl glass-regular p-4">
               <label className="flex items-center gap-3 text-sm font-semibold">
                 <input
                   type="checkbox"

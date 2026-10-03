@@ -83,7 +83,7 @@ export function BabyPlusSchedule() {
 
   return (
     <div className="space-y-6">
-      <section className="min-w-0 space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+      <section className="min-w-0 space-y-3 rounded-2xl glass-regular p-4 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 space-y-1.5">
             <Label htmlFor="start-date">{t("babyPlus.programStart")}</Label>
@@ -173,7 +173,7 @@ export function BabyPlusSchedule() {
               <AccordionItem
                 key={soundIndex}
                 value={`sound-${soundIndex}`}
-                className="overflow-hidden rounded-2xl border border-border/60 bg-card px-4 shadow-sm"
+                className="overflow-hidden rounded-2xl glass-regular px-4 shadow-sm"
               >
                 <AccordionTrigger className="py-4 hover:no-underline">
                   <div className="flex flex-1 items-center gap-2 pr-2 text-left">

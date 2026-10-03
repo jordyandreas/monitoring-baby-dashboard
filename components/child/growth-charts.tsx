@@ -227,7 +227,7 @@ export function GrowthChartsSection({
   ];
 
   return (
-    <Card id="growth-charts" className="w-full min-w-0 max-w-full scroll-mt-24 overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
+    <Card id="growth-charts" className="w-full min-w-0 max-w-full scroll-mt-24 overflow-hidden rounded-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg">{t("growth.chartsTitle")}</CardTitle>
         <CardDescription>{t("growth.chartsHint")}</CardDescription>

@@ -226,7 +226,7 @@ function SaveToastCard({
   return (
     <div
       className={cn(
-        "pointer-events-auto flex w-[min(20rem,calc(100vw-2rem))] items-center gap-3 rounded-2xl border bg-card px-3 py-3 text-card-foreground shadow-lg",
+        "pointer-events-auto flex w-[min(20rem,calc(100vw-2rem))] items-center gap-3 rounded-2xl glass-clear px-3 py-3 text-card-foreground",
         ok ? "border-mint-foreground/30" : "border-destructive/35",
       )}
     >

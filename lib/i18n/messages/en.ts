@@ -182,6 +182,8 @@ export const en = {
     selectDate: "Select date",
     clearDate: "Clear date",
     selectTime: "Select time",
+    hour: "Hour",
+    minute: "Minute",
     selectGender: "Select gender",
     confirmTitle: "Are you sure?",
     today: "Today",

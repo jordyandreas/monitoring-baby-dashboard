@@ -79,7 +79,7 @@ export function VitaminNameForm({ savedItems, onSave }: VitaminNameFormProps) {
   const removeLabel = pendingSlot?.name.trim() || t("vitamins.thisVitamin");
 
   return (
-    <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+    <section className="space-y-4 rounded-2xl glass-regular p-4 shadow-sm">
       <div className="space-y-1">
         <Label className="text-base font-semibold">{t("vitamins.yourVitamins")}</Label>
         <p className="text-sm text-muted-foreground">{t("vitamins.formHint")}</p>

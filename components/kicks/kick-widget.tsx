@@ -31,7 +31,7 @@ export function KickWidget({ className }: { className?: string }) {
   return (
     <Card
       className={cn(
-        "flex h-full flex-col rounded-2xl border-border/60 bg-gradient-to-br from-secondary/50 to-card shadow-sm",
+        "flex h-full flex-col rounded-2xl bg-gradient-to-br from-secondary/40 to-white/20 shadow-sm",
         className,
       )}
     >
