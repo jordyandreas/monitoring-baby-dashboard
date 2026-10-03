@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { CircleAlert, X } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/hooks/use-supabase";
-import { getSyncNotice, subscribeSyncNotice } from "@/lib/supabase/live-sync";
+import { getSyncNotice, subscribeSyncNotice } from "@/lib/supabase/account-data";
 
 /** Sync and auth failures only. Sits in the corner and stays until dismissed. */
 export function SupabaseSyncStatus() {

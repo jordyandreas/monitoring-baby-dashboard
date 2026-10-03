@@ -3,7 +3,7 @@
 import { Check, CircleAlert, X } from "lucide-react";
 import { toast, Toaster, type ExternalToast } from "sonner";
 import { useLocale } from "@/components/providers/locale-provider";
-import { scheduleRemoteWrite } from "@/lib/supabase/live-sync";
+import { scheduleRemoteWrite } from "@/lib/supabase/account-data";
 import type { SupabaseSyncDomain } from "@/lib/supabase/env";
 import { openWhatsAppShare } from "@/lib/whatsapp-share";
 import { cn } from "@/lib/utils";
@@ -12,28 +12,216 @@ const TOAST_MS = 5000;
 const WHATSAPP_TOAST_MS = 8000;
 
 type SaveToastKind = "success" | "error";
-type SaveToastAction = "save" | "delete";
+type SaveToastAction = "save" | "update" | "delete";
+
+export type SaveToastTopic =
+  | "feed"
+  | "diaper"
+  | "sleep"
+  | "growth"
+  | "profile"
+  | "solid"
+  | "health"
+  | "potty"
+  | "meal"
+  | "milestone"
+  | "baby"
+  | "babyPlus"
+  | "kick"
+  | "water"
+  | "vitamin"
+  | "glass";
+
+function toastMessage(
+  t: ReturnType<typeof useLocale>["t"],
+  kind: SaveToastKind,
+  action: SaveToastAction,
+  topic?: SaveToastTopic,
+) {
+  if (!topic) {
+    if (kind === "error") {
+      return action === "delete" ? t("toast.deleteFailed") : t("toast.failed");
+    }
+    return action === "delete" ? t("toast.deleted") : t("toast.saved");
+  }
+
+  if (kind === "error" && action === "delete") {
+    switch (topic) {
+      case "feed":
+        return t("toast.feedDeleteFailed");
+      case "diaper":
+        return t("toast.diaperDeleteFailed");
+      case "sleep":
+        return t("toast.sleepDeleteFailed");
+      case "growth":
+        return t("toast.growthDeleteFailed");
+      case "solid":
+        return t("toast.solidDeleteFailed");
+      case "health":
+        return t("toast.healthDeleteFailed");
+      case "potty":
+        return t("toast.pottyDeleteFailed");
+      case "meal":
+        return t("toast.mealDeleteFailed");
+      case "milestone":
+        return t("toast.milestoneDeleteFailed");
+      case "kick":
+        return t("toast.kickDeleteFailed");
+      case "water":
+        return t("toast.waterDeleteFailed");
+      default:
+        return t("toast.deleteFailed");
+    }
+  }
+
+  if (kind === "error" && action === "update") {
+    switch (topic) {
+      case "feed":
+        return t("toast.feedUpdateFailed");
+      case "diaper":
+        return t("toast.diaperUpdateFailed");
+      case "sleep":
+        return t("toast.sleepUpdateFailed");
+      case "growth":
+        return t("toast.growthUpdateFailed");
+      default:
+        return t("toast.failed");
+    }
+  }
+
+  if (kind === "error") {
+    switch (topic) {
+      case "feed":
+        return t("toast.feedFailed");
+      case "diaper":
+        return t("toast.diaperFailed");
+      case "sleep":
+        return t("toast.sleepFailed");
+      case "growth":
+        return t("toast.growthFailed");
+      case "profile":
+        return t("toast.profileFailed");
+      case "solid":
+        return t("toast.solidFailed");
+      case "health":
+        return t("toast.healthFailed");
+      case "potty":
+        return t("toast.pottyFailed");
+      case "meal":
+        return t("toast.mealFailed");
+      case "milestone":
+        return t("toast.milestoneFailed");
+      case "baby":
+        return t("toast.babyFailed");
+      case "babyPlus":
+        return t("toast.babyPlusFailed");
+      case "kick":
+        return t("toast.kickFailed");
+      case "water":
+        return t("toast.waterFailed");
+      case "vitamin":
+        return t("toast.vitaminFailed");
+      case "glass":
+        return t("toast.glassFailed");
+    }
+  }
+
+  if (action === "delete") {
+    switch (topic) {
+      case "feed":
+        return t("toast.feedDeleted");
+      case "diaper":
+        return t("toast.diaperDeleted");
+      case "sleep":
+        return t("toast.sleepDeleted");
+      case "growth":
+        return t("toast.growthDeleted");
+      case "solid":
+        return t("toast.solidDeleted");
+      case "health":
+        return t("toast.healthDeleted");
+      case "potty":
+        return t("toast.pottyDeleted");
+      case "meal":
+        return t("toast.mealDeleted");
+      case "milestone":
+        return t("toast.milestoneDeleted");
+      case "kick":
+        return t("toast.kickDeleted");
+      case "water":
+        return t("toast.waterDeleted");
+      default:
+        return t("toast.deleted");
+    }
+  }
+
+  if (action === "update") {
+    switch (topic) {
+      case "feed":
+        return t("toast.feedUpdated");
+      case "diaper":
+        return t("toast.diaperUpdated");
+      case "sleep":
+        return t("toast.sleepUpdated");
+      case "growth":
+        return t("toast.growthUpdated");
+      default:
+        return t("toast.saved");
+    }
+  }
+
+  switch (topic) {
+    case "feed":
+      return t("toast.feedSaved");
+    case "diaper":
+      return t("toast.diaperSaved");
+    case "sleep":
+      return t("toast.sleepSaved");
+    case "growth":
+      return t("toast.growthSaved");
+    case "profile":
+      return t("toast.profileSaved");
+    case "solid":
+      return t("toast.solidSaved");
+    case "health":
+      return t("toast.healthSaved");
+    case "potty":
+      return t("toast.pottySaved");
+    case "meal":
+      return t("toast.mealSaved");
+    case "milestone":
+      return t("toast.milestoneSaved");
+    case "baby":
+      return t("toast.babySaved");
+    case "babyPlus":
+      return t("toast.babyPlusSaved");
+    case "kick":
+      return t("toast.kickSaved");
+    case "water":
+      return t("toast.waterSaved");
+    case "vitamin":
+      return t("toast.vitaminSaved");
+    case "glass":
+      return t("toast.glassSaved");
+  }
+}
 
 function SaveToastCard({
   id,
   kind,
   action,
+  topic,
   whatsappText,
 }: {
   id: string | number;
   kind: SaveToastKind;
   action: SaveToastAction;
+  topic?: SaveToastTopic;
   whatsappText?: string;
 }) {
   const { t } = useLocale();
   const ok = kind === "success";
-  const message = ok
-    ? action === "delete"
-      ? t("toast.deleted")
-      : t("toast.saved")
-    : action === "delete"
-      ? t("toast.deleteFailed")
-      : t("toast.failed");
+  const message = toastMessage(t, kind, action, topic);
 
   return (
     <div
@@ -83,6 +271,7 @@ export function showSaveToast(
   id?: string | number,
   action: SaveToastAction = "save",
   whatsappText?: string,
+  topic?: SaveToastTopic,
 ) {
   const options: ExternalToast = {
     id,
@@ -91,7 +280,13 @@ export function showSaveToast(
   };
   return toast.custom(
     (toastId) => (
-      <SaveToastCard id={toastId} kind={kind} action={action} whatsappText={whatsappText} />
+      <SaveToastCard
+        id={toastId}
+        kind={kind}
+        action={action}
+        topic={topic}
+        whatsappText={whatsappText}
+      />
     ),
     options,
   );
@@ -102,9 +297,10 @@ export function reportSave(
   write: Parameters<typeof scheduleRemoteWrite>[1],
   action: SaveToastAction = "save",
   whatsappText?: string,
+  topic?: SaveToastTopic,
 ) {
-  const id = showSaveToast("success", undefined, action, whatsappText);
-  scheduleRemoteWrite(domain, write, () => showSaveToast("error", id, action));
+  const id = showSaveToast("success", undefined, action, whatsappText, topic);
+  scheduleRemoteWrite(domain, write, () => showSaveToast("error", id, action, undefined, topic));
 }
 
 export function SaveToaster() {

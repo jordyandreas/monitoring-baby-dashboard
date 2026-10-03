@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ChildProfile, ChildStorage, MilestoneKey } from "@/lib/child/types";
-import { childStorageHasData, updateChildStorage } from "@/lib/child/storage";
+import { updateChildStorage } from "@/lib/child/storage";
 import type { Database } from "@/lib/supabase/database.types";
 import {
   childProfileToRow,
@@ -69,12 +69,6 @@ function rememberOwnId(list: LogList, from: string, to: string) {
 async function keepLocalId<T extends { id: string }>(list: LogList, entry: T, write: RowWrite<T>) {
   const saved = await saveWithOwnId(entry, write);
   rememberOwnId(list, entry.id, saved.id);
-}
-
-async function saveOwnedList<T extends { id: string }>(entries: T[], write: RowWrite<T>): Promise<T[]> {
-  const saved: T[] = [];
-  for (const entry of entries) saved.push(await saveWithOwnId(entry, write));
-  return saved;
 }
 
 export async function syncChildProfile(
@@ -286,47 +280,3 @@ export async function fetchRemoteChild(supabase: Client, userId: string): Promis
     milestones: milestones.data ?? [],
   });
 }
-
-export async function replaceRemoteChild(
-  supabase: Client,
-  userId: string,
-  data: ChildStorage,
-): Promise<ChildStorage> {
-  await syncChildProfile(supabase, userId, data.profile);
-
-  await throwOnError(supabase.from("feed_logs").delete().eq("user_id", userId));
-  const feeds = await saveOwnedList(data.feeds, (entry, mode) => writeFeed(supabase, userId, entry, mode));
-  await throwOnError(supabase.from("diaper_logs").delete().eq("user_id", userId));
-  const diapers = await saveOwnedList(data.diapers, (entry, mode) =>
-    writeDiaper(supabase, userId, entry, mode),
-  );
-  await throwOnError(supabase.from("sleep_logs").delete().eq("user_id", userId));
-  const sleeps = await saveOwnedList(data.sleeps, (entry, mode) => writeSleep(supabase, userId, entry, mode));
-  await throwOnError(supabase.from("growth_logs").delete().eq("user_id", userId));
-  const growth = await saveOwnedList(data.growth, (entry, mode) =>
-    writeGrowth(supabase, userId, entry, mode),
-  );
-  await throwOnError(supabase.from("solid_logs").delete().eq("user_id", userId));
-  const solids = await saveOwnedList(data.solids, (entry, mode) => writeSolid(supabase, userId, entry, mode));
-  await throwOnError(supabase.from("health_logs").delete().eq("user_id", userId));
-  const health = await saveOwnedList(data.health, (entry, mode) =>
-    writeHealth(supabase, userId, entry, mode),
-  );
-  await throwOnError(supabase.from("potty_logs").delete().eq("user_id", userId));
-  const potty = await saveOwnedList(data.potty, (entry, mode) => writePotty(supabase, userId, entry, mode));
-  await throwOnError(supabase.from("meal_logs").delete().eq("user_id", userId));
-  const meals = await saveOwnedList(data.meals, (entry, mode) => writeMeal(supabase, userId, entry, mode));
-  await throwOnError(supabase.from("milestone_logs").delete().eq("user_id", userId));
-  if (data.milestones.length) {
-    await throwOnError(
-      supabase.from("milestone_logs").upsert(
-        data.milestones.map((entry) => milestoneToRow(userId, entry)),
-        { onConflict: "user_id,milestone_key" },
-      ),
-    );
-  }
-
-  return { ...data, feeds, diapers, sleeps, growth, solids, health, potty, meals };
-}
-
-export { childStorageHasData };

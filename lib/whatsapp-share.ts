@@ -23,13 +23,11 @@ export function feedShareText(entry: Omit<FeedEntry, "id">, t: Translate): strin
 }
 
 export function diaperShareText(entry: Omit<DiaperEntry, "id">, t: Translate): string {
-  const kind =
-    entry.kind === "pee" ? t("diaper.pee") : entry.kind === "poop" ? t("diaper.poop") : t("diaper.both");
+  if (entry.kind === "pee") return `${t("diaper.pee")} · ${entry.time}`;
+  if (entry.kind === "both") return `${t("diaper.pee")} & ${t("diaper.poop")} · ${entry.time}`;
   const color = entry.poopColor ? t(POOP_COLOR_KEYS[entry.poopColor]) : "";
   const texture = entry.poopTexture ? t(POOP_TEXTURE_KEYS[entry.poopTexture]) : "";
-  const detail =
-    entry.kind === "pee" ? kind : [kind, color, texture].filter(Boolean).join(" · ");
-  return `${t("pages.diapers.title")} · ${entry.time}\n${detail}`;
+  return [t("diaper.poop"), color, texture, entry.time].filter(Boolean).join(" · ");
 }
 
 export function openWhatsAppShare(text: string) {

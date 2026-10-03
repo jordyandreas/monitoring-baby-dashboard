@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
+import { ReminderSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   ensureServiceWorker,
@@ -68,6 +70,7 @@ export function ReminderSettingsPanel({ className }: { className?: string }) {
   );
   const [requesting, setRequesting] = useState(false);
   const [testMessage, setTestMessage] = useState<string | null>(null);
+  const pending = useRemoteDataPending();
 
   const refreshPermission = useCallback(() => {
     setPermission(getNotificationPermissionState());
@@ -110,7 +113,7 @@ export function ReminderSettingsPanel({ className }: { className?: string }) {
     return handleEnableNotifications();
   };
 
-  if (!mounted) return null;
+  if (!mounted || pending) return <ReminderSkeleton />;
 
   const reminders = data.reminders;
   const babyPlusTime = data.babyPlus.dailyTime;
@@ -147,12 +150,10 @@ export function ReminderSettingsPanel({ className }: { className?: string }) {
                 type="button"
                 size="sm"
                 onClick={handleEnableNotifications}
-                disabled={requesting}
+                loading={requesting}
               >
                 <Bell className="size-4" />
-                {requesting
-                  ? t("reminders.enabling")
-                  : t("reminders.enableButton")}
+                {t("reminders.enableButton")}
               </Button>
             ) : (
               <p className="flex items-center gap-2 text-xs text-muted-foreground">

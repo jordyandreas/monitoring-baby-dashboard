@@ -5,9 +5,11 @@ import { ChildDayHistory } from "@/components/child/day-history";
 import { SleepRangeSummary } from "@/components/child/page-summary";
 import { SleepLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
+import { LogPageSkeleton } from "@/components/layout/data-skeletons";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { sleepHistoryParts } from "@/lib/child/summary";
 
 export function SleepPageContent() {
@@ -16,7 +18,9 @@ export function SleepPageContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = data.sleeps.find((entry) => entry.id === editingId) ?? null;
 
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+
+  if (!mounted || pending) return <LogPageSkeleton tiles={4} />;
 
   return (
     <LogScreen>

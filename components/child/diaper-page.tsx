@@ -5,9 +5,11 @@ import { ChildDayHistory } from "@/components/child/day-history";
 import { DiaperRangeSummary } from "@/components/child/page-summary";
 import { DiaperLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
+import { LogPageSkeleton } from "@/components/layout/data-skeletons";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { diaperHistoryParts } from "@/lib/child/summary";
 
 export function DiaperPageContent() {
@@ -16,7 +18,9 @@ export function DiaperPageContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = data.diapers.find((entry) => entry.id === editingId) ?? null;
 
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+
+  if (!mounted || pending) return <LogPageSkeleton tiles={3} />;
 
   return (
     <LogScreen>

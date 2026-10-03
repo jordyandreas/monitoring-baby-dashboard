@@ -13,9 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoadingCard } from "@/components/layout/loading-card";
+import { ProfileCardSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   formatDueDate,
@@ -29,9 +30,10 @@ export function BabyProfileCard({ className }: { className?: string }) {
   const { data, mounted, setBaby } = useAppStorage();
   const { locale, t } = useLocale();
   const { signedIn, requestLogin } = useSupabase();
+  const pending = useRemoteDataPending();
   const [open, setOpen] = useState(false);
 
-  if (!mounted) return <LoadingCard />;
+  if (!mounted || pending) return <ProfileCardSkeleton className={className} />;
 
   const baby = data?.baby;
 

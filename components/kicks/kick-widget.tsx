@@ -10,8 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoadingCard } from "@/components/layout/loading-card";
+import { DashboardCardSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import { getKicksInRange, getTopHours } from "@/lib/kicks";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,9 @@ import { cn } from "@/lib/utils";
 export function KickWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
   const { t } = useLocale();
+  const pending = useRemoteDataPending();
 
-  if (!mounted) return <LoadingCard />;
+  if (!mounted || pending) return <DashboardCardSkeleton className={className} lines={3} />;
 
   const kicks = data?.kicks ?? [];
   const last7 = getKicksInRange(kicks, 7).length;

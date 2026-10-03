@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoadingCard } from "@/components/layout/loading-card";
+import { SummaryChartSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import type { Locale } from "@/lib/i18n/types";
 import {
@@ -41,9 +42,10 @@ const barColorByStatus = {
 export function WaterSummary({ compact = false }: { compact?: boolean }) {
   const { data, mounted } = useAppStorage();
   const { locale, t } = useLocale();
+  const pending = useRemoteDataPending();
   const [range, setRange] = useState<RangeDays>(7);
 
-  if (!mounted) return <LoadingCard />;
+  if (!mounted || pending) return <SummaryChartSkeleton />;
 
   const entries = data?.water.entries ?? [];
   const chartDays = compact ? 7 : range;

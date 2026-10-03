@@ -5,9 +5,11 @@ import { ChildDayHistory } from "@/components/child/day-history";
 import { FeedRangeSummary } from "@/components/child/page-summary";
 import { FeedLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
+import { LogPageSkeleton } from "@/components/layout/data-skeletons";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { feedHistoryParts } from "@/lib/child/summary";
 
 export function FeedPageContent() {
@@ -16,7 +18,9 @@ export function FeedPageContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = data.feeds.find((entry) => entry.id === editingId) ?? null;
 
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+
+  if (!mounted || pending) return <LogPageSkeleton tiles={4} />;
 
   return (
     <LogScreen>

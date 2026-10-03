@@ -42,7 +42,8 @@ export async function signOut(): Promise<{ ok: true } | { ok: false; message: st
   const { supabase, message } = clientOrError();
   if (!supabase) return { ok: false, message: message ?? "Supabase is not configured" };
 
-  const { error } = await supabase.auth.signOut();
+  // local: this browser only. Default "global" revokes every device for the account.
+  const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error) return { ok: false, message: error.message };
   return { ok: true };
 }

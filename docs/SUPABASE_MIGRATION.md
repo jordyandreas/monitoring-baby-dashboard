@@ -119,7 +119,7 @@ supabase/migrations/
 
 ### Phase 2 — Live read/write (wired)
 
-`AppStorageProvider` still updates localStorage immediately. When Supabase is enabled, each mutation also schedules a write in `lib/supabase/live-sync.ts`:
+`AppStorageProvider` still updates localStorage immediately. When Supabase is enabled, each mutation also schedules a write in `lib/supabase/account-data.ts`:
 
 - Kicks and water entries insert or delete one row.
 - Baby profile, Baby Plus, glass size, reminders, and vitamins upsert their rows.

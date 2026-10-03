@@ -28,7 +28,7 @@ import type {
   SolidEntry,
 } from "@/lib/child/types";
 import { mergeGrowthDay } from "@/lib/child/summary";
-import { reportSave, showSaveToast } from "@/components/ui/save-toast";
+import { reportSave, showSaveToast, type SaveToastTopic } from "@/components/ui/save-toast";
 import {
   syncChildProfile,
   syncDiaperDelete,
@@ -59,10 +59,11 @@ function newId(): string {
 
 function reportChildSave(
   write: Parameters<typeof reportSave>[1],
-  action: "save" | "delete" = "save",
+  topic: SaveToastTopic,
+  action: "save" | "update" | "delete" = "save",
   whatsappText?: string,
 ) {
-  reportSave("child", write, action, whatsappText);
+  reportSave("child", write, action, whatsappText, topic);
 }
 
 type ChildStorageContextValue = {
@@ -108,13 +109,13 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
 
   const saveProfile = useCallback((profile: ChildProfile) => {
     updateChildStorage((prev) => ({ ...prev, profile }));
-    reportChildSave((supabase, userId) => syncChildProfile(supabase, userId, profile));
+    reportChildSave((supabase, userId) => syncChildProfile(supabase, userId, profile), "profile");
   }, []);
 
   const addFeed = useCallback((entry: Omit<FeedEntry, "id">, whatsappText?: string) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, feeds: [next, ...prev.feeds] }));
-    reportChildSave((supabase, userId) => syncFeedInsert(supabase, userId, next), "save", whatsappText);
+    reportChildSave((supabase, userId) => syncFeedInsert(supabase, userId, next), "feed", "save", whatsappText);
   }, []);
 
   const updateFeed = useCallback((id: string, entry: Omit<FeedEntry, "id">) => {
@@ -123,7 +124,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       feeds: prev.feeds.map((item) => (item.id === id ? next : item)),
     }));
-    reportChildSave((supabase, userId) => syncFeedUpdate(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncFeedUpdate(supabase, userId, next), "feed", "update");
   }, []);
 
   const removeFeed = useCallback((id: string) => {
@@ -131,7 +132,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       feeds: prev.feeds.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncFeedDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncFeedDelete(supabase, userId, id), "feed", "delete");
   }, []);
 
   const addDiaper = useCallback((entry: Omit<DiaperEntry, "id">, whatsappText?: string) => {
@@ -139,6 +140,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
     updateChildStorage((prev) => ({ ...prev, diapers: [next, ...prev.diapers] }));
     reportChildSave(
       (supabase, userId) => syncDiaperInsert(supabase, userId, next),
+      "diaper",
       "save",
       whatsappText,
     );
@@ -150,7 +152,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       diapers: prev.diapers.map((item) => (item.id === id ? next : item)),
     }));
-    reportChildSave((supabase, userId) => syncDiaperUpdate(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncDiaperUpdate(supabase, userId, next), "diaper", "update");
   }, []);
 
   const removeDiaper = useCallback((id: string) => {
@@ -158,13 +160,13 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       diapers: prev.diapers.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncDiaperDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncDiaperDelete(supabase, userId, id), "diaper", "delete");
   }, []);
 
   const addSleep = useCallback((entry: Omit<SleepEntry, "id">) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, sleeps: [next, ...prev.sleeps] }));
-    reportChildSave((supabase, userId) => syncSleepInsert(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncSleepInsert(supabase, userId, next), "sleep");
   }, []);
 
   const updateSleep = useCallback((id: string, entry: Omit<SleepEntry, "id">) => {
@@ -173,7 +175,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       sleeps: prev.sleeps.map((item) => (item.id === id ? next : item)),
     }));
-    reportChildSave((supabase, userId) => syncSleepUpdate(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncSleepUpdate(supabase, userId, next), "sleep", "update");
   }, []);
 
   const removeSleep = useCallback((id: string) => {
@@ -181,7 +183,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       sleeps: prev.sleeps.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncSleepDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncSleepDelete(supabase, userId, id), "sleep", "delete");
   }, []);
 
   const addGrowth = useCallback((entry: Omit<GrowthEntry, "id">) => {
@@ -195,7 +197,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       return { ...prev, growth: [merged.entry, ...rest] };
     });
     if (!saved) {
-      showSaveToast("error");
+      showSaveToast("error", undefined, "save", undefined, "growth");
       return;
     }
     const savedEntry = saved;
@@ -203,7 +205,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
     reportChildSave(async (supabase, userId) => {
       await syncGrowthInsert(supabase, userId, savedEntry);
       for (const id of dropped) await syncGrowthDelete(supabase, userId, id);
-    });
+    }, "growth");
   }, []);
 
   const replaceGrowthDay = useCallback((sourceIds: string[], entry: Omit<GrowthEntry, "id">) => {
@@ -218,7 +220,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       return { ...prev, growth: [merged.entry, ...withoutDay] };
     });
     if (!saved) {
-      showSaveToast("error");
+      showSaveToast("error", undefined, "update", undefined, "growth");
       return;
     }
     const savedEntry = saved;
@@ -226,7 +228,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
     reportChildSave(async (supabase, userId) => {
       await syncGrowthInsert(supabase, userId, savedEntry);
       for (const id of dropped) await syncGrowthDelete(supabase, userId, id);
-    });
+    }, "growth", "update");
   }, []);
 
   const removeGrowth = useCallback((id: string | string[]) => {
@@ -237,13 +239,13 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
     }));
     reportChildSave(async (supabase, userId) => {
       for (const entryId of ids) await syncGrowthDelete(supabase, userId, entryId);
-    }, "delete");
+    }, "growth", "delete");
   }, []);
 
   const addSolid = useCallback((entry: Omit<SolidEntry, "id">) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, solids: [next, ...prev.solids] }));
-    reportChildSave((supabase, userId) => syncSolidInsert(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncSolidInsert(supabase, userId, next), "solid");
   }, []);
 
   const removeSolid = useCallback((id: string) => {
@@ -251,13 +253,13 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       solids: prev.solids.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncSolidDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncSolidDelete(supabase, userId, id), "solid", "delete");
   }, []);
 
   const addHealth = useCallback((entry: Omit<HealthEntry, "id">) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, health: [next, ...prev.health] }));
-    reportChildSave((supabase, userId) => syncHealthInsert(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncHealthInsert(supabase, userId, next), "health");
   }, []);
 
   const removeHealth = useCallback((id: string) => {
@@ -265,13 +267,13 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       health: prev.health.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncHealthDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncHealthDelete(supabase, userId, id), "health", "delete");
   }, []);
 
   const addPotty = useCallback((entry: Omit<PottyEntry, "id">) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, potty: [next, ...prev.potty] }));
-    reportChildSave((supabase, userId) => syncPottyInsert(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncPottyInsert(supabase, userId, next), "potty");
   }, []);
 
   const removePotty = useCallback((id: string) => {
@@ -279,13 +281,13 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       potty: prev.potty.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncPottyDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncPottyDelete(supabase, userId, id), "potty", "delete");
   }, []);
 
   const addMeal = useCallback((entry: Omit<MealEntry, "id">) => {
     const next = { ...entry, id: newId() };
     updateChildStorage((prev) => ({ ...prev, meals: [next, ...prev.meals] }));
-    reportChildSave((supabase, userId) => syncMealInsert(supabase, userId, next));
+    reportChildSave((supabase, userId) => syncMealInsert(supabase, userId, next), "meal");
   }, []);
 
   const removeMeal = useCallback((id: string) => {
@@ -293,7 +295,7 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
       ...prev,
       meals: prev.meals.filter((entry) => entry.id !== id),
     }));
-    reportChildSave((supabase, userId) => syncMealDelete(supabase, userId, id), "delete");
+    reportChildSave((supabase, userId) => syncMealDelete(supabase, userId, id), "meal", "delete");
   }, []);
 
   const setMilestone = useCallback((key: MilestoneKey, date: string | null) => {
@@ -304,7 +306,11 @@ export function ChildStorageProvider({ children }: { children: React.ReactNode }
         milestones: date ? [...rest, { key, date }] : rest,
       };
     });
-    reportChildSave((supabase, userId) => syncMilestone(supabase, userId, key, date));
+    reportChildSave(
+      (supabase, userId) => syncMilestone(supabase, userId, key, date),
+      "milestone",
+      date ? "save" : "delete",
+    );
   }, []);
 
   const value = useMemo(

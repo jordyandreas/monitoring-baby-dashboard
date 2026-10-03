@@ -11,8 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { LoadingCard } from "@/components/layout/loading-card";
+import { DashboardCardSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   countCompleted,
@@ -25,8 +26,9 @@ import { cn } from "@/lib/utils";
 export function VitaminWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
   const { locale, t } = useLocale();
+  const pending = useRemoteDataPending();
 
-  if (!mounted) return <LoadingCard />;
+  if (!mounted || pending) return <DashboardCardSkeleton className={className} lines={2} />;
 
   const vitamins = data?.vitamins ?? {
     items: [],
