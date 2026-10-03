@@ -35,7 +35,7 @@ import type { Locale } from "@/lib/i18n/types";
 import type { Gender } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type RangeDays = 7 | 30;
+type RangeDays = 1 | 7 | 30;
 
 function SummaryShell({
   icon: Icon,
@@ -73,7 +73,7 @@ function RangeToggle({
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        {([7, 30] as RangeDays[]).map((days) => (
+        {([1, 7, 30] as RangeDays[]).map((days) => (
           <button
             key={days}
             type="button"
@@ -85,7 +85,7 @@ function RangeToggle({
                 : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/60",
             )}
           >
-            {t("child.rangeDays", { count: days })}
+            {days === 1 ? t("common.today") : t("child.rangeDays", { count: days })}
           </button>
         ))}
       </div>
@@ -146,7 +146,7 @@ function ActivityChart({
     <div className="space-y-2">
       <div>
         <p className="text-sm font-medium text-foreground">{title}</p>
-        {chartFrom && chartTo ? (
+        {days.length > 1 && chartFrom && chartTo ? (
           <p className="text-xs text-muted-foreground">
             {t("child.chartDateRange", { from: chartFrom, to: chartTo })}
           </p>
@@ -224,7 +224,11 @@ export function FeedRangeSummary({ entries }: { entries: FeedEntry[] }) {
     <SummaryShell icon={Milk} title={t("feed.summaryTitle")} subtitle={t("feed.summarySubtitle")}>
       <RangeToggle range={range} onChange={setRange} />
       <div className="grid grid-cols-2 gap-3">
-        <StatTile value={String(summary.count)} caption={t("feed.feedsInRange", { count: range })} emphasis />
+        <StatTile
+          value={String(summary.count)}
+          caption={range === 1 ? t("feed.feedsToday") : t("feed.feedsInRange", { count: range })}
+          emphasis
+        />
         <StatTile value={t("child.summaryMl", { ml: summary.ml })} caption={t("feed.summaryBottle")} />
         <StatTile
           value={summary.avgMl === null ? "—" : t("child.summaryMl", { ml: summary.avgMl })}
@@ -263,7 +267,11 @@ export function DiaperRangeSummary({ entries }: { entries: DiaperEntry[] }) {
     <SummaryShell icon={DiaperIcon} title={t("diaper.summaryTitle")} subtitle={t("diaper.summarySubtitle")}>
       <RangeToggle range={range} onChange={setRange} />
       <div className="grid grid-cols-3 gap-3">
-        <StatTile value={String(summary.count)} caption={t("diaper.changesInRange", { count: range })} emphasis />
+        <StatTile
+          value={String(summary.count)}
+          caption={range === 1 ? t("diaper.changesToday") : t("diaper.changesInRange", { count: range })}
+          emphasis
+        />
         <StatTile value={String(summary.pee)} caption={t("diaper.pee")} />
         <StatTile value={String(summary.poop)} caption={t("diaper.poop")} />
       </div>
@@ -300,7 +308,7 @@ export function SleepRangeSummary({ entries }: { entries: SleepEntry[] }) {
       <div className="grid grid-cols-2 gap-3">
         <StatTile
           value={formatDuration(summary.total, t)}
-          caption={t("sleep.totalInRange", { count: range })}
+          caption={range === 1 ? t("sleep.totalToday") : t("sleep.totalInRange", { count: range })}
           emphasis
         />
         <StatTile value={String(summary.count)} caption={t("sleep.summarySessions")} />
