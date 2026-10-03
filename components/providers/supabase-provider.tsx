@@ -26,6 +26,15 @@ import {
   signUpWithEmail as signUpWithEmailRequest,
 } from "@/lib/supabase/email-auth";
 import { isSupabaseEnabled } from "@/lib/supabase/env";
+import {
+  endChildSession,
+  endPregnancySession,
+  loadAccountData,
+  pauseAccountWrites,
+  prepareChildAccountSwitch,
+  refreshChildFromRemote,
+  refreshPregnancyFromRemote,
+} from "@/lib/supabase/account-data";
 import type { MigrationResult } from "@/lib/supabase/migrate-local";
 
 export type AccountActionResult = {
@@ -65,6 +74,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [authAttempt, setAuthAttempt] = useState(0);
   const [loginOpen, setLoginOpen] = useState(false);
   const pendingPath = useRef<string | null>(null);
+  const childSyncUser = useRef<string | null>(null);
 
   const signedIn = isEmailAccount(user);
 
@@ -136,6 +146,41 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     setAuthError(null);
     return { error: null, notice: null };
   }, []);
+
+  useEffect(() => {
+    if (!enabled || authStatus === "loading") return;
+
+    if (!signedIn || !user?.id) {
+      childSyncUser.current = null;
+      endPregnancySession();
+      endChildSession();
+      return;
+    }
+
+    const userId = user.id;
+    if (childSyncUser.current && childSyncUser.current !== userId) {
+      prepareChildAccountSwitch();
+    }
+    childSyncUser.current = userId;
+    pauseAccountWrites();
+    void loadAccountData(userId);
+
+    return () => {
+      pauseAccountWrites();
+    };
+  }, [authStatus, enabled, signedIn, user?.id]);
+
+  useEffect(() => {
+    if (!enabled || !signedIn || !user?.id) return;
+    const userId = user.id;
+    const pull = () => {
+      if (document.visibilityState !== "visible") return;
+      void refreshChildFromRemote(userId);
+      void refreshPregnancyFromRemote(userId);
+    };
+    document.addEventListener("visibilitychange", pull);
+    return () => document.removeEventListener("visibilitychange", pull);
+  }, [enabled, signedIn, user?.id]);
 
   useEffect(() => {
     if (!enabled) {

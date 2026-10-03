@@ -17,7 +17,9 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Progress } from "@/components/ui/progress";
+import { BabyPlusSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   completionKey,
@@ -36,7 +38,9 @@ import { cn } from "@/lib/utils";
 export function BabyPlusSchedule() {
   const { locale, t } = useLocale();
   const [resetOpen, setResetOpen] = useState(false);
-  const { data, updateBabyPlus, resetBabyPlus } = useAppStorage();
+  const { data, mounted, updateBabyPlus, resetBabyPlus } = useAppStorage();
+  const pending = useRemoteDataPending();
+  if (!mounted || pending) return <BabyPlusSkeleton />;
   const babyPlus = data?.babyPlus ?? {
     startDate: "",
     dailyTime: "",

@@ -41,7 +41,7 @@ async function runEnsureSupabaseSession(): Promise<SessionResult> {
     if (!existing) return { session: null, error: null };
     if (isEmailAccount(existing.user)) return { session: existing, error: null };
 
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: "local" });
     if (error) return { session: null, error: error.message };
     return { session: null, error: null };
   } catch (err) {

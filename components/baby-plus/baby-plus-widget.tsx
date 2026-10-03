@@ -13,8 +13,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { LoadingCard } from "@/components/layout/loading-card";
+import { DashboardCardSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   countCompletions,
@@ -26,8 +27,9 @@ import { cn } from "@/lib/utils";
 export function BabyPlusWidget({ className }: { className?: string }) {
   const { data, mounted } = useAppStorage();
   const { t } = useLocale();
+  const pending = useRemoteDataPending();
 
-  if (!mounted) return <LoadingCard />;
+  if (!mounted || pending) return <DashboardCardSkeleton className={className} lines={2} />;
 
   const { startDate, dailyTime, completions } = data?.babyPlus ?? {
     startDate: "",

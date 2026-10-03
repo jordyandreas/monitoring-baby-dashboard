@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { LogOut, UserRound } from "lucide-react";
+import { Baby, LogOut, UserRound } from "lucide-react";
 import { headerIconButtonClassName } from "@/components/layout/header-icon-button";
 import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useAppStorage } from "@/components/providers/app-storage-provider";
@@ -12,10 +12,10 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -152,10 +152,15 @@ export function AccountDialog() {
             type="button"
             className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
             disabled={busy}
+            aria-busy={busy || undefined}
             onClick={signOut}
           >
-            <LogOut className="size-4 text-muted-foreground" aria-hidden />
-            {busy ? t("account.working") : t("account.signOut")}
+            {busy ? (
+              <Spinner className="text-muted-foreground" />
+            ) : (
+              <LogOut className="size-4 text-muted-foreground" aria-hidden />
+            )}
+            {t("account.signOut")}
           </button>
         </PopoverContent>
       </Popover>
@@ -227,13 +232,18 @@ export function LoginDialog() {
         className="z-[80] sm:max-w-md"
         overlayClassName="z-[80] bg-black/25 backdrop-blur-lg!"
         showCloseButton={false}
+        aria-describedby={undefined}
         onEscapeKeyDown={(event) => event.preventDefault()}
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
       >
-        <DialogHeader>
-          <DialogTitle>{t("account.title")}</DialogTitle>
-          <DialogDescription>{t("account.guestHint")}</DialogDescription>
+        <DialogHeader className="items-center gap-3 pt-2 text-center">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-lilac text-lilac-deep">
+            <Baby className="size-7" aria-hidden />
+          </span>
+          <DialogTitle className="text-xl font-bold text-foreground">
+            {t("pages.home.title")}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
@@ -291,12 +301,8 @@ export function LoginDialog() {
           </div>
           {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="submit" className="min-h-11 w-full rounded-full" disabled={busy}>
-            {busy
-              ? t("account.working")
-              : authMode === "sign-up"
-                ? t("account.submitSignUp")
-                : t("account.submitSignIn")}
+          <Button type="submit" className="min-h-11 w-full rounded-full" loading={busy}>
+            {authMode === "sign-up" ? t("account.submitSignUp") : t("account.submitSignIn")}
           </Button>
         </form>
       </DialogContent>

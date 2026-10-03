@@ -13,8 +13,10 @@ import {
   newestFirst,
 } from "@/components/child/form-bits";
 import { HistoryList } from "@/components/child/history-list";
+import { ListPageSkeleton, MilestonesSkeleton } from "@/components/layout/data-skeletons";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { describeHealth, describeMeal, describePotty, describeSolid } from "@/lib/child/summary";
@@ -34,7 +36,8 @@ export function SolidsPageContent() {
   const { date, setDate, time, setTime } = useClock();
   const [name, setName] = useState("");
   const [allergy, setAllergy] = useState("");
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+  if (!mounted || pending) return <ListPageSkeleton />;
   const items = newestFirst(data.solids).map((entry) => ({
     id: entry.id,
     title: formatLogWhen(entry.date, entry.time, locale),
@@ -78,7 +81,8 @@ export function HealthPageContent() {
   const [name, setName] = useState("");
   const [dose, setDose] = useState("");
   const [temp, setTemp] = useState("");
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+  if (!mounted || pending) return <ListPageSkeleton />;
   const temperatureC = temp.trim() ? Number(temp) : undefined;
   const tempOk = temperatureC === undefined || (Number.isFinite(temperatureC) && temperatureC > 30 && temperatureC < 45);
   const canSave = Boolean(date && time && tempOk && (name.trim() || temperatureC !== undefined));
@@ -126,7 +130,8 @@ export function PottyPageContent() {
   const { data, mounted, addPotty, removePotty } = useChildStorage();
   const { date, setDate, time, setTime } = useClock();
   const [kind, setKind] = useState<PottyKind>("pee");
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+  if (!mounted || pending) return <ListPageSkeleton />;
   const items = newestFirst(data.potty).map((entry) => ({
     id: entry.id,
     title: formatLogWhen(entry.date, entry.time, locale),
@@ -171,7 +176,8 @@ export function MealsPageContent() {
   const { date, setDate, time, setTime } = useClock();
   const [slot, setSlot] = useState<MealSlot>("breakfast");
   const [note, setNote] = useState("");
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+  if (!mounted || pending) return <ListPageSkeleton />;
   const items = newestFirst(data.meals).map((entry) => ({
     id: entry.id,
     title: formatLogWhen(entry.date, entry.time, locale),
@@ -236,7 +242,8 @@ function milestoneLabel(key: MilestoneKey, t: (key: string) => string): string {
 export function MilestonesPageContent() {
   const { t } = useLocale();
   const { data, mounted, setMilestone } = useChildStorage();
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+  if (!mounted || pending) return <MilestonesSkeleton />;
   return (
     <LogScreen>
       <ul className="space-y-3">

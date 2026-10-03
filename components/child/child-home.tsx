@@ -22,6 +22,9 @@ import {
   Utensils,
   type LucideIcon,
 } from "lucide-react";
+import { AgeCelebrationCard } from "@/components/child/age-celebration-card";
+import { ChildHomeSkeleton } from "@/components/layout/data-skeletons";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { ChildProfileForm } from "@/components/child/child-profile-form";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { formatLogWhen, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
@@ -96,12 +99,13 @@ export function ChildHome() {
   const [logFilter, setLogFilter] = useState<LogFilter>("all");
   const [logPage, setLogPage] = useState(1);
   const today = getTodayDateStr();
+  const pending = useRemoteDataPending();
+
+  if (!mounted || pending) return <ChildHomeSkeleton />;
   const todayStats = todayTotals(data, today);
   const timeline = todayTimeline(data, today, t);
   const profile = data.profile;
   const dfLocale = locale === "id" ? idLocale : enUS;
-
-  if (!mounted) return null;
 
   const more = [
     { href: "/solids", label: t("child.moreSolids"), icon: Apple },
@@ -119,6 +123,7 @@ export function ChildHome() {
 
   return (
     <div className="space-y-6">
+      {profile ? <AgeCelebrationCard name={profile.name} birthDate={profile.birthDate} /> : null}
       <section className="rounded-2xl border border-border/60 bg-card p-5">
         {profile && !editing ? (
           <div className="flex items-start justify-between gap-3">

@@ -5,7 +5,9 @@ import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { DateDayStrip } from "@/components/history/date-day-strip";
 import { HistoryDayList } from "@/components/history/history-day-list";
+import { HistoryListSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import { kickCountLabel } from "@/lib/i18n/kicks";
 import { formatKickTime, getKicksForDate, getTodayDateStr } from "@/lib/kicks";
@@ -13,6 +15,7 @@ import { formatKickTime, getKicksForDate, getTodayDateStr } from "@/lib/kicks";
 export function KickList() {
   const { data, mounted, removeKick } = useAppStorage();
   const { locale, t } = useLocale();
+  const pending = useRemoteDataPending();
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr);
 
   const kicks = data?.kicks ?? [];
@@ -22,7 +25,7 @@ export function KickList() {
     locale: dfLocale,
   });
 
-  if (!mounted) return null;
+  if (!mounted || pending) return <HistoryListSkeleton />;
 
   return (
     <div className="space-y-3">

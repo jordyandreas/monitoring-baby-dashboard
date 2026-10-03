@@ -24,7 +24,7 @@ import type {
   VitaminState,
   WaterEntry,
 } from "@/lib/types";
-import { scheduleRemoteWrite } from "@/lib/supabase/live-sync";
+import { scheduleRemoteWrite } from "@/lib/supabase/account-data";
 import { reportSave } from "@/components/ui/save-toast";
 import {
   syncBabyPlus,
@@ -91,8 +91,12 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
       });
       if (box.next) {
         const vitamins = box.next;
-        reportSave("vitamins", (supabase, userId) =>
-          syncVitamins(supabase, userId, vitamins),
+        reportSave(
+          "vitamins",
+          (supabase, userId) => syncVitamins(supabase, userId, vitamins),
+          "save",
+          undefined,
+          "vitamin",
         );
       }
     },
@@ -102,7 +106,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   const setBaby = useCallback(
     (baby: BabyProfile | null) => {
       persist((prev) => ({ ...prev, baby }));
-      reportSave("baby", (supabase, userId) => syncBabyProfile(supabase, userId, baby));
+      reportSave("baby", (supabase, userId) => syncBabyProfile(supabase, userId, baby), "save", undefined, "baby");
     },
     [persist],
   );
@@ -110,8 +114,12 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   const setBabyPlus = useCallback(
     (babyPlus: BabyPlusState) => {
       persist((prev) => ({ ...prev, babyPlus }));
-      reportSave("babyPlus", (supabase, userId) =>
-        syncBabyPlus(supabase, userId, babyPlus),
+      reportSave(
+        "babyPlus",
+        (supabase, userId) => syncBabyPlus(supabase, userId, babyPlus),
+        "save",
+        undefined,
+        "babyPlus",
       );
     },
     [persist],
@@ -126,8 +134,12 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
       });
       if (box.next) {
         const babyPlus = box.next;
-        reportSave("babyPlus", (supabase, userId) =>
-          syncBabyPlus(supabase, userId, babyPlus),
+        reportSave(
+          "babyPlus",
+          (supabase, userId) => syncBabyPlus(supabase, userId, babyPlus),
+          "save",
+          undefined,
+          "babyPlus",
         );
       }
     },
@@ -141,7 +153,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
         ...prev,
         kicks: [entry, ...prev.kicks],
       }));
-      reportSave("kicks", (supabase, userId) => syncKickInsert(supabase, userId, entry));
+      reportSave("kicks", (supabase, userId) => syncKickInsert(supabase, userId, entry), "save", undefined, "kick");
     },
     [persist],
   );
@@ -152,7 +164,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
         ...prev,
         kicks: prev.kicks.filter((k) => k.id !== id),
       }));
-      reportSave("kicks", (supabase, userId) => syncKickDelete(supabase, userId, id), "delete");
+      reportSave("kicks", (supabase, userId) => syncKickDelete(supabase, userId, id), "delete", undefined, "kick");
     },
     [persist],
   );
@@ -195,7 +207,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
           entries: [next, ...prev.water.entries],
         },
       }));
-      reportSave("water", (supabase, userId) => syncWaterInsert(supabase, userId, next));
+      reportSave("water", (supabase, userId) => syncWaterInsert(supabase, userId, next), "save", undefined, "water");
     },
     [persist],
   );
@@ -209,7 +221,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
           entries: prev.water.entries.filter((e) => e.id !== id),
         },
       }));
-      reportSave("water", (supabase, userId) => syncWaterDelete(supabase, userId, id), "delete");
+      reportSave("water", (supabase, userId) => syncWaterDelete(supabase, userId, id), "delete", undefined, "water");
     },
     [persist],
   );
@@ -224,7 +236,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
           glassSizeMl: normalized,
         },
       }));
-      reportSave("water", (supabase, userId) => syncGlassSize(supabase, userId, normalized));
+      reportSave("water", (supabase, userId) => syncGlassSize(supabase, userId, normalized), "save", undefined, "glass");
     },
     [persist],
   );

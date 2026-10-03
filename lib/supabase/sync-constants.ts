@@ -6,3 +6,6 @@ export const LOCAL_DIRTY_KEY = "baby-monitor-supabase-dirty-v1";
 
 /** localStorage flag: a child-mode write failed and the next load should push child data. */
 export const CHILD_DIRTY_KEY = "baby-monitor-child-dirty-v1";
+
+/** localStorage flag: which account last loaded child logs on this browser. */
+export const CHILD_OWNER_KEY = "baby-monitor-child-owner-v1";

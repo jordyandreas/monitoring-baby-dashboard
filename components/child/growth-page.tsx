@@ -8,9 +8,11 @@ import {
   SubmitButton,
 } from "@/components/child/form-bits";
 import { GrowthHistoryTable } from "@/components/child/growth-history";
+import { GrowthPageSkeleton } from "@/components/layout/data-skeletons";
 import { GrowthCompareSummary } from "@/components/child/page-summary";
 import { useChildStorage } from "@/components/providers/child-storage-provider";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { growthByDay } from "@/lib/child/summary";
@@ -30,7 +32,9 @@ export function GrowthPageContent() {
   const [length, setLength] = useState("");
   const [head, setHead] = useState("");
 
-  if (!mounted) return null;
+  const pending = useRemoteDataPending();
+
+  if (!mounted || pending) return <GrowthPageSkeleton />;
 
   const weightKg = optionalNumber(weight);
   const lengthCm = optionalNumber(length);

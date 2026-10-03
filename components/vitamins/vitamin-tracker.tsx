@@ -1,7 +1,8 @@
 "use client";
 
-import { LoadingCard } from "@/components/layout/loading-card";
+import { VitaminTrackerSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import {
   formatVitaminDate,
@@ -15,8 +16,9 @@ import { VitaminNameForm } from "./vitamin-name-form";
 export function VitaminTracker() {
   const { data, mounted, setVitaminItems, toggleVitamin } = useAppStorage();
   const { locale, t } = useLocale();
+  const pending = useRemoteDataPending();
 
-  if (!mounted) return <LoadingCard />;
+  if (!mounted || pending) return <VitaminTrackerSkeleton />;
 
   const vitamins = data?.vitamins ?? {
     items: [],
