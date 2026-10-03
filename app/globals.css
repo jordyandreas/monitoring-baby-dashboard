@@ -218,6 +218,26 @@ body::before {
   }
 }
 
+@keyframes age-celebration-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--celebration-tilt, 12deg));
+  }
+  50% {
+    transform: translateY(-7px) rotate(calc(var(--celebration-tilt, 12deg) + 16deg));
+  }
+}
+
+.age-celebration-piece {
+  animation: age-celebration-drift 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .age-celebration-piece {
+    animation: none;
+  }
+}
+
 /* Keep save toasts at the top-right under the header, including phones. */
 @media (max-width: 600px) {
   [data-sonner-toaster].app-toaster {
