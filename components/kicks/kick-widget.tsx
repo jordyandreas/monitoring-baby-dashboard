@@ -14,7 +14,7 @@ import { DashboardCardSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
-import { getKicksInRange, getTopHours } from "@/lib/kicks";
+import { getKicksForDate, getKicksInRange, getTodayDateStr, getTopHours } from "@/lib/kicks";
 import { cn } from "@/lib/utils";
 
 export function KickWidget({ className }: { className?: string }) {
@@ -26,6 +26,7 @@ export function KickWidget({ className }: { className?: string }) {
 
   const kicks = data?.kicks ?? [];
   const last7 = getKicksInRange(kicks, 7).length;
+  const todayCount = getKicksForDate(kicks, getTodayDateStr()).length;
   const topHours = getTopHours(kicks, 7);
 
   return (
@@ -42,26 +43,22 @@ export function KickWidget({ className }: { className?: string }) {
         </CardTitle>
         <CardDescription>{t("kicks.subtitle")}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col space-y-4">
-        <div className="rounded-xl bg-card/80 px-4 py-3">
-          <p className="text-2xl font-bold">{last7}</p>
+      <CardContent className="flex flex-1 flex-col gap-3">
+        <div className="min-h-[7.5rem] rounded-xl bg-card/80 px-4 py-3">
+          <p className="text-2xl font-bold tabular-nums">{last7}</p>
           <p className="text-sm text-muted-foreground">{t("kicks.last7Days")}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {todayCount} {t("kicks.kicksToday")}
+          </p>
         </div>
-        {topHours.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              {t("kicks.mostActive")}
-            </p>
-            <ul className="space-y-1.5">
+        <div className="flex min-h-24 flex-1 flex-col justify-center rounded-xl bg-lilac/30 px-4 py-3">
+          <p className="text-sm font-medium text-foreground">{t("kicks.mostActive")}</p>
+          {topHours.length > 0 ? (
+            <ul className="mt-2.5 space-y-2">
               {topHours.map((slot) => (
-                <li
-                  key={slot.hour}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <span className="w-[4.5rem] shrink-0 font-medium">
-                    {slot.label}
-                  </span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-lilac/30">
+                <li key={slot.hour} className="flex items-center gap-2 text-sm">
+                  <span className="w-[4.5rem] shrink-0 font-medium">{slot.label}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-background/70">
                     <div
                       className="h-full rounded-full bg-lilac-deep"
                       style={{
@@ -69,14 +66,16 @@ export function KickWidget({ className }: { className?: string }) {
                       }}
                     />
                   </div>
-                  <span className="shrink-0 text-muted-foreground tabular-nums">
+                  <span className="w-4 shrink-0 text-right text-muted-foreground tabular-nums">
                     {slot.count}
                   </span>
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="mt-1 text-sm text-muted-foreground">{t("kicks.logToSeePatterns")}</p>
+          )}
+        </div>
         <FeatureLink
           href="/kicks"
           className={cn(

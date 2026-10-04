@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { Activity } from "lucide-react";
@@ -15,37 +14,70 @@ import { SummaryChartSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
+import type { useSummaryLink } from "@/hooks/use-summary-link";
 import { kickCountLabel } from "@/lib/i18n/kicks";
 import type { Locale } from "@/lib/i18n/types";
 import {
+  formatHourLabel,
+  getKicksForDate,
   getKicksInRange,
   getKicksPerDay,
+  getTodayDateStr,
   getTopHours,
 } from "@/lib/kicks";
+import type { KickEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type RangeDays = 7 | 30;
+type RangeDays = 1 | 7 | 30;
+
+function topHoursOnDate(kicks: KickEntry[], date: string) {
+  const counts = new Map<number, number>();
+  for (const kick of kicks) {
+    if (kick.date !== date) continue;
+    const hour = Number.parseInt(kick.time.split(":")[0] ?? "", 10);
+    if (hour >= 0 && hour < 24) counts.set(hour, (counts.get(hour) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([hour, count]) => ({ hour, count, label: formatHourLabel(hour) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+}
 
 function dateFnsLocale(locale: Locale) {
   return locale === "id" ? idLocale : enUS;
 }
 
-export function KickSummary({ compact = false }: { compact?: boolean }) {
+export function KickSummary({
+  compact = false,
+  link,
+}: {
+  compact?: boolean;
+  link: ReturnType<typeof useSummaryLink>;
+}) {
   const { data, mounted } = useAppStorage();
   const { locale, t } = useLocale();
   const pending = useRemoteDataPending();
-  const [range, setRange] = useState<RangeDays>(7);
+  const range: RangeDays = compact ? 7 : link.range;
 
   if (!mounted || pending) return <SummaryChartSkeleton />;
 
   const kicks = data?.kicks ?? [];
-  const chartDays = compact ? 7 : range;
-  const perDay = getKicksPerDay(kicks, chartDays, new Date(), locale);
+  const today = getTodayDateStr();
+  const chartDays = range === 1 ? 7 : range;
+  const perDay = range === 1 ? [] : getKicksPerDay(kicks, chartDays, new Date(), locale);
   const maxCount = Math.max(...perDay.map((d) => d.count), 1);
-  const totalInRange = getKicksInRange(kicks, range).length;
-  const topHours = getTopHours(kicks, range);
+  const dayCount = getKicksForDate(kicks, link.day).length;
+  const totalInRange = range === 1 ? dayCount : getKicksInRange(kicks, range).length;
+  const topHours = range === 1 ? topHoursOnDate(kicks, link.day) : getTopHours(kicks, range);
   const hasChartData = perDay.some((d) => d.count > 0);
   const dfLocale = dateFnsLocale(locale);
+  const dateLabel = format(parseISO(link.day), "d MMM", { locale: dfLocale });
+  const totalCaption =
+    range === 1
+      ? link.day === today
+        ? t("kicks.kicksToday")
+        : t("kicks.kicksOnDay", { date: dateLabel })
+      : t("kicks.kicksInRange", { count: range });
 
   const chartFrom = perDay[0]
     ? format(parseISO(perDay[0].date), "d MMM", { locale: dfLocale })
@@ -70,11 +102,11 @@ export function KickSummary({ compact = false }: { compact?: boolean }) {
       <CardContent className="space-y-5">
         <div className="space-y-2">
           <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
-            {([7, 30] as RangeDays[]).map((days) => (
+            {(compact ? ([7, 30] as RangeDays[]) : ([1, 7, 30] as RangeDays[])).map((days) => (
               <button
                 key={days}
                 type="button"
-                onClick={() => setRange(days)}
+                onClick={() => link.setRange(days)}
                 className={cn(
                   "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
                   range === days
@@ -82,22 +114,29 @@ export function KickSummary({ compact = false }: { compact?: boolean }) {
                     : "text-muted-foreground hover:bg-white/55",
                 )}
               >
-                {t("kicks.rangeDays", { count: days })}
+                {days === 1
+                  ? link.day === today
+                    ? t("common.today")
+                    : dateLabel
+                  : t("kicks.rangeDays", { count: days })}
               </button>
             ))}
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            {t("kicks.rangeHint")}
-          </p>
+          {range === 1 ? null : (
+            <p className="text-xs leading-relaxed text-muted-foreground">{t("kicks.rangeHint")}</p>
+          )}
         </div>
 
         <div className="rounded-xl bg-lilac/35 px-4 py-3 text-center">
           <p className="text-3xl font-bold text-foreground">{totalInRange}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("kicks.kicksInRange", { count: range })}
-          </p>
+          <p className="text-sm text-muted-foreground">{totalCaption}</p>
         </div>
 
+        {range === 1 && dayCount === 0 && kicks.length > 0 ? (
+          <p className="text-center text-sm text-muted-foreground">{t("kicks.emptyDay")}</p>
+        ) : null}
+
+        {range === 1 ? null : (
         <div className="space-y-2">
           <div>
             <p className="text-sm font-medium text-foreground">
@@ -184,6 +223,7 @@ export function KickSummary({ compact = false }: { compact?: boolean }) {
             </div>
           </div>
         </div>
+        )}
 
         {topHours.length > 0 && (
           <div className="space-y-2">

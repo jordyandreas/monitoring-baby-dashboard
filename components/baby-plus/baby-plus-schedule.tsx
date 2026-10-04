@@ -72,13 +72,18 @@ export function BabyPlusSchedule() {
     checked: boolean,
   ) => {
     const key = completionKey(soundIndex, dayIndex);
-    updateBabyPlus((prev) => ({
-      ...prev,
-      completions: {
-        ...prev.completions,
-        [key]: checked,
-      },
-    }));
+    updateBabyPlus(
+      (prev) => ({
+        ...prev,
+        completions: {
+          ...prev.completions,
+          [key]: checked,
+        },
+      }),
+      checked
+        ? { kind: "item", sound: soundIndex + 1, day: dayIndex + 1 }
+        : { kind: "silent" },
+    );
   };
 
   return (

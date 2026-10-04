@@ -59,8 +59,8 @@ export function WaterWidget({ className }: { className?: string }) {
         </CardTitle>
         <CardDescription>{t("water.subtitle")}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col space-y-4">
-        <div className="rounded-xl bg-card/80 px-4 py-3">
+      <CardContent className="flex flex-1 flex-col gap-3">
+        <div className="min-h-[7.5rem] rounded-xl bg-card/80 px-4 py-3">
           <p className="text-2xl font-bold tabular-nums">
             {formatVolume(todayMl, locale)}
           </p>
@@ -71,9 +71,9 @@ export function WaterWidget({ className }: { className?: string }) {
           <p className="mt-2 text-xs text-muted-foreground">{t("water.guidelineShort")}</p>
         </div>
 
-        <div className="rounded-xl bg-lilac/30 px-3 py-2 text-sm">
+        <div className="flex min-h-24 flex-1 flex-col justify-center rounded-xl bg-lilac/30 px-4 py-3 text-sm">
           <p className="font-medium text-foreground">{t("water.weekMetGoal")}</p>
-          <p className="mt-0.5 text-muted-foreground">
+          <p className="mt-1 text-muted-foreground">
             {t("water.weekMetGoalDetail", { met: daysMetGoal, total: 7 })}
           </p>
         </div>

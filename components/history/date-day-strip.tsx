@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { addDays, format, startOfDay } from "date-fns";
+import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -36,6 +36,13 @@ export function DateDayStrip({
       marked: marks.has(date),
     };
   });
+
+  useEffect(() => {
+    const selected = startOfDay(parseISO(selectedDate));
+    const start = addDays(startOfDay(anchor), -WINDOW);
+    const end = addDays(startOfDay(anchor), WINDOW);
+    if (selected < start || selected > end) setAnchor(selected);
+  }, [anchor, selectedDate]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {

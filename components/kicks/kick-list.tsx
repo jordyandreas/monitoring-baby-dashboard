@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { DateDayStrip } from "@/components/history/date-day-strip";
@@ -10,13 +9,18 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
 import { kickCountLabel } from "@/lib/i18n/kicks";
-import { formatKickTime, getKicksForDate, getTodayDateStr } from "@/lib/kicks";
+import { formatKickTime, getKicksForDate } from "@/lib/kicks";
 
-export function KickList() {
+export function KickList({
+  selectedDate,
+  onSelectDate,
+}: {
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
+}) {
   const { data, mounted, removeKick } = useAppStorage();
   const { locale, t } = useLocale();
   const pending = useRemoteDataPending();
-  const [selectedDate, setSelectedDate] = useState(getTodayDateStr);
 
   const kicks = data?.kicks ?? [];
   const entries = getKicksForDate(kicks, selectedDate);
@@ -31,7 +35,7 @@ export function KickList() {
     <div className="space-y-3">
       <DateDayStrip
         selectedDate={selectedDate}
-        onSelect={setSelectedDate}
+        onSelect={onSelectDate}
         markedDates={kicks.map((kick) => kick.date)}
       />
       {kicks.length === 0 ? (

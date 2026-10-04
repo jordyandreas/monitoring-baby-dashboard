@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { DateDayStrip } from "@/components/history/date-day-strip";
@@ -18,11 +17,16 @@ import {
 } from "@/lib/water";
 import { WaterDaySummary } from "./water-day-summary";
 
-export function WaterList() {
+export function WaterList({
+  selectedDate,
+  onSelectDate,
+}: {
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
+}) {
   const { data, mounted, removeWater } = useAppStorage();
   const { locale, t } = useLocale();
   const pending = useRemoteDataPending();
-  const [selectedDate, setSelectedDate] = useState(getTodayDateStr);
 
   const entries = data?.water.entries ?? [];
   const glassSizeMl = data?.water.glassSizeMl ?? 250;
@@ -39,7 +43,7 @@ export function WaterList() {
     <div className="space-y-3">
       <DateDayStrip
         selectedDate={selectedDate}
-        onSelect={setSelectedDate}
+        onSelect={onSelectDate}
         markedDates={entries.map((entry) => entry.date)}
       />
       {entries.length === 0 ? (
