@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
-import { DiaperRangeSummary } from "@/components/child/page-summary";
+import { DiaperRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { DiaperLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
 import { LogPageSkeleton } from "@/components/layout/data-skeletons";
@@ -16,6 +16,7 @@ export function DiaperPageContent() {
   const { t } = useLocale();
   const { data, mounted, removeDiaper } = useChildStorage();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const summary = useSummaryLink();
   const editing = data.diapers.find((entry) => entry.id === editingId) ?? null;
 
   const pending = useRemoteDataPending();
@@ -25,8 +26,10 @@ export function DiaperPageContent() {
   return (
     <LogScreen>
       <DiaperLogForm />
-      <DiaperRangeSummary entries={data.diapers} />
+      <DiaperRangeSummary entries={data.diapers} link={summary} />
       <ChildDayHistory
+        selectedDate={summary.day}
+        onSelectDate={summary.selectHistoryDate}
         entries={data.diapers.map((entry) => ({
           ...entry,
           ...diaperHistoryParts(entry, t),

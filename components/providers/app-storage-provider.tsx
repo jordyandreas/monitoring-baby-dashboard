@@ -25,6 +25,7 @@ import type {
   WaterEntry,
 } from "@/lib/types";
 import { scheduleRemoteWrite } from "@/lib/supabase/account-data";
+import { useLocale } from "@/components/providers/locale-provider";
 import { reportSave } from "@/components/ui/save-toast";
 import {
   syncBabyPlus,
@@ -46,7 +47,10 @@ interface AppStorageContextValue {
   isLoading: boolean;
   setBaby: (baby: BabyProfile | null) => void;
   setBabyPlus: (babyPlus: BabyPlusState) => void;
-  updateBabyPlus: (updater: (prev: BabyPlusState) => BabyPlusState) => void;
+  updateBabyPlus: (
+    updater: (prev: BabyPlusState) => BabyPlusState,
+    notice?: BabyPlusNotice,
+  ) => void;
   addKick: (kick: Omit<KickEntry, "id">) => void;
   removeKick: (id: string) => void;
   resetBabyPlus: () => void;
@@ -64,7 +68,11 @@ interface AppStorageContextValue {
 
 const AppStorageContext = createContext<AppStorageContextValue | null>(null);
 
+type BabyPlusNotice = { kind: "saved" } | { kind: "silent" } | { kind: "item"; sound: number; day: number };
+type VitaminNotice = "saved" | "silent" | "taken";
+
 export function AppStorageProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useLocale();
   const data = useSyncExternalStore(
     subscribeAppStorage,
     getAppStorageSnapshot,
@@ -81,7 +89,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const updateVitamins = useCallback(
-    (updater: (prev: VitaminState) => VitaminState) => {
+    (updater: (prev: VitaminState) => VitaminState, notice: VitaminNotice = "saved", takenName = "") => {
       const box: { next?: VitaminState } = {};
       persist((prev) => {
         box.next = rolloverVitaminState(
@@ -89,18 +97,21 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
         );
         return { ...prev, vitamins: box.next };
       });
-      if (box.next) {
-        const vitamins = box.next;
-        reportSave(
-          "vitamins",
-          (supabase, userId) => syncVitamins(supabase, userId, vitamins),
-          "save",
-          undefined,
-          "vitamin",
-        );
+      if (!box.next) return;
+      const vitamins = box.next;
+      const write = (supabase: Parameters<typeof syncVitamins>[0], userId: string) =>
+        syncVitamins(supabase, userId, vitamins);
+      if (notice === "silent") {
+        scheduleRemoteWrite("vitamins", write);
+        return;
       }
+      const detail =
+        notice === "taken"
+          ? t("toast.vitaminTaken", { name: takenName || t("vitamins.thisVitamin") })
+          : undefined;
+      reportSave("vitamins", write, "save", undefined, "vitamin", detail);
     },
-    [persist],
+    [persist, t],
   );
 
   const setBaby = useCallback(
@@ -126,24 +137,27 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
   );
 
   const updateBabyPlus = useCallback(
-    (updater: (prev: BabyPlusState) => BabyPlusState) => {
+    (updater: (prev: BabyPlusState) => BabyPlusState, notice: BabyPlusNotice = { kind: "saved" }) => {
       const box: { next?: BabyPlusState } = {};
       persist((prev) => {
         box.next = updater(prev.babyPlus);
         return { ...prev, babyPlus: box.next };
       });
-      if (box.next) {
-        const babyPlus = box.next;
-        reportSave(
-          "babyPlus",
-          (supabase, userId) => syncBabyPlus(supabase, userId, babyPlus),
-          "save",
-          undefined,
-          "babyPlus",
-        );
+      if (!box.next) return;
+      const babyPlus = box.next;
+      const write = (supabase: Parameters<typeof syncBabyPlus>[0], userId: string) =>
+        syncBabyPlus(supabase, userId, babyPlus);
+      if (notice.kind === "silent") {
+        scheduleRemoteWrite("babyPlus", write);
+        return;
       }
+      const detail =
+        notice.kind === "item"
+          ? t("toast.babyPlusItemSaved", { sound: notice.sound, day: notice.day })
+          : undefined;
+      reportSave("babyPlus", write, "save", undefined, "babyPlus", detail);
     },
-    [persist],
+    [persist, t],
   );
 
   const addKick = useCallback(
@@ -236,13 +250,15 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
           glassSizeMl: normalized,
         },
       }));
-      reportSave("water", (supabase, userId) => syncGlassSize(supabase, userId, normalized), "save", undefined, "glass");
+      scheduleRemoteWrite("water", (supabase, userId) => syncGlassSize(supabase, userId, normalized));
     },
     [persist],
   );
 
   const toggleVitamin = useCallback(
     (day: "today" | "yesterday", vitaminId: string, checked: boolean) => {
+      const name =
+        getAppStorageSnapshot().vitamins.items.find((item) => item.id === vitaminId)?.name.trim() ?? "";
       updateVitamins((prev) => {
         if (day === "yesterday" && !prev.yesterday) return prev;
 
@@ -265,7 +281,7 @@ export function AppStorageProvider({ children }: { children: React.ReactNode }) 
           ...prev,
           yesterday: { ...prev.yesterday!, completed },
         };
-      });
+      }, checked ? "taken" : "silent", name);
     },
     [updateVitamins],
   );

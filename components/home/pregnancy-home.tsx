@@ -9,12 +9,12 @@ export function PregnancyHome() {
   return (
     <div className="space-y-6">
       <LiveGreetingClock />
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
-        <BabyProfileCard className="h-full" />
+      <BabyProfileCard />
+      <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
         <BabyPlusWidget className="h-full" />
         <VitaminWidget className="h-full" />
         <KickWidget className="h-full" />
-        <WaterWidget className="h-full lg:col-span-2" />
+        <WaterWidget className="h-full" />
       </div>
     </div>
   );

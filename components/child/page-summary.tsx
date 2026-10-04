@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ComponentType, type ReactNode } from "react";
-import { format, parseISO } from "date-fns";
+import { type ComponentType, type ReactNode } from "react";
+import { format, parseISO, startOfDay } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { Baby, Milk, Moon, Ruler, Weight } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
@@ -33,7 +33,10 @@ import {
 } from "@/lib/child/who-growth";
 import type { Locale } from "@/lib/i18n/types";
 import type { Gender } from "@/lib/types";
+import { useSummaryLink } from "@/hooks/use-summary-link";
 import { cn } from "@/lib/utils";
+
+export { useSummaryLink };
 
 type RangeDays = 1 | 7 | 30;
 
@@ -62,14 +65,59 @@ function SummaryShell({
   );
 }
 
+function todayKey() {
+  return format(startOfDay(new Date()), "yyyy-MM-dd");
+}
+
+function useSummaryWindow(
+  dates: string[],
+  link: {
+    range: RangeDays;
+    day: string;
+    setRange: (days: RangeDays) => void;
+    setDay: (day: string) => void;
+  },
+) {
+  const { locale } = useLocale();
+  const { range, setRange, day, setDay } = link;
+  const today = todayKey();
+  const markedDates = [...new Set(dates)];
+  const axis =
+    range === 1
+      ? [
+          {
+            date: day,
+            dayLabel: format(parseISO(day), "d", {
+              locale: locale === "id" ? idLocale : enUS,
+            }),
+            fullLabel: format(parseISO(day), "EEE, d MMM yyyy", {
+              locale: locale === "id" ? idLocale : enUS,
+            }),
+            isToday: day === today,
+          },
+        ]
+      : recentDates(range, locale);
+  return { range, setRange, day, setDay, markedDates, axis, today, locale };
+}
+
+function shortDayLabel(day: string, locale: Locale) {
+  return format(parseISO(day), "d MMM", { locale: locale === "id" ? idLocale : enUS });
+}
+
 function RangeToggle({
   range,
-  onChange,
+  day,
+  today,
+  onRangeChange,
 }: {
   range: RangeDays;
-  onChange: (days: RangeDays) => void;
+  day: string;
+  today: string;
+  onRangeChange: (days: RangeDays) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const dayButtonLabel = day === today ? t("common.today") : shortDayLabel(day, locale);
+
   return (
     <div className="space-y-2">
       <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
@@ -77,7 +125,7 @@ function RangeToggle({
           <button
             key={days}
             type="button"
-            onClick={() => onChange(days)}
+            onClick={() => onRangeChange(days)}
             className={cn(
               "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
               range === days
@@ -85,11 +133,13 @@ function RangeToggle({
                 : "text-muted-foreground hover:bg-white/55",
             )}
           >
-            {days === 1 ? t("common.today") : t("child.rangeDays", { count: days })}
+            {days === 1 ? dayButtonLabel : t("child.rangeDays", { count: days })}
           </button>
         ))}
       </div>
-      <p className="text-xs leading-relaxed text-muted-foreground">{t("child.rangeHint")}</p>
+      {range === 1 ? null : (
+        <p className="text-xs leading-relaxed text-muted-foreground">{t("child.rangeHint")}</p>
+      )}
     </div>
   );
 }
@@ -207,26 +257,42 @@ function ActivityChart({
   );
 }
 
-export function FeedRangeSummary({ entries }: { entries: FeedEntry[] }) {
-  const { t, locale } = useLocale();
-  const [range, setRange] = useState<RangeDays>(7);
-  const axis = recentDates(range, locale);
-  const byDay = axis.map((day) => ({
-    ...day,
-    entries: entries.filter((entry) => entry.date === day.date),
+export function FeedRangeSummary({
+  entries,
+  link,
+}: {
+  entries: FeedEntry[];
+  link: ReturnType<typeof useSummaryLink>;
+}) {
+  const { t } = useLocale();
+  const period = useSummaryWindow(
+    entries.map((entry) => entry.date),
+    link,
+  );
+  const { range, day, today, axis, locale } = period;
+  const byDay = axis.map((item) => ({
+    ...item,
+    entries: entries.filter((entry) => entry.date === item.date),
   }));
-  const inRange = byDay.flatMap((day) => day.entries);
+  const inRange = byDay.flatMap((item) => item.entries);
   const summary = feedDaySummary(inRange);
-  const counts = byDay.map((day) => day.entries.length);
+  const counts = byDay.map((item) => item.entries.length);
   const maxCount = Math.max(...counts, 1);
+  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={Milk} title={t("feed.summaryTitle")} subtitle={t("feed.summarySubtitle")}>
-      <RangeToggle range={range} onChange={setRange} />
+      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
       <div className="grid grid-cols-2 gap-3">
         <StatTile
           value={String(summary.count)}
-          caption={range === 1 ? t("feed.feedsToday") : t("feed.feedsInRange", { count: range })}
+          caption={
+            range !== 1
+              ? t("feed.feedsInRange", { count: range })
+              : day === today
+                ? t("feed.feedsToday")
+                : t("feed.feedsOnDay", { date: dateLabel })
+          }
           emphasis
         />
         <StatTile value={t("child.summaryMl", { ml: summary.ml })} caption={t("feed.summaryBottle")} />
@@ -236,15 +302,20 @@ export function FeedRangeSummary({ entries }: { entries: FeedEntry[] }) {
         />
         <StatTile value={formatDuration(summary.nursingMin, t)} caption={t("feed.summaryNursing")} />
       </div>
-      <ActivityChart
-        title={t("feed.dailyActivity")}
-        hint={t("feed.dailyActivityHint")}
-        days={byDay.map((day) => ({ ...day, value: day.entries.length }))}
-        maxValue={maxCount}
-        barLabel={(value) => String(value)}
-        ariaLabel={(value, date) => t("feed.barAria", { count: value, date })}
-        locale={locale}
-      />
+      {range === 1 && inRange.length === 0 && entries.length > 0 ? (
+        <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
+      ) : null}
+      {range === 1 ? null : (
+        <ActivityChart
+          title={t("feed.dailyActivity")}
+          hint={t("feed.dailyActivityHint")}
+          days={byDay.map((item) => ({ ...item, value: item.entries.length }))}
+          maxValue={maxCount}
+          barLabel={(value) => String(value)}
+          ariaLabel={(value, date) => t("feed.barAria", { count: value, date })}
+          locale={locale}
+        />
+      )}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("feed.logPatterns")}</p>
       ) : null}
@@ -252,38 +323,59 @@ export function FeedRangeSummary({ entries }: { entries: FeedEntry[] }) {
   );
 }
 
-export function DiaperRangeSummary({ entries }: { entries: DiaperEntry[] }) {
-  const { t, locale } = useLocale();
-  const [range, setRange] = useState<RangeDays>(7);
-  const axis = recentDates(range, locale);
-  const byDay = axis.map((day) => ({
-    ...day,
-    entries: entries.filter((entry) => entry.date === day.date),
+export function DiaperRangeSummary({
+  entries,
+  link,
+}: {
+  entries: DiaperEntry[];
+  link: ReturnType<typeof useSummaryLink>;
+}) {
+  const { t } = useLocale();
+  const period = useSummaryWindow(
+    entries.map((entry) => entry.date),
+    link,
+  );
+  const { range, day, today, axis, locale } = period;
+  const byDay = axis.map((item) => ({
+    ...item,
+    entries: entries.filter((entry) => entry.date === item.date),
   }));
-  const summary = diaperDaySummary(byDay.flatMap((day) => day.entries));
-  const maxCount = Math.max(...byDay.map((day) => day.entries.length), 1);
+  const summary = diaperDaySummary(byDay.flatMap((item) => item.entries));
+  const maxCount = Math.max(...byDay.map((item) => item.entries.length), 1);
+  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={DiaperIcon} title={t("diaper.summaryTitle")} subtitle={t("diaper.summarySubtitle")}>
-      <RangeToggle range={range} onChange={setRange} />
+      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
       <div className="grid grid-cols-3 gap-3">
         <StatTile
           value={String(summary.count)}
-          caption={range === 1 ? t("diaper.changesToday") : t("diaper.changesInRange", { count: range })}
+          caption={
+            range !== 1
+              ? t("diaper.changesInRange", { count: range })
+              : day === today
+                ? t("diaper.changesToday")
+                : t("diaper.changesOnDay", { date: dateLabel })
+          }
           emphasis
         />
         <StatTile value={String(summary.pee)} caption={t("diaper.pee")} />
         <StatTile value={String(summary.poop)} caption={t("diaper.poop")} />
       </div>
-      <ActivityChart
-        title={t("diaper.dailyActivity")}
-        hint={t("diaper.dailyActivityHint")}
-        days={byDay.map((day) => ({ ...day, value: day.entries.length }))}
-        maxValue={maxCount}
-        barLabel={(value) => String(value)}
-        ariaLabel={(value, date) => t("diaper.barAria", { count: value, date })}
-        locale={locale}
-      />
+      {range === 1 && summary.count === 0 && entries.length > 0 ? (
+        <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
+      ) : null}
+      {range === 1 ? null : (
+        <ActivityChart
+          title={t("diaper.dailyActivity")}
+          hint={t("diaper.dailyActivityHint")}
+          days={byDay.map((item) => ({ ...item, value: item.entries.length }))}
+          maxValue={maxCount}
+          barLabel={(value) => String(value)}
+          ariaLabel={(value, date) => t("diaper.barAria", { count: value, date })}
+          locale={locale}
+        />
+      )}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("diaper.logPatterns")}</p>
       ) : null}
@@ -291,39 +383,64 @@ export function DiaperRangeSummary({ entries }: { entries: DiaperEntry[] }) {
   );
 }
 
-export function SleepRangeSummary({ entries }: { entries: SleepEntry[] }) {
-  const { t, locale } = useLocale();
-  const [range, setRange] = useState<RangeDays>(7);
-  const axis = recentDates(range, locale);
-  const byDay = axis.map((day) => {
-    const dayEntries = entries.filter((entry) => entry.date === day.date);
-    return { ...day, entries: dayEntries, minutes: dayEntries.reduce((sum, entry) => sum + sleepMinutes(entry), 0) };
+export function SleepRangeSummary({
+  entries,
+  link,
+}: {
+  entries: SleepEntry[];
+  link: ReturnType<typeof useSummaryLink>;
+}) {
+  const { t } = useLocale();
+  const period = useSummaryWindow(
+    entries.map((entry) => entry.date),
+    link,
+  );
+  const { range, day, today, axis, locale } = period;
+  const byDay = axis.map((item) => {
+    const dayEntries = entries.filter((entry) => entry.date === item.date);
+    return {
+      ...item,
+      entries: dayEntries,
+      minutes: dayEntries.reduce((sum, entry) => sum + sleepMinutes(entry), 0),
+    };
   });
-  const summary = sleepDaySummary(byDay.flatMap((day) => day.entries));
-  const maxMinutes = Math.max(...byDay.map((day) => day.minutes), 1);
+  const summary = sleepDaySummary(byDay.flatMap((item) => item.entries));
+  const maxMinutes = Math.max(...byDay.map((item) => item.minutes), 1);
+  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={Moon} title={t("sleep.summaryTitle")} subtitle={t("sleep.summarySubtitle")}>
-      <RangeToggle range={range} onChange={setRange} />
+      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
       <div className="grid grid-cols-2 gap-3">
         <StatTile
           value={formatDuration(summary.total, t)}
-          caption={range === 1 ? t("sleep.totalToday") : t("sleep.totalInRange", { count: range })}
+          caption={
+            range !== 1
+              ? t("sleep.totalInRange", { count: range })
+              : day === today
+                ? t("sleep.totalToday")
+                : t("sleep.totalOnDay", { date: dateLabel })
+          }
           emphasis
         />
         <StatTile value={String(summary.count)} caption={t("sleep.summarySessions")} />
         <StatTile value={formatDuration(summary.nap, t)} caption={t("sleep.day")} />
         <StatTile value={formatDuration(summary.night, t)} caption={t("sleep.night")} />
       </div>
-      <ActivityChart
-        title={t("sleep.dailyActivity")}
-        hint={t("sleep.dailyActivityHint")}
-        days={byDay.map((day) => ({ ...day, value: day.minutes }))}
-        maxValue={maxMinutes}
-        barLabel={(value) => formatDuration(value, t)}
-        ariaLabel={(value, date) => t("sleep.barAria", { duration: formatDuration(value, t), date })}
-        locale={locale}
-      />
+      {range === 1 && summary.count === 0 && entries.length > 0 ? (
+        <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
+      ) : null}
+      {range === 1 ? null : (
+        <ActivityChart
+          title={t("sleep.dailyActivity")}
+          hint={t("sleep.dailyActivityHint")}
+          days={byDay.map((item) => ({ ...item, value: item.minutes }))}
+          maxValue={maxMinutes}
+          barLabel={(value) => formatDuration(value, t)}
+          ariaLabel={(value, date) => t("sleep.barAria", { duration: formatDuration(value, t), date })}
+          locale={locale}
+        />
+      )}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("sleep.logPatterns")}</p>
       ) : null}

@@ -25,14 +25,20 @@ export function ChildDayHistory<T extends DayEntry>({
   emptyLabel,
   onDelete,
   onEdit,
+  selectedDate: selectedDateProp,
+  onSelectDate,
 }: {
   entries: T[];
   emptyLabel: string;
   onDelete: (id: string) => void;
   onEdit?: (id: string) => void;
+  selectedDate?: string;
+  onSelectDate?: (date: string) => void;
 }) {
   const { t, locale } = useLocale();
-  const [selectedDate, setSelectedDate] = useState(getTodayDateStr);
+  const [internalDate, setInternalDate] = useState(getTodayDateStr);
+  const selectedDate = selectedDateProp ?? internalDate;
+  const setSelectedDate = onSelectDate ?? setInternalDate;
   const dfLocale = locale === "id" ? idLocale : enUS;
   const selectedLabel = format(parseISO(selectedDate), "EEEE, d MMMM yyyy", { locale: dfLocale });
   const dayEntries = entries

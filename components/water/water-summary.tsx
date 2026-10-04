@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { Droplets } from "lucide-react";
@@ -15,18 +14,33 @@ import { SummaryChartSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useRemoteDataPending } from "@/hooks/use-remote-data-pending";
 import { useAppStorage } from "@/hooks/use-app-storage";
+import type { useSummaryLink } from "@/hooks/use-summary-link";
 import type { Locale } from "@/lib/i18n/types";
 import {
   countDaysMetGoal,
   formatVolume,
   formatVolumeCompact,
+  getDayStatus,
+  getTodayDateStr,
+  getWaterForDate,
   getWaterInRange,
   getWaterPerDay,
   WATER_MIN_ML,
+  type WaterDayStatus,
 } from "@/lib/water";
 import { cn } from "@/lib/utils";
 
-type RangeDays = 7 | 30;
+type RangeDays = 1 | 7 | 30;
+
+function dayStatusLabel(
+  status: WaterDayStatus,
+  t: ReturnType<typeof useLocale>["t"],
+) {
+  if (status === "low") return t("water.status.low");
+  if (status === "good") return t("water.status.good");
+  if (status === "above") return t("water.status.above");
+  return t("water.status.empty");
+}
 
 function dateFnsLocale(locale: Locale) {
   return locale === "id" ? idLocale : enUS;
@@ -39,23 +53,39 @@ const barColorByStatus = {
   above: "bg-sky-500",
 } as const;
 
-export function WaterSummary({ compact = false }: { compact?: boolean }) {
+export function WaterSummary({
+  compact = false,
+  link,
+}: {
+  compact?: boolean;
+  link: ReturnType<typeof useSummaryLink>;
+}) {
   const { data, mounted } = useAppStorage();
   const { locale, t } = useLocale();
   const pending = useRemoteDataPending();
-  const [range, setRange] = useState<RangeDays>(7);
+  const range: RangeDays = compact ? 7 : link.range;
 
   if (!mounted || pending) return <SummaryChartSkeleton />;
 
   const entries = data?.water.entries ?? [];
-  const chartDays = compact ? 7 : range;
-  const perDay = getWaterPerDay(entries, chartDays, new Date(), locale);
+  const today = getTodayDateStr();
+  const chartDays = range === 1 ? 7 : range;
+  const perDay = range === 1 ? [] : getWaterPerDay(entries, chartDays, new Date(), locale);
   const maxMl = Math.max(...perDay.map((d) => d.totalMl), WATER_MIN_ML);
-  const inRange = getWaterInRange(entries, range);
-  const totalMlInRange = inRange.reduce((sum, e) => sum + e.amountMl, 0);
+  const dayEntries = getWaterForDate(entries, link.day);
+  const dayTotal = dayEntries.reduce((sum, entry) => sum + entry.amountMl, 0);
+  const inRange = range === 1 ? dayEntries : getWaterInRange(entries, range);
+  const totalMlInRange = range === 1 ? dayTotal : inRange.reduce((sum, entry) => sum + entry.amountMl, 0);
   const daysMetGoal = countDaysMetGoal(perDay);
   const hasChartData = perDay.some((d) => d.totalMl > 0);
   const dfLocale = dateFnsLocale(locale);
+  const dateLabel = format(parseISO(link.day), "d MMM", { locale: dfLocale });
+  const totalCaption =
+    range === 1
+      ? link.day === today
+        ? t("water.totalToday")
+        : t("water.totalOnDay", { date: dateLabel })
+      : t("water.totalInRange", { count: range });
 
   const chartFrom = perDay[0]
     ? format(parseISO(perDay[0].date), "d MMM", { locale: dfLocale })
@@ -80,11 +110,11 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
       <CardContent className="space-y-5">
         <div className="space-y-2">
           <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
-            {([7, 30] as RangeDays[]).map((days) => (
+            {(compact ? ([7, 30] as RangeDays[]) : ([1, 7, 30] as RangeDays[])).map((days) => (
               <button
                 key={days}
                 type="button"
-                onClick={() => setRange(days)}
+                onClick={() => link.setRange(days)}
                 className={cn(
                   "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
                   range === days
@@ -92,13 +122,19 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
                     : "text-muted-foreground hover:bg-white/55",
                 )}
               >
-                {t("water.rangeDays", { count: days })}
+                {days === 1
+                  ? link.day === today
+                    ? t("common.today")
+                    : dateLabel
+                  : t("water.rangeDays", { count: days })}
               </button>
             ))}
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            {t("water.rangeHint")}
-          </p>
+          {range === 1 ? null : (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t("water.rangeHint")}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -106,23 +142,31 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
             <p className="text-2xl font-bold tabular-nums">
               {formatVolume(totalMlInRange, locale)}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {t("water.totalInRange", { count: range })}
-            </p>
+            <p className="text-xs text-muted-foreground">{totalCaption}</p>
           </div>
-          <div className="rounded-xl bg-lilac/20 px-3 py-3 text-center">
-            <p className="text-2xl font-bold tabular-nums">
-              {daysMetGoal}
-              <span className="text-lg font-medium text-muted-foreground">
-                /{chartDays}
-              </span>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("water.daysMetGoal")}
-            </p>
-          </div>
+          {range === 1 ? (
+            <div className="rounded-xl bg-lilac/20 px-3 py-3 text-center">
+              <p className="text-lg font-bold">{dayStatusLabel(getDayStatus(dayTotal), t)}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("water.goalMin", { amount: formatVolume(WATER_MIN_ML, locale) })}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-lilac/20 px-3 py-3 text-center">
+              <p className="text-2xl font-bold tabular-nums">
+                {daysMetGoal}
+                <span className="text-lg font-medium text-muted-foreground">/{chartDays}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">{t("water.daysMetGoal")}</p>
+            </div>
+          )}
         </div>
 
+        {range === 1 && dayTotal === 0 && entries.length > 0 ? (
+          <p className="text-center text-sm text-muted-foreground">{t("water.emptyDay")}</p>
+        ) : null}
+
+        {range === 1 ? null : (
         <div className="space-y-2">
           <div>
             <p className="text-sm font-medium text-foreground">
@@ -227,6 +271,7 @@ export function WaterSummary({ compact = false }: { compact?: boolean }) {
             </p>
           </div>
         </div>
+        )}
 
         {entries.length === 0 && (
           <p className="text-center text-sm text-muted-foreground">

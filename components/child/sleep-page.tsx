@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
-import { SleepRangeSummary } from "@/components/child/page-summary";
+import { SleepRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { SleepLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
 import { LogPageSkeleton } from "@/components/layout/data-skeletons";
@@ -16,6 +16,7 @@ export function SleepPageContent() {
   const { t } = useLocale();
   const { data, mounted, removeSleep } = useChildStorage();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const summary = useSummaryLink();
   const editing = data.sleeps.find((entry) => entry.id === editingId) ?? null;
 
   const pending = useRemoteDataPending();
@@ -25,8 +26,10 @@ export function SleepPageContent() {
   return (
     <LogScreen>
       <SleepLogForm />
-      <SleepRangeSummary entries={data.sleeps} />
+      <SleepRangeSummary entries={data.sleeps} link={summary} />
       <ChildDayHistory
+        selectedDate={summary.day}
+        onSelectDate={summary.selectHistoryDate}
         entries={data.sleeps.map((entry) => ({
           ...entry,
           time: entry.startTime,

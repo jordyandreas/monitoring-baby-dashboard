@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
-import { FeedRangeSummary } from "@/components/child/page-summary";
+import { FeedRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { FeedLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
 import { LogPageSkeleton } from "@/components/layout/data-skeletons";
@@ -16,6 +16,7 @@ export function FeedPageContent() {
   const { t } = useLocale();
   const { data, mounted, removeFeed } = useChildStorage();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const summary = useSummaryLink();
   const editing = data.feeds.find((entry) => entry.id === editingId) ?? null;
 
   const pending = useRemoteDataPending();
@@ -25,8 +26,10 @@ export function FeedPageContent() {
   return (
     <LogScreen>
       <FeedLogForm />
-      <FeedRangeSummary entries={data.feeds} />
+      <FeedRangeSummary entries={data.feeds} link={summary} />
       <ChildDayHistory
+        selectedDate={summary.day}
+        onSelectDate={summary.selectHistoryDate}
         entries={data.feeds.map((entry) => ({
           ...entry,
           ...feedHistoryParts(entry, t),

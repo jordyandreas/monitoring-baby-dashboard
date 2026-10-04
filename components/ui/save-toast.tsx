@@ -212,16 +212,18 @@ function SaveToastCard({
   action,
   topic,
   whatsappText,
+  detail,
 }: {
   id: string | number;
   kind: SaveToastKind;
   action: SaveToastAction;
   topic?: SaveToastTopic;
   whatsappText?: string;
+  detail?: string;
 }) {
   const { t } = useLocale();
   const ok = kind === "success";
-  const message = toastMessage(t, kind, action, topic);
+  const message = ok && detail ? detail : toastMessage(t, kind, action, topic);
 
   return (
     <div
@@ -272,6 +274,7 @@ export function showSaveToast(
   action: SaveToastAction = "save",
   whatsappText?: string,
   topic?: SaveToastTopic,
+  detail?: string,
 ) {
   const options: ExternalToast = {
     id,
@@ -286,6 +289,7 @@ export function showSaveToast(
         action={action}
         topic={topic}
         whatsappText={whatsappText}
+        detail={kind === "success" ? detail : undefined}
       />
     ),
     options,
@@ -298,8 +302,9 @@ export function reportSave(
   action: SaveToastAction = "save",
   whatsappText?: string,
   topic?: SaveToastTopic,
+  detail?: string,
 ) {
-  const id = showSaveToast("success", undefined, action, whatsappText, topic);
+  const id = showSaveToast("success", undefined, action, whatsappText, topic, detail);
   scheduleRemoteWrite(domain, write, () => showSaveToast("error", id, action, undefined, topic));
 }
 
