@@ -11,10 +11,10 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="glass-bar mt-10 mb-[calc(6.5rem+env(safe-area-inset-bottom))] border-t border-border md:mb-0">
+    <footer className="glass-bar mt-8 mb-[calc(6.5rem+env(safe-area-inset-bottom))] border-t border-border md:mt-10 md:mb-0">
       <div
         className={cn(
-          "mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 md:flex-row md:items-start md:justify-between md:gap-10 md:px-6 lg:px-10",
+          "mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-5 md:flex-row md:items-start md:justify-between md:gap-10 md:px-6 md:py-6 lg:px-10",
           mode === "child" && "pr-20 md:pr-24 lg:pr-28",
         )}
       >
@@ -23,13 +23,13 @@ export function SiteFooter() {
             <img src="/logo.png" alt="" className="size-8" />
           </Link>
           <div className="min-w-0">
-            <p className="font-bold text-foreground">{t("pages.home.title")}</p>
-            <p className="mt-1 max-w-sm leading-relaxed">{t("footer.tagline")}</p>
+            <p className="text-sm font-bold text-foreground">{t("pages.home.title")}</p>
+            <p className="mt-0.5 max-w-sm text-sm leading-snug text-muted-foreground">{t("footer.tagline")}</p>
           </div>
         </div>
-        <div className="max-w-md space-y-2 leading-relaxed md:text-right">
+        <div className="max-w-md space-y-1.5 text-xs leading-relaxed text-muted-foreground md:text-right md:text-sm">
           <p>{t("footer.disclaimer")}</p>
-          <p>{t("footer.copyright", { year })}</p>
+          <p className="font-medium text-foreground/70">{t("footer.copyright", { year })}</p>
         </div>
       </div>
     </footer>

@@ -174,12 +174,17 @@ export function feedHistoryParts(
   };
 }
 
+function diaperKindLabel(kind: DiaperEntry["kind"], t: Translate): string {
+  if (kind === "pee") return t("diaper.pee");
+  if (kind === "poop") return t("diaper.poop");
+  return `${t("diaper.pee")} & ${t("diaper.poop")}`;
+}
+
 export function diaperHistoryParts(
   entry: DiaperEntry,
   t: Translate,
 ): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
-  const title =
-    entry.kind === "pee" ? t("diaper.pee") : entry.kind === "poop" ? t("diaper.poop") : t("diaper.both");
+  const title = diaperKindLabel(entry.kind, t);
   return {
     title,
     subtitle: [diaperColorLabel(entry.poopColor, t), diaperTextureLabel(entry.poopTexture, t)]
@@ -248,8 +253,7 @@ function diaperTextureLabel(texture: DiaperEntry["poopTexture"], t: Translate): 
 }
 
 export function describeDiaper(entry: DiaperEntry, t: Translate): string {
-  const kind =
-    entry.kind === "pee" ? t("diaper.pee") : entry.kind === "poop" ? t("diaper.poop") : t("diaper.both");
+  const kind = diaperKindLabel(entry.kind, t);
   const extra = [diaperColorLabel(entry.poopColor, t), diaperTextureLabel(entry.poopTexture, t)].filter(
     Boolean,
   );
