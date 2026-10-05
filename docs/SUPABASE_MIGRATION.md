@@ -1,220 +1,81 @@
-# Supabase migration guide
+# Nurtory and Supabase
 
-Gradual path from **localStorage-only** to **Supabase** without rewriting the app at once.
-
-## Current architecture (unchanged by default)
+Each screen calls the service for that feature. The service reads and writes Supabase. There is no shared local note blob and no upload queue.
 
 ```
-UI components
-  → useAppStorage()
-    → AppStorageProvider
-      → lib/storage.ts (localStorage + useSyncExternalStore)
+Screen
+  → src/services/<feature>.service.ts
+    → Supabase table (RLS: auth.uid())
 ```
 
-With `NEXT_PUBLIC_SUPABASE_ENABLED=false` (default), behavior is identical to before.
+Sign-in uses an email account. The session is stored in cookies so `src/proxy.ts` can see it. A visitor without a session who opens a feature route is sent back to `/`, where the login dialog lives. Home stays public.
 
-## Target architecture (phased)
+A failed save shows the error toast and leaves the list on screen unchanged. Nothing is written to the device when the network is down.
 
-```
-UI components
-  → useAppStorage()          ← keep this API stable
-    → persist layer
-        ├─ localStorage (cache / offline)
-        └─ Supabase repositories (when domain flag is on)
-  → useSupabase()            ← auth + migration status only (for now)
-```
+## Browser keys that remain
+
+These are device preferences, copied once from the old names:
+
+| Current key | Previous key |
+|-------------|--------------|
+| `nurtory-locale` | `baby-monitor-locale` |
+| `nurtory-mode` | `baby-monitor-mode` |
+| `nurtory-age-celebration-dismissed` | `baby-age-celebration-dismissed` |
+
+`baby-monitor-v1` and `baby-monitor-child-v1` are deleted on startup and are not uploaded. The notes already live in the account.
+
+In-memory events: `nurtory-data-refresh`.
+
+Reminders are Web Push. Settings live in the account menu. The sender is the `send-due-reminders` Edge Function.
 
 ## Database schema
 
 | Table | Purpose |
 |-------|---------|
-| `profiles` | 1:1 with `auth.users`, locale |
+| `profiles` | 1:1 with `auth.users` |
 | `baby_profiles` | Baby name, gender, LMP, due date |
 | `baby_plus_programs` | Start date, daily time, completions JSON |
 | `vitamin_items` | Named vitamins |
-| `vitamin_day_logs` | Per-day completion map (`completions` jsonb) |
+| `vitamin_day_logs` | Per-day completion map |
 | `kick_logs` | Individual kick events |
 | `water_logs` | Individual water entries |
 | `user_settings` | `glass_size_ml` |
-| `notification_preferences` | Full `RemindersState` as jsonb |
-| `reminder_fired_events` | Dedupe keys (for future server scheduler) |
-| `sync_metadata` | Migration / last sync timestamps |
-| `scheduled_notifications` | **Future** — cron/interval jobs |
+| `push_reminder_preferences` | Web Push reminder choices |
+| `push_subscriptions` | Browser push endpoints |
+| `scheduled_notifications` | Next send time for each reminder |
+| `child_profiles` | Child name, gender, birth date |
+| `feed_logs` | Milk |
+| `diaper_logs` | Diapers |
+| `sleep_logs` | Sleep |
+| `growth_logs` | Weight, length, head |
+| `solid_logs` | Solid food |
+| `health_logs` | Medicine and temperature |
+| `potty_logs` | Toilet |
+| `meal_logs` | Family meals |
+| `milestone_logs` | Milestones |
 
-### Why jsonb in places?
+Apply `supabase/migrations/` in the SQL editor or with `supabase db push`.
 
-- `baby_plus_programs.completions` — matches existing `Record<string, boolean>` keys (`"0-0"`).
-- `notification_preferences.preferences` — matches `RemindersState` exactly; avoids 4+ tables for MVP.
-- `vitamin_day_logs.completions` — matches `VitaminDayRecord.completed`.
-
-You can normalize reminders into `scheduled_notifications` when you add server-side push.
-
-## Supabase project setup
-
-1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL**: Run `supabase/migrations/20260526000000_initial_schema.sql` in the SQL editor (or use Supabase CLI `supabase db push`).
-3. **Auth → Providers**: Enable **Anonymous sign-ins** (MVP, no login UI yet).
-4. **API keys**: Copy project URL + anon key into `.env.local` (see `.env.example`).
+## Environment
 
 ```bash
 cp .env.example .env.local
-# fill NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 
-## Environment flags
+| Variable | Meaning |
+|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key |
+| `NEXT_PUBLIC_SUPABASE_ENABLED` | `true` turns on sign-in, proxy, and saves |
 
-| Variable | Default | Meaning |
-|----------|---------|---------|
-| `NEXT_PUBLIC_SUPABASE_ENABLED` | `false` | Master switch |
-| `NEXT_PUBLIC_SUPABASE_SYNC_BABY` | on when master is on | Read/write baby profile via Supabase |
-| `NEXT_PUBLIC_SUPABASE_SYNC_KICKS` | on when master is on | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_WATER` | on when master is on | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_VITAMINS` | on when master is on | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_BABY_PLUS` | on when master is on | |
-| `NEXT_PUBLIC_SUPABASE_SYNC_REMINDERS` | on when master is on | |
+Auth uses email sign-in. A browser that signed in before cookies were used needs to sign in once more.
 
-Omit a `SYNC_*` flag to sync that domain. Set it to `false` to keep that domain on localStorage only.
+## Services
 
-## Folder structure
+Pregnancy: `baby`, `baby-plus`, `vitamins`, `kicks`, `water`.
 
-```
-lib/supabase/
-  client.ts              # Browser client (singleton)
-  server.ts              # Server client (future SSR/API)
-  env.ts                 # Config + feature flags
-  auth.ts                # Anonymous session helper
-  database.types.ts      # DB types (hand-written; replace with CLI later)
-  mappers.ts             # AppStorage ↔ rows
-  migrate-local.ts       # One-time localStorage sync
-  sync-constants.ts
-  repositories/
-    app-data.ts          # fetch + upsert helpers
-components/providers/
-  supabase-provider.tsx  # Auth bootstrap + migration on load
-supabase/migrations/
-  20260526000000_initial_schema.sql
-```
+Push reminders: `push-reminders`.
 
-## Migration phases (recommended)
+Child: `child`, `feed`, `diapers`, `sleep`, `growth`, `solids`, `health`, `potty`, `meals`, `milestones`.
 
-### Phase 0 — Infrastructure (you are here)
-
-- [x] SQL schema + RLS
-- [x] Supabase client + env flags
-- [x] `SupabaseProvider` (disabled by default)
-- [x] One-time `runLocalStorageMigration()`
-- [ ] Apply SQL in your Supabase project
-- [ ] Set `.env.local` keys
-
-**No user-visible change** until `SUPABASE_ENABLED=true`.
-
-### Phase 1 — Upload existing data
-
-1. Set `NEXT_PUBLIC_SUPABASE_ENABLED=true` (keep all `SYNC_*` false).
-2. Deploy / run locally — app signs in anonymously and uploads localStorage once.
-3. Verify rows in Supabase Table Editor.
-4. Device flag `baby-monitor-supabase-migrated-v1` prevents duplicate uploads.
-
-**Conflict rule (MVP):** local data wins on first sync if both sides have data.
-
-### Phase 2 — Live read/write (wired)
-
-`AppStorageProvider` still updates localStorage immediately. When Supabase is enabled, each mutation also schedules a write in `lib/supabase/account-data.ts`:
-
-- Kicks and water entries insert or delete one row.
-- Baby profile, Baby Plus, glass size, reminders, and vitamins upsert their rows.
-- On load, after the one-time migration, a device that already migrated pulls remote data into the local cache.
-- If a write fails, local data is kept and pushed again on the next load.
-
-Set a domain flag to `false` to pause that domain. localStorage stays on either way.
-
-### Phase 3 — Supabase primary
-
-- Load from Supabase on startup; localStorage becomes cache only.
-- Optional: Supabase Realtime subscriptions per table (not required for MVP).
-
-### Phase 4 — Auth upgrade
-
-- Replace anonymous auth with magic link / Google when you need multi-device.
-- `auth.users` id stays stable if you link anonymous → permanent account (Supabase supports this).
-
-### Phase 5 — Remove localStorage blob
-
-- Drop `baby-monitor-v1` once all domains use Supabase + you accept offline limits.
-- Keep `baby-monitor-locale` or move locale to `profiles.locale`.
-
-## When to sync
-
-| Event | Action |
-|-------|--------|
-| First visit with Supabase enabled | `runLocalStorageMigration()` (upload or download) |
-| User mutation (Phase 2+) | Write local immediately → async Supabase |
-| Tab focus (optional later) | Pull remote changes if `last_synced_at` stale |
-| Before logout / account link | Final upsert |
-
-Avoid syncing on every reminder poll (15s) — reminders stay client-side until Phase 6.
-
-## Avoiding regressions
-
-1. **Never remove** `updateAppStorage` until Phase 5.
-2. **Feature flags** per domain — easy rollback on Vercel.
-3. **Same types** — `lib/types.ts` remains source of truth; mappers translate.
-4. **Test checklist** per domain: add → refresh → second device (later) → offline add → reconnect.
-
-## Future notifications
-
-Current flow stays in the browser:
-
-`useReminderScheduler` → `getDueReminders` → `Notification` / service worker
-
-**Later**, use `scheduled_notifications`:
-
-| `schedule_type` | Use case |
-|-----------------|----------|
-| `daily` | Vitamins / kicks at `HH:mm` |
-| `interval` | Hydration every N hours |
-| `cron` | Complex rules |
-| `once` | One-off nudge |
-
-**Suggested backend layout:**
-
-```
-scheduled_notifications (what to send, when)
-        ↓
-Supabase Edge Function or pg_cron (every minute)
-        ↓
-Query due rows (next_run_at <= now())
-        ↓
-Web Push / FCM / email
-        ↓
-Insert reminder_fired_events + update next_run_at
-```
-
-`notification_preferences` remains user-facing settings; `scheduled_notifications` is the operational queue derived from those settings (sync via trigger or app code when prefs change).
-
-**Do not** move the 15s client poll to the server until you need push when the app is closed.
-
-## Incremental repository API
-
-Writes live in `lib/supabase/repositories/domain-sync.ts` and are scheduled from `AppStorageProvider` through `scheduleRemoteWrite`.
-
-## Vercel deployment
-
-Add env vars in Project → Settings → Environment Variables (same names as `.env.local`).
-
-## Type generation (optional)
-
-```bash
-npx supabase login
-npx supabase link --project-ref YOUR_REF
-npx supabase gen types typescript --linked > lib/supabase/database.types.ts
-```
-
-## Troubleshooting
-
-| Issue | Fix |
-|-------|-----|
-| `Anonymous sign-ins are disabled` | Enable in Supabase Auth settings |
-| RLS permission denied | Ensure user is signed in; policies use `auth.uid()` |
-| Empty tables after “success” | Check `migration` in React DevTools; verify localStorage had data |
-| Duplicate kicks after migration | Phase 1 uses full replace; Phase 2 should switch to insert-only |
+Mappers stay in `src/lib/supabase/mappers.ts` and `src/lib/supabase/child-mappers.ts`. The browser client is `src/lib/supabase/client.ts`.

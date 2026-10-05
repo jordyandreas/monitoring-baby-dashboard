@@ -1,11 +1,11 @@
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { en } from "../lib/i18n/messages/en";
-import { id } from "../lib/i18n/messages/id";
+import { en } from "../src/lib/i18n/messages/en";
+import { id } from "../src/lib/i18n/messages/id";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE_DIRS = ["app", "components", "lib"];
+const SOURCE_DIRS = ["src/app", "src/components", "src/lib", "src/hooks", "src/services", "src/utils"];
 
 /** Keys passed to t("...") in source files. */
 export function collectUsedKeys(): Set<string> {
@@ -31,7 +31,7 @@ function walkSourceFiles(): string[] {
       const rel = relative(ROOT, full);
 
       if (
-        rel.startsWith("lib/i18n/messages") ||
+        rel.startsWith("src/lib/i18n/messages") ||
         rel.startsWith("scripts/") ||
         rel.startsWith("scripts\\") ||
         entry === "node_modules"
@@ -147,7 +147,7 @@ export function writeIdCatalog(flat: Map<string, string>) {
     nested,
     `import type { Messages } from "./en";`,
   );
-  const outPath = join(ROOT, "lib/i18n/messages/id.ts");
+  const outPath = join(ROOT, "src/lib/i18n/messages/id.ts");
   writeFileSync(outPath, content, "utf8");
   return outPath;
 }
