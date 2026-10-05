@@ -1,3 +1,22 @@
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+
+  const title = payload.title || "Nurtory";
+  const options = {
+    body: payload.body || "",
+    icon: "/icons/icon-192.png",
+    tag: payload.tag || "nurtory",
+    data: { url: payload.url || "/" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
@@ -9,6 +28,9 @@ self.addEventListener("notificationclick", (event) => {
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && "focus" in client) {
+            if ("navigate" in client) {
+              return client.navigate(url).then((next) => (next ?? client).focus());
+            }
             return client.focus();
           }
         }

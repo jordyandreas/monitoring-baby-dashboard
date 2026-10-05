@@ -1,6 +1,6 @@
-Baby Monitor — pregnancy tracking (vitamins, Baby Plus, kicks, water, reminders). Data is stored in **localStorage**. With Supabase enabled, the same data syncs to your project under an anonymous session.
+Nurtory keeps a private record of pregnancy and childhood. Each screen reads and writes its own Supabase tables. Notes are not stored in the browser.
 
-See **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** for schema, env vars, and phased rollout.
+See **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** for the schema, environment, and how saves work.
 
 ## Getting Started
 

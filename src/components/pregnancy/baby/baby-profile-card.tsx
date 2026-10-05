@@ -1,0 +1,163 @@
+"use client";
+
+import { useState } from "react";
+import { Baby, Calendar, Heart, Pencil } from "lucide-react";
+import { BabyProfileForm } from "./baby-profile-form";
+import { BabyProfileDialog } from "./baby-profile-dialog";
+import { GenderBadge } from "./gender-badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ProfileCardSkeleton } from "@/components/layout/data-skeletons";
+import { useLocale } from "@/components/providers/locale-provider";
+import { useSupabase } from "@/components/providers/supabase-provider";
+import { commitSave } from "@/components/ui/save-toast";
+import { useRemote } from "@/hooks/use-remote";
+import {
+  formatDueDate,
+  getBabyGreeting,
+  getDueDateCountdown,
+  getPregnancyProgress,
+} from "@/lib/i18n/baby";
+import type { BabyProfile } from "@/lib/pregnancy/types";
+import { getBaby, saveBaby } from "@/services/baby.service";
+import { cn } from "@/utils/cn";
+
+export function BabyProfileCard({ className }: { className?: string }) {
+  const { signedIn, requestLogin } = useSupabase();
+  const { data, ready } = useRemote("baby", getBaby, signedIn);
+  const { locale, t } = useLocale();
+  const [open, setOpen] = useState(false);
+
+  if (!ready) return <ProfileCardSkeleton className={className} />;
+
+  const baby = data;
+
+  const save = (profile: BabyProfile) => {
+    void commitSave("baby", () => saveBaby(profile), "save", undefined, "baby");
+  };
+
+  if (!baby) {
+    return (
+      <Card
+        className={cn(
+          "h-full overflow-hidden rounded-2xl bg-gradient-to-br from-secondary/40 to-white/20 shadow-sm",
+          className,
+        )}
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Baby className="size-6 text-lilac-deep" />
+            {t("baby.yourLittleOne")}
+          </CardTitle>
+          <CardDescription>{t("baby.addProfileHint")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {signedIn ? (
+            <BabyProfileForm
+              onSave={(profile) => {
+                save(profile);
+              }}
+            />
+          ) : (
+            <Button type="button" className="min-h-11 rounded-full" onClick={() => requestLogin()}>
+              {t("account.signIn")}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const pregnancy = getPregnancyProgress(baby.dueDate, t, locale);
+  const greeting = getBabyGreeting(baby.name, baby.gender, t);
+
+  return (
+    <>
+      <Card
+        className={cn(
+          "h-full overflow-hidden rounded-2xl bg-gradient-to-br from-secondary/40 to-white/20 shadow-sm",
+          className,
+        )}
+      >
+        <CardHeader className="flex flex-row items-start justify-between gap-2 pb-3">
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className="text-sm font-medium leading-relaxed text-lilac-deep/90">
+              {greeting}
+            </p>
+            <CardTitle className="text-2xl leading-tight">{baby.name}</CardTitle>
+            <GenderBadge gender={baby.gender} />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 rounded-full"
+            onClick={() => {
+              if (!signedIn) {
+                requestLogin();
+                return;
+              }
+              setOpen(true);
+            }}
+            aria-label={t("baby.editProfile")}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-start gap-3 rounded-xl border border-lilac/30 bg-lilac/20 px-4 py-3">
+              <Heart className="mt-0.5 size-5 shrink-0 text-lilac-deep" />
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("baby.pregnancy")}
+                </p>
+                <p className="text-lg font-bold text-foreground">
+                  {pregnancy.weekDisplay}
+                </p>
+                {pregnancy.trimesterLabel ? (
+                  <p className="text-sm font-medium text-lilac-deep">
+                    {pregnancy.trimesterLabel}
+                  </p>
+                ) : null}
+                <p className="text-sm text-muted-foreground">{pregnancy.label}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-xl border border-border/50 bg-card px-4 py-3">
+              <Calendar className="mt-0.5 size-5 shrink-0 text-lilac-deep" />
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("baby.expectedDelivery")}
+                </p>
+                <p className="text-sm font-semibold text-foreground">
+                  {formatDueDate(baby.dueDate, locale)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="rounded-xl bg-lilac/40 px-4 py-3 text-center text-sm font-medium text-lilac-foreground">
+            {getDueDateCountdown(baby.dueDate, t)}
+          </p>
+        </CardContent>
+      </Card>
+
+      <BabyProfileDialog
+        open={open}
+        onOpenChange={setOpen}
+        initial={baby}
+        onSave={(profile) => {
+          save(profile);
+          setOpen(false);
+        }}
+      />
+    </>
+  );
+}
