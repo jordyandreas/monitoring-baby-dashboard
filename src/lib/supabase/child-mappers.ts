@@ -8,6 +8,7 @@ import type {
   MealEntry,
   MilestoneEntry,
   PottyEntry,
+  PumpEntry,
   SleepEntry,
   SolidEntry,
 } from "@/lib/child/types";
@@ -79,6 +80,25 @@ export function rowToFeed(row: Tables["feed_logs"]["Row"]): FeedEntry {
   if (row.duration_min != null) entry.durationMin = row.duration_min;
   if (row.amount_ml != null) entry.amountMl = row.amount_ml;
   return entry;
+}
+
+export function pumpToRow(userId: string, entry: PumpEntry): Tables["pump_logs"]["Insert"] {
+  return {
+    id: entry.id,
+    user_id: userId,
+    logged_date: entry.date,
+    logged_time: clock(entry.time),
+    amount_ml: entry.amountMl,
+  };
+}
+
+export function rowToPump(row: Tables["pump_logs"]["Row"]): PumpEntry {
+  return {
+    id: row.id,
+    date: row.logged_date,
+    time: hhmm(row.logged_time),
+    amountMl: row.amount_ml,
+  };
 }
 
 export function diaperToRow(userId: string, entry: DiaperEntry): Tables["diaper_logs"]["Insert"] {
@@ -267,6 +287,7 @@ export function rowToMilestone(row: Tables["milestone_logs"]["Row"]): MilestoneE
 export function rowsToChildStorage(input: {
   profile: Tables["child_profiles"]["Row"] | null;
   feeds: Tables["feed_logs"]["Row"][];
+  pumps: Tables["pump_logs"]["Row"][];
   diapers: Tables["diaper_logs"]["Row"][];
   sleeps: Tables["sleep_logs"]["Row"][];
   growth: Tables["growth_logs"]["Row"][];
@@ -280,6 +301,7 @@ export function rowsToChildStorage(input: {
     ...DEFAULT_CHILD_STORAGE,
     profile: input.profile ? rowToChildProfile(input.profile) : null,
     feeds: input.feeds.map(rowToFeed),
+    pumps: input.pumps.map(rowToPump),
     diapers: input.diapers.map(rowToDiaper),
     sleeps: input.sleeps.map(rowToSleep),
     growth: input.growth.map(rowToGrowth),

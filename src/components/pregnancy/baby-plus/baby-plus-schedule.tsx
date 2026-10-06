@@ -17,7 +17,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Progress } from "@/components/ui/progress";
-import { BabyPlusSkeleton } from "@/components/layout/data-skeletons";
+import { BabyPlusSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -43,8 +43,9 @@ export function BabyPlusSchedule() {
   const { locale, t } = useLocale();
   const { signedIn } = useSupabase();
   const [resetOpen, setResetOpen] = useState(false);
-  const { data, ready } = useRemote("babyPlus", getBabyPlus, signedIn);
-  if (!ready) return <BabyPlusSkeleton />;
+  const { data, ready, error, reload } = useRemote("babyPlus", getBabyPlus, signedIn);
+  const placeholder = remotePlaceholder(ready, error, data, reload, <BabyPlusSkeleton />);
+  if (placeholder) return placeholder;
   const babyPlus = data ?? DEFAULT_STORAGE.babyPlus;
   const persist = (next: BabyPlusState, detail?: string) => {
     void commitSave("babyPlus", () => saveBabyPlus(next), "save", undefined, "babyPlus", detail);

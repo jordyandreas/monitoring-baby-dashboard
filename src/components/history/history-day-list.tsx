@@ -5,6 +5,7 @@ import { Droplets, Footprints, Milk, Moon, Pencil, Trash2 } from "lucide-react";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
+import { PumpIcon } from "@/components/icons/pump-icon";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useLocale } from "@/components/providers/locale-provider";
 import type { HistoryIcon, HistoryTone } from "@/lib/child/summary";
@@ -19,6 +20,7 @@ const toneClass: Record<HistoryTone, string> = {
 
 const historyIcons: Record<HistoryIcon, ComponentType<{ className?: string }>> = {
   feed: Milk,
+  pump: PumpIcon,
   diaper: DiaperIcon,
   sleep: Moon,
   kick: Footprints,
@@ -73,7 +75,7 @@ export function HistoryDayList({
             key={item.id}
             className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
           >
-            <span className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
+            <span className="w-16 shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums">
               {item.time}
             </span>
             <span className="h-8 w-px shrink-0 bg-border" aria-hidden />

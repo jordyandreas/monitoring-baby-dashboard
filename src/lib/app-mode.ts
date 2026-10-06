@@ -5,6 +5,7 @@ export type AppMode = "pregnancy" | "child";
 const PREGNANCY_PREFIXES = ["/vitamins", "/baby-plus", "/water", "/kicks"];
 const CHILD_PREFIXES = [
   "/feed",
+  "/pump",
   "/diapers",
   "/sleep",
   "/growth",

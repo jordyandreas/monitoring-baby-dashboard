@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
-import { Droplets, Footprints, Home, Milk, Moon, Music, Pill, Ruler } from "lucide-react";
+import { Droplets, Footprints, Home, Milk, Music, Pill, Ruler } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
+import { PumpIcon } from "@/components/icons/pump-icon";
 import type { AppMode } from "@/lib/app-mode";
 
 export type NavIcon = ComponentType<{ className?: string }>;
@@ -27,12 +28,12 @@ export const navRoutes: NavRoute[] = [
   { href: "/kicks", labelKey: "nav.kicks", icon: Footprints },
 ];
 
-/** Home → Milk → Diapers → Sleep → Growth */
+/** Home → Milk → Diapers → Pump → Growth */
 export const childNavRoutes: NavRoute[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
   { href: "/feed", labelKey: "nav.feed", icon: Milk },
   { href: "/diapers", labelKey: "nav.diaper", icon: DiaperIcon },
-  { href: "/sleep", labelKey: "nav.sleep", icon: Moon },
+  { href: "/pump", labelKey: "nav.pump", icon: PumpIcon },
   { href: "/growth", labelKey: "nav.growth", icon: Ruler },
 ];
 

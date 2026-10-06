@@ -1,6 +1,6 @@
 "use client";
 
-import { VitaminTrackerSkeleton } from "@/components/layout/data-skeletons";
+import { remotePlaceholder, VitaminTrackerSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -21,10 +21,11 @@ import { VitaminNameForm } from "./vitamin-name-form";
 
 export function VitaminTracker() {
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("vitamins", getVitamins, signedIn);
+  const { data, ready, error, reload } = useRemote("vitamins", getVitamins, signedIn);
   const { locale, t } = useLocale();
 
-  if (!ready) return <VitaminTrackerSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <VitaminTrackerSkeleton />);
+  if (placeholder) return placeholder;
 
   const vitamins = data ?? DEFAULT_STORAGE.vitamins;
   const named = getNamedVitamins(vitamins.items);

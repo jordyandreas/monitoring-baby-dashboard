@@ -2,7 +2,7 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import { Bell, BellOff } from "lucide-react";
-import { ReminderSkeleton } from "@/components/layout/data-skeletons";
+import { LoadFailed, ReminderSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { Button } from "@/components/ui/button";
@@ -257,6 +257,19 @@ function PushReminderPanel() {
   if (!remindersRemote.ready || !babyPlusRemote.ready) {
     return <ReminderSkeleton />;
   }
+  if (
+    (remindersRemote.error && remindersRemote.data == null) ||
+    (babyPlusRemote.error && babyPlusRemote.data == null)
+  ) {
+    return (
+      <LoadFailed
+        onRetry={() => {
+          remindersRemote.reload();
+          babyPlusRemote.reload();
+        }}
+      />
+    );
+  }
 
   const babyPlusTime = babyPlusRemote.data?.dailyTime ?? "";
   const canSchedule = permission === "granted" && configured && !iosNeedsInstall;
@@ -340,6 +353,33 @@ function PushReminderPanel() {
                   patch({
                     ...preferences,
                     feed: { ...preferences.feed, intervalMinutes },
+                  })
+                }
+              />
+            </div>
+          </ReminderRow>
+          <ReminderRow
+            id="push-pump"
+            label={t("pushReminders.pumpLabel")}
+            description={t("pushReminders.pumpHint")}
+            enabled={preferences.pump.enabled && canSchedule}
+            onEnabledChange={async (checked) => {
+              if (checked && !(await enablePush())) return;
+              patch({ ...preferences, pump: { ...preferences.pump, enabled: checked } });
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="push-pump-hours" className="text-xs">
+                {t("pushReminders.intervalLabel")}
+              </Label>
+              <IntervalField
+                id="push-pump-hours"
+                value={preferences.pump.intervalMinutes}
+                disabled={!canSchedule}
+                onChange={(intervalMinutes) =>
+                  patch({
+                    ...preferences,
+                    pump: { ...preferences.pump, intervalMinutes },
                   })
                 }
               />

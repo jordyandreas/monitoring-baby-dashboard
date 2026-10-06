@@ -10,6 +10,7 @@ import type {
   HealthEntry,
   MealEntry,
   PottyEntry,
+  PumpEntry,
   SleepEntry,
   SolidEntry,
 } from "@/lib/child/types";
@@ -37,6 +38,8 @@ export type TodayTotals = {
   logCount: number;
   feedCount: number;
   ml: number;
+  pumpCount: number;
+  pumpMl: number;
   pee: number;
   poop: number;
   sleepMin: number;
@@ -47,15 +50,27 @@ export function rangeTotals(
   inRange: (date: string) => boolean,
 ): TodayTotals {
   const feeds = data.feeds.filter((entry) => inRange(entry.date));
+  const pumps = data.pumps.filter((entry) => inRange(entry.date));
   const diapers = data.diapers.filter((entry) => inRange(entry.date));
   const sleeps = data.sleeps.filter((entry) => inRange(entry.date));
   return {
-    logCount: feeds.length + diapers.length + sleeps.length,
+    logCount: feeds.length + pumps.length + diapers.length + sleeps.length,
     feedCount: feeds.length,
     ml: feeds.reduce((sum, entry) => sum + (entry.amountMl ?? 0), 0),
+    pumpCount: pumps.length,
+    pumpMl: pumps.reduce((sum, entry) => sum + entry.amountMl, 0),
     pee: diapers.filter((entry) => entry.kind === "pee" || entry.kind === "both").length,
     poop: diapers.filter((entry) => entry.kind === "poop" || entry.kind === "both").length,
     sleepMin: sleeps.reduce((sum, entry) => sum + sleepMinutes(entry), 0),
+  };
+}
+
+export function pumpDaySummary(entries: PumpEntry[]) {
+  const ml = entries.reduce((sum, entry) => sum + entry.amountMl, 0);
+  return {
+    count: entries.length,
+    ml,
+    avgMl: entries.length > 0 ? Math.round(ml / entries.length) : null,
   };
 }
 
@@ -126,7 +141,7 @@ export function monthTotals(data: ChildStorage, today: string): TodayTotals {
   return rangeTotals(data, (date) => date.startsWith(month));
 }
 
-export type TimelineKind = "feed" | "diaper" | "sleep" | "solid" | "health" | "potty" | "meal";
+export type TimelineKind = "feed" | "pump" | "diaper" | "sleep" | "solid" | "health" | "potty" | "meal";
 
 export type TimelineItem = {
   id: string;
@@ -150,7 +165,7 @@ function feedSideLabel(side: FeedEntry["side"], t: Translate): string {
 }
 
 export type HistoryTone = "amber" | "sky" | "lilac" | "violet";
-export type HistoryIcon = "feed" | "diaper" | "sleep" | "kick" | "water";
+export type HistoryIcon = "feed" | "pump" | "diaper" | "sleep" | "kick" | "water";
 
 export function feedHistoryParts(
   entry: FeedEntry,
@@ -205,6 +220,22 @@ export function sleepHistoryParts(
     tone: "sky",
     icon: "sleep",
   };
+}
+
+export function pumpHistoryParts(
+  entry: PumpEntry,
+  t: Translate,
+): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
+  return {
+    title: t("child.tagPump"),
+    subtitle: t("child.summaryMl", { ml: entry.amountMl }),
+    tone: "violet",
+    icon: "pump",
+  };
+}
+
+export function describePump(entry: PumpEntry, t: Translate): string {
+  return t("child.summaryMl", { ml: entry.amountMl });
 }
 
 export function describeFeed(entry: FeedEntry, t: Translate): string {
@@ -312,6 +343,15 @@ export function todayTimeline(data: ChildStorage, today: string, t: Translate): 
         time: entry.time,
         title: t("child.tagFeed"),
         detail: describeFeed(entry, t),
+      })),
+    ...data.pumps
+      .filter((entry) => entry.date === today)
+      .map((entry) => ({
+        id: `pump-${entry.id}`,
+        kind: "pump" as const,
+        time: entry.time,
+        title: t("child.tagPump"),
+        detail: describePump(entry, t),
       })),
     ...data.diapers
       .filter((entry) => entry.date === today)

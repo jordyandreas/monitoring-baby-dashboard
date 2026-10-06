@@ -8,7 +8,7 @@ import {
   SubmitButton,
 } from "@/components/child/form-bits";
 import { GrowthHistoryTable } from "@/components/child/growth-history";
-import { GrowthPageSkeleton } from "@/components/layout/data-skeletons";
+import { GrowthPageSkeleton, LoadFailed } from "@/components/layout/data-skeletons";
 import { GrowthCompareSummary } from "@/components/child/page-summary";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
@@ -38,6 +38,19 @@ export function GrowthPageContent() {
   const [head, setHead] = useState("");
 
   if (!growthRemote.ready || !profileRemote.ready) return <GrowthPageSkeleton />;
+  if (
+    (growthRemote.error && growthRemote.data == null) ||
+    (profileRemote.error && profileRemote.data == null)
+  ) {
+    return (
+      <LoadFailed
+        onRetry={() => {
+          growthRemote.reload();
+          profileRemote.reload();
+        }}
+      />
+    );
+  }
 
   const growth = growthRemote.data ?? [];
   const weightKg = optionalNumber(weight);

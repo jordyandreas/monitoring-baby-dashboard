@@ -15,6 +15,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
+import { PumpIcon } from "@/components/icons/pump-icon";
 
 export type PageMeta = {
   titleKey: string;
@@ -52,6 +53,11 @@ export const pageMetaByPath: Record<string, PageMeta> = {
     titleKey: "pages.feed.title",
     descriptionKey: "pages.feed.description",
     icon: Milk,
+  },
+  "/pump": {
+    titleKey: "pages.pump.title",
+    descriptionKey: "pages.pump.description",
+    icon: PumpIcon,
   },
   "/diapers": {
     titleKey: "pages.diapers.title",

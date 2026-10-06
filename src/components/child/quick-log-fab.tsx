@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Milk, Moon } from "lucide-react";
-import { DiaperLogForm, FeedLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
+import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
+import { PumpIcon } from "@/components/icons/pump-icon";
 import { ExpandableFab, type ExpandableFabAction } from "@/components/ui/expandable-fab";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAppMode } from "@/components/providers/app-mode-provider";
@@ -12,16 +13,17 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { cn } from "@/utils/cn";
 
-type LogKind = "feed" | "diaper" | "sleep";
+type LogKind = "feed" | "pump" | "diaper" | "sleep";
 
 const destinations: Record<LogKind, string> = {
   feed: "/feed",
+  pump: "/pump",
   diaper: "/diapers",
   sleep: "/sleep",
 };
 
 function isLogKind(value: string): value is LogKind {
-  return value === "feed" || value === "diaper" || value === "sleep";
+  return value === "feed" || value === "pump" || value === "diaper" || value === "sleep";
 }
 
 export function QuickLogFab() {
@@ -36,6 +38,7 @@ export function QuickLogFab() {
 
   const actions: ExpandableFabAction[] = [
     { id: "feed", label: t("nav.feed"), icon: Milk },
+    { id: "pump", label: t("nav.pump"), icon: PumpIcon },
     { id: "diaper", label: t("nav.diaper"), icon: DiaperIcon },
     { id: "sleep", label: t("nav.sleep"), icon: Moon },
   ];
@@ -47,7 +50,13 @@ export function QuickLogFab() {
   }
 
   const title =
-    kind === "diaper" ? t("diaper.add") : kind === "sleep" ? t("sleep.add") : t("feed.add");
+    kind === "diaper"
+      ? t("diaper.add")
+      : kind === "sleep"
+        ? t("sleep.add")
+        : kind === "pump"
+          ? t("pump.add")
+          : t("feed.add");
 
   return (
     <>
@@ -81,6 +90,7 @@ export function QuickLogFab() {
         <DialogContent className="max-h-[min(90vh,760px)] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
           <DialogTitle className="sr-only">{title}</DialogTitle>
           {kind === "feed" ? <FeedLogForm embedded onSaved={closeAndGo} /> : null}
+          {kind === "pump" ? <PumpLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "diaper" ? <DiaperLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "sleep" ? <SleepLogForm embedded onSaved={closeAndGo} /> : null}
         </DialogContent>

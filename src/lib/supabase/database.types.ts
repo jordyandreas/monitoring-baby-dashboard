@@ -358,6 +358,13 @@ export interface Database {
         duration_min: number | null;
         amount_ml: number | null;
       }>;
+      pump_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        amount_ml: number;
+      }>;
       diaper_logs: TableShape<{
         user_id: string;
         id: string;

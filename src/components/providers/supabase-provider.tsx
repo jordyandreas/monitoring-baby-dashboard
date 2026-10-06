@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { setAccountSession } from "@/lib/supabase/account-session";
 import {
   ensureSupabaseSession,
   resetEnsureSupabaseSession,
@@ -67,12 +68,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const signedIn = isEmailAccount(user);
 
   const retryAuth = useCallback(() => {
+    setAccountSession(null);
     resetEnsureSupabaseSession();
     resetSupabaseBrowserClient();
     setAuthAttempt((n) => n + 1);
   }, []);
 
   const adoptSession = useCallback((next: Session) => {
+    setAccountSession(next);
     setSession(next);
     setUser(next.user);
     setAuthStatus("ready");
@@ -128,6 +131,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async (): Promise<AccountActionResult> => {
     const result = await signOutRequest();
     if (!result.ok) return { error: result.message, notice: null };
+    setAccountSession(null);
     setSession(null);
     setUser(null);
     setAuthStatus("ready");
@@ -153,6 +157,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       if (!active) return;
 
       if (error) {
+        setAccountSession(null);
         setAuthStatus("error");
         setAuthError(error);
         setSession(null);
@@ -160,6 +165,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      setAccountSession(nextSession);
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       setAuthStatus("ready");
@@ -169,6 +175,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       const { data } = supabase.auth.onAuthStateChange((_event, next) => {
         if (!active) return;
         if (next && !isEmailAccount(next.user)) return;
+        setAccountSession(next);
         setSession(next);
         setUser(next?.user ?? null);
         setAuthStatus("ready");

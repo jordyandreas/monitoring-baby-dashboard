@@ -9,6 +9,7 @@ export function useRemote<T>(
   enabled: boolean,
 ) {
   const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
   const loaded = useRef(false);
@@ -17,20 +18,27 @@ export function useRemote<T>(
   useEffect(() => {
     if (!enabled) {
       setData(null);
+      setError(null);
       setReady(true);
       loaded.current = false;
       return;
     }
     let cancelled = false;
-    if (!loaded.current) setReady(false);
+    if (!loaded.current) {
+      setReady(false);
+      setError(null);
+    }
     load()
       .then((value) => {
         if (cancelled) return;
         setData(value);
+        setError(null);
         loaded.current = true;
       })
-      .catch(() => {
-        if (!cancelled) setData(null);
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (!loaded.current) setData(null);
+        setError(err instanceof Error ? err.message : "Request failed");
       })
       .finally(() => {
         if (!cancelled) setReady(true);
@@ -52,5 +60,5 @@ export function useRemote<T>(
     return () => window.removeEventListener(DATA_REFRESH_EVENT, onRefresh);
   }, [features, reload]);
 
-  return { data, setData, ready, reload };
+  return { data, setData, error, ready, reload };
 }

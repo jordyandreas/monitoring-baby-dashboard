@@ -13,6 +13,13 @@ export type FeedEntry = {
   amountMl?: number;
 };
 
+export type PumpEntry = {
+  id: string;
+  date: string;
+  time: string;
+  amountMl: number;
+};
+
 export type DiaperKind = "pee" | "poop" | "both";
 export type PoopColor = "yellow" | "green" | "black" | "brown" | "other";
 export type PoopTexture = "liquid" | "soft" | "solid";
@@ -108,6 +115,7 @@ export interface ChildStorage {
   version: 1;
   profile: ChildProfile | null;
   feeds: FeedEntry[];
+  pumps: PumpEntry[];
   diapers: DiaperEntry[];
   sleeps: SleepEntry[];
   growth: GrowthEntry[];
@@ -122,6 +130,7 @@ export const DEFAULT_CHILD_STORAGE: ChildStorage = {
   version: 1,
   profile: null,
   feeds: [],
+  pumps: [],
   diapers: [],
   sleeps: [],
   growth: [],

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
-import { FeedRangeSummary, useSummaryLink } from "@/components/child/page-summary";
-import { FeedLogForm } from "@/components/child/quick-log-forms";
+import { PumpRangeSummary, useSummaryLink } from "@/components/child/page-summary";
+import { PumpLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
 import { LogPageSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -11,37 +11,37 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { feedHistoryParts } from "@/lib/child/summary";
-import { feedShareText } from "@/lib/child/whatsapp-share";
-import { deleteFeed, listFeeds } from "@/services/feed.service";
+import { pumpHistoryParts } from "@/lib/child/summary";
+import { pumpShareText } from "@/lib/child/whatsapp-share";
+import { deletePump, listPumps } from "@/services/pump.service";
 
-export function FeedPageContent() {
+export function PumpPageContent() {
   const { t } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready, error, reload } = useRemote("feed", listFeeds, signedIn);
+  const { data, ready, error, reload } = useRemote("pump", listPumps, signedIn);
   const [editingId, setEditingId] = useState<string | null>(null);
   const summary = useSummaryLink();
-  const feeds = data ?? [];
-  const editing = feeds.find((entry) => entry.id === editingId) ?? null;
+  const pumps = data ?? [];
+  const editing = pumps.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={4} />);
+  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={3} />);
   if (placeholder) return placeholder;
 
   return (
     <LogScreen>
-      <FeedLogForm />
-      <FeedRangeSummary entries={feeds} link={summary} />
+      <PumpLogForm />
+      <PumpRangeSummary entries={pumps} link={summary} />
       <ChildDayHistory
         selectedDate={summary.day}
         onSelectDate={summary.selectHistoryDate}
-        entries={feeds.map((entry) => ({
+        entries={pumps.map((entry) => ({
           ...entry,
-          ...feedHistoryParts(entry, t),
-          shareText: feedShareText(entry, t),
+          ...pumpHistoryParts(entry, t),
+          shareText: pumpShareText(entry, t),
         }))}
-        emptyLabel={t("feed.empty")}
+        emptyLabel={t("pump.empty")}
         onDelete={(id) => {
-          void commitSave("feed", () => deleteFeed(id), "delete", undefined, "feed");
+          void commitSave("pump", () => deletePump(id), "delete", undefined, "pump");
         }}
         onEdit={setEditingId}
       />
@@ -52,9 +52,9 @@ export function FeedPageContent() {
         }}
       >
         <DialogContent className="max-h-[min(90vh,760px)] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
-          <DialogTitle className="sr-only">{t("feed.edit")}</DialogTitle>
+          <DialogTitle className="sr-only">{t("pump.edit")}</DialogTitle>
           {editing ? (
-            <FeedLogForm key={editing.id} initial={editing} onSaved={() => setEditingId(null)} />
+            <PumpLogForm key={editing.id} initial={editing} onSaved={() => setEditingId(null)} />
           ) : null}
         </DialogContent>
       </Dialog>
