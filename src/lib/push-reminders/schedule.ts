@@ -1,7 +1,11 @@
 export {
   computeSchedules,
   parsePushPreferences,
+  clampIntervalMinutes,
   DEFAULT_PUSH_PREFERENCES,
+  INTERVAL_PRESET_MINUTES,
+  MIN_INTERVAL_MINUTES,
+  MAX_INTERVAL_MINUTES,
   PUSH_KINDS,
   zonedTimeToUtc,
   zonedDateString,

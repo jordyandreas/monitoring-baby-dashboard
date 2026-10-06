@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -31,7 +32,11 @@ import {
   subscribeForPush,
 } from "@/lib/push-reminders/browser";
 import {
+  clampIntervalMinutes,
   DEFAULT_PUSH_PREFERENCES,
+  INTERVAL_PRESET_MINUTES,
+  MAX_INTERVAL_MINUTES,
+  MIN_INTERVAL_MINUTES,
   type PushReminderPreferences,
 } from "@/lib/push-reminders/schedule";
 import { getVapidPublicKey } from "@/lib/supabase/env";
@@ -45,7 +50,7 @@ import {
 import { formatTimeLabel } from "@/utils/time";
 import { cn } from "@/utils/cn";
 
-const HOURS = [1, 2, 3, 4, 5, 6] as const;
+const PRESET_HOURS = INTERVAL_PRESET_MINUTES.map((minutes) => minutes / 60);
 
 type PermissionState = "unsupported" | "default" | "granted" | "denied";
 
@@ -89,7 +94,7 @@ function ReminderRow({
   );
 }
 
-function HourSelect({
+function IntervalField({
   id,
   value,
   onChange,
@@ -97,29 +102,66 @@ function HourSelect({
 }: {
   id: string;
   value: number;
-  onChange: (hours: number) => void;
+  onChange: (minutes: number) => void;
   disabled?: boolean;
 }) {
   const { t } = useLocale();
+  const preset = (INTERVAL_PRESET_MINUTES as readonly number[]).includes(value);
+  const [custom, setCustom] = useState(!preset);
+  const selectValue = custom || !preset ? "custom" : String(value);
+
   return (
-    <Select
-      value={String(value)}
-      onValueChange={(next) => onChange(Number(next))}
-      disabled={disabled}
-    >
-      <SelectTrigger id={id} className="w-full">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {HOURS.map((hours) => (
-          <SelectItem key={hours} value={String(hours)}>
-            {hours === 1
-              ? t("pushReminders.hoursOptionOne")
-              : t("pushReminders.hoursOption", { hours })}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="space-y-3">
+      <Select
+        value={selectValue}
+        onValueChange={(next) => {
+          if (next === "custom") {
+            setCustom(true);
+            return;
+          }
+          setCustom(false);
+          onChange(Number(next));
+        }}
+        disabled={disabled}
+      >
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {PRESET_HOURS.map((hours) => (
+            <SelectItem key={hours} value={String(hours * 60)}>
+              {hours === 1
+                ? t("pushReminders.hoursOptionOne")
+                : t("pushReminders.hoursOption", { hours })}
+            </SelectItem>
+          ))}
+          <SelectItem value="custom">{t("pushReminders.customOption")}</SelectItem>
+        </SelectContent>
+      </Select>
+      {selectValue === "custom" ? (
+        <div className="space-y-1.5">
+          <Label htmlFor={`${id}-minutes`} className="text-xs">
+            {t("pushReminders.customMinutesLabel")}
+          </Label>
+          <Input
+            id={`${id}-minutes`}
+            type="number"
+            inputMode="numeric"
+            min={MIN_INTERVAL_MINUTES}
+            max={MAX_INTERVAL_MINUTES}
+            step={1}
+            disabled={disabled}
+            value={value}
+            onChange={(event) => {
+              if (event.target.value.trim() === "") return;
+              const next = Number(event.target.value);
+              if (!Number.isInteger(next)) return;
+              onChange(clampIntervalMinutes(next));
+            }}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -290,14 +332,14 @@ function PushReminderPanel() {
               <Label htmlFor="push-feed-hours" className="text-xs">
                 {t("pushReminders.intervalLabel")}
               </Label>
-              <HourSelect
+              <IntervalField
                 id="push-feed-hours"
-                value={preferences.feed.intervalHours}
+                value={preferences.feed.intervalMinutes}
                 disabled={!canSchedule}
-                onChange={(intervalHours) =>
+                onChange={(intervalMinutes) =>
                   patch({
                     ...preferences,
-                    feed: { ...preferences.feed, intervalHours },
+                    feed: { ...preferences.feed, intervalMinutes },
                   })
                 }
               />
@@ -395,14 +437,14 @@ function PushReminderPanel() {
                   <Label htmlFor="push-hydration-hours" className="text-xs">
                     {t("pushReminders.intervalLabel")}
                   </Label>
-                  <HourSelect
+                  <IntervalField
                     id="push-hydration-hours"
-                    value={preferences.hydration.intervalHours}
+                    value={preferences.hydration.intervalMinutes}
                     disabled={!canSchedule}
-                    onChange={(intervalHours) =>
+                    onChange={(intervalMinutes) =>
                       patch({
                         ...preferences,
-                        hydration: { ...preferences.hydration, intervalHours },
+                        hydration: { ...preferences.hydration, intervalMinutes },
                       })
                     }
                   />
