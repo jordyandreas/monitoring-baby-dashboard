@@ -170,7 +170,12 @@ export function DiaperLogForm({
         };
         const entry: DiaperEntry = { id: initial?.id ?? crypto.randomUUID(), ...next };
         const text = diaperShareText(entry, t);
-        void commitSave("diaper", () => saveDiaper(entry), initial ? "update" : "save", text, "diaper").then((ok) => {
+        const loggedAs = kind === "pee" ? t("diaper.pee") : kind === "poop" ? t("diaper.poop") : "";
+        const detail =
+          kind === "both"
+            ? undefined
+            : t(initial ? "toast.diaperKindUpdated" : "toast.diaperKindSaved", { kind: loggedAs });
+        void commitSave("diaper", () => saveDiaper(entry), initial ? "update" : "save", text, "diaper", detail).then((ok) => {
           if (!ok) return;
           if (!initial) setTime(getCurrentTimeString());
           onSaved?.();
@@ -192,7 +197,7 @@ export function DiaperLogForm({
         ]}
       />
       {needsPoop ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <ChoiceRow
             className="min-w-0"
             label={t("diaper.color")}

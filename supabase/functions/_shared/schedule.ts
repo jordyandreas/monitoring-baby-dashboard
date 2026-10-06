@@ -3,26 +3,30 @@ export type PushKind = "feed" | "vitamins" | "babyPlus" | "kicks" | "hydration";
 export type PushLocale = "en" | "id";
 
 export interface PushReminderPreferences {
-  feed: { enabled: boolean; intervalHours: number };
+  feed: { enabled: boolean; intervalMinutes: number };
   vitamins: { enabled: boolean; time: string };
   babyPlus: { enabled: boolean };
   kicks: { enabled: boolean; time: string };
   hydration: {
     enabled: boolean;
-    intervalHours: number;
+    intervalMinutes: number;
     startTime: string;
     endTime: string;
   };
 }
 
+export const INTERVAL_PRESET_MINUTES = [60, 120, 180, 240, 300, 360] as const;
+export const MIN_INTERVAL_MINUTES = 1;
+export const MAX_INTERVAL_MINUTES = 7 * 24 * 60;
+
 export const DEFAULT_PUSH_PREFERENCES: PushReminderPreferences = {
-  feed: { enabled: false, intervalHours: 3 },
+  feed: { enabled: false, intervalMinutes: 180 },
   vitamins: { enabled: false, time: "08:00" },
   babyPlus: { enabled: false },
   kicks: { enabled: false, time: "20:00" },
   hydration: {
     enabled: false,
-    intervalHours: 2,
+    intervalMinutes: 120,
     startTime: "08:00",
     endTime: "22:00",
   },
@@ -82,7 +86,7 @@ const COPY: Record<
   id: {
     feed: {
       title: "Waktunya minum susu",
-      body: "Sudah {hours} jam sejak minum terakhir.",
+      body: "Sudah {interval} sejak minum terakhir.",
       url: "/feed",
     },
     vitamins: {
@@ -109,7 +113,7 @@ const COPY: Record<
   en: {
     feed: {
       title: "Time for milk",
-      body: "It has been {hours} hours since the last feeding.",
+      body: "It has been {interval} since the last feeding.",
       url: "/feed",
     },
     vitamins: {
@@ -135,9 +139,15 @@ const COPY: Record<
   },
 };
 
-function clampHours(value: number): number {
-  if (!Number.isFinite(value)) return 1;
-  return Math.min(6, Math.max(1, Math.round(value)));
+export function clampIntervalMinutes(value: number): number {
+  if (!Number.isFinite(value)) return 60;
+  return Math.min(MAX_INTERVAL_MINUTES, Math.max(MIN_INTERVAL_MINUTES, Math.round(value)));
+}
+
+function legacyHoursToMinutes(value: number): number {
+  if (!Number.isFinite(value)) return 60;
+  const hours = Math.min(6, Math.max(1, Math.round(value)));
+  return hours * 60;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -149,8 +159,27 @@ function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function hours(value: unknown, fallback: number): number {
-  return typeof value === "number" ? clampHours(value) : fallback;
+function intervalMinutes(
+  record: Record<string, unknown> | null,
+  fallback: number,
+): number {
+  if (typeof record?.intervalMinutes === "number") {
+    return clampIntervalMinutes(record.intervalMinutes);
+  }
+  if (typeof record?.intervalHours === "number") {
+    return legacyHoursToMinutes(record.intervalHours);
+  }
+  return fallback;
+}
+
+function formatInterval(locale: PushLocale, minutes: number): string {
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    if (locale === "id") return hours === 1 ? "1 jam" : `${hours} jam`;
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  if (locale === "id") return minutes === 1 ? "1 menit" : `${minutes} menit`;
+  return minutes === 1 ? "1 minute" : `${minutes} minutes`;
 }
 
 function time(value: unknown, fallback: string): string {
@@ -168,7 +197,7 @@ export function parsePushPreferences(value: unknown): PushReminderPreferences {
   return {
     feed: {
       enabled: bool(feed?.enabled, base.feed.enabled),
-      intervalHours: hours(feed?.intervalHours, base.feed.intervalHours),
+      intervalMinutes: intervalMinutes(feed, base.feed.intervalMinutes),
     },
     vitamins: {
       enabled: bool(vitamins?.enabled, base.vitamins.enabled),
@@ -183,7 +212,7 @@ export function parsePushPreferences(value: unknown): PushReminderPreferences {
     },
     hydration: {
       enabled: bool(hydration?.enabled, base.hydration.enabled),
-      intervalHours: hours(hydration?.intervalHours, base.hydration.intervalHours),
+      intervalMinutes: intervalMinutes(hydration, base.hydration.intervalMinutes),
       startTime: time(hydration?.startTime, base.hydration.startTime),
       endTime: time(hydration?.endTime, base.hydration.endTime),
     },
@@ -302,7 +331,7 @@ function idle(
   scheduleType: "daily" | "interval",
   locale: PushLocale,
   sentKey: string | null,
-  hoursValue?: number,
+  intervalMinutes?: number,
 ): ScheduleDraft {
   const copy = COPY[locale][kind];
   return {
@@ -312,7 +341,10 @@ function idle(
     nextRunAt: null,
     payload: {
       title: copy.title,
-      body: copy.body.replace("{hours}", String(hoursValue ?? "")),
+      body:
+        intervalMinutes === undefined
+          ? copy.body
+          : copy.body.replace("{interval}", formatInterval(locale, intervalMinutes)),
       url: copy.url,
       tag: kind,
       pendingKey: null,
@@ -328,7 +360,7 @@ function draftOf(
   locale: PushLocale,
   sentKey: string | null,
   next: { pendingKey: string; nextRunAt: Date; due: boolean },
-  hoursValue?: number,
+  intervalMinutes?: number,
 ): ScheduleDraft {
   const copy = COPY[locale][kind];
   return {
@@ -338,7 +370,10 @@ function draftOf(
     nextRunAt: next.nextRunAt.toISOString(),
     payload: {
       title: copy.title,
-      body: copy.body.replace("{hours}", String(hoursValue ?? "")),
+      body:
+        intervalMinutes === undefined
+          ? copy.body
+          : copy.body.replace("{interval}", formatInterval(locale, intervalMinutes)),
       url: copy.url,
       tag: next.pendingKey,
       pendingKey: next.pendingKey,
@@ -350,19 +385,19 @@ function draftOf(
 
 function feedSchedule(source: ScheduleSource): ScheduleDraft {
   const sentKey = source.sentKeys.feed ?? null;
-  const { enabled, intervalHours } = source.preferences.feed;
-  const hoursValue = clampHours(intervalHours);
+  const { enabled, intervalMinutes } = source.preferences.feed;
+  const minutes = clampIntervalMinutes(intervalMinutes);
   if (!enabled || !source.latestFeed) {
-    return idle("feed", "interval", source.locale, sentKey, hoursValue);
+    return idle("feed", "interval", source.locale, sentKey, minutes);
   }
   const last = localStampToUtc(
     source.latestFeed.date,
     source.latestFeed.time,
     source.timeZone,
   );
-  if (!last) return idle("feed", "interval", source.locale, sentKey, hoursValue);
+  if (!last) return idle("feed", "interval", source.locale, sentKey, minutes);
 
-  const step = hoursValue * 60 * 60 * 1000;
+  const step = minutes * 60 * 1000;
   let slot = new Date(last.getTime() + step);
   for (let guard = 0; guard < 48 && `feed:${slot.toISOString()}` === sentKey; guard += 1) {
     slot = new Date(slot.getTime() + step);
@@ -379,7 +414,7 @@ function feedSchedule(source: ScheduleSource): ScheduleDraft {
       nextRunAt: due ? source.now : slot,
       due,
     },
-    hoursValue,
+    minutes,
   );
 }
 
@@ -472,14 +507,14 @@ function calendarDaysBetween(from: string, to: string): number {
 function hydrationSchedule(source: ScheduleSource): ScheduleDraft {
   const sentKey = source.sentKeys.hydration ?? null;
   const prefs = source.preferences.hydration;
-  const hoursValue = clampHours(prefs.intervalHours);
+  const minutes = clampIntervalMinutes(prefs.intervalMinutes);
   if (!prefs.enabled) return idle("hydration", "interval", source.locale, sentKey);
   const start = minutesOf(prefs.startTime);
   const end = minutesOf(prefs.endTime);
   if (start === null || end === null || end <= start) {
     return idle("hydration", "interval", source.locale, sentKey);
   }
-  const interval = hoursValue * 60;
+  const interval = minutes;
   const today = localDate(source.now, source.timeZone);
   const nowMinutes = localMinutes(source.now, source.timeZone);
 
@@ -503,7 +538,8 @@ function hydrationSchedule(source: ScheduleSource): ScheduleDraft {
     return place(tomorrow, 0, start, false);
   }
 
-  for (let guard = 0; guard < 16; guard += 1) {
+  const maxSlots = Math.ceil((end - start) / interval) + 2;
+  for (let guard = 0; guard < maxSlots; guard += 1) {
     const key = `hydration:${date}:${slotIndex}`;
     const logged = source.waterLogs.some((entry) => {
       if (entry.date !== date) return false;

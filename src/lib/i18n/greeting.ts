@@ -29,17 +29,24 @@ export function getTimeOfDayGreeting(
   return { message: t("greeting.goodNight"), emoji: "✨" };
 }
 
-export function formatLiveClockLine(date: Date, locale: Locale): string {
+export function formatLiveClockParts(date: Date, locale: Locale): { time: string; date: string } {
   const intl = localeToIntl(locale);
   const time = new Intl.DateTimeFormat(intl, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   }).format(date);
-
-  const day = new Intl.DateTimeFormat(intl, {
+  const fullDate = new Intl.DateTimeFormat(intl, {
     weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   }).format(date);
 
-  return `${time} • ${day}`;
+  return { time, date: fullDate };
+}
+
+export function formatLiveClockLine(date: Date, locale: Locale): string {
+  const { time, date: fullDate } = formatLiveClockParts(date, locale);
+  return `${time} • ${fullDate}`;
 }

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { AgeCelebrationCard } from "@/components/child/age-celebration-card";
 import { ChildHomeSkeleton } from "@/components/layout/data-skeletons";
+import { LiveGreetingClock } from "@/components/layout/live-greeting-clock";
 import { ChildProfileForm } from "@/components/child/child-profile-form";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { formatLogWhen, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
@@ -101,7 +102,14 @@ export function ChildHome() {
   const [logPage, setLogPage] = useState(1);
   const today = getTodayDateStr();
 
-  if (!ready) return <ChildHomeSkeleton />;
+  if (!ready) {
+    return (
+      <div className="space-y-6">
+        <LiveGreetingClock />
+        <ChildHomeSkeleton />
+      </div>
+    );
+  }
   const board = data ?? DEFAULT_CHILD_STORAGE;
   const todayStats = todayTotals(board, today);
   const timeline = todayTimeline(board, today, t);
@@ -124,6 +132,7 @@ export function ChildHome() {
 
   return (
     <div className="space-y-6">
+      <LiveGreetingClock />
       {profile ? <AgeCelebrationCard name={profile.name} birthDate={profile.birthDate} /> : null}
       <section className="rounded-2xl glass-regular p-5">
         {profile && !editing ? (
