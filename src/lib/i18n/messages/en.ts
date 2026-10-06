@@ -486,7 +486,7 @@ export const en = {
     measureHeightField: "Height (cm)",
     measureEmpty: "Not measured yet",
     measureUpdated: "Updated {date}",
-    measureUpdate: "Update measurements",
+    measureUpdate: "Log measurements",
     measureSave: "Save measurement",
     activityTitle: "Today's activity",
     activityHint: "A quick summary of today's logs.",
@@ -535,7 +535,7 @@ export const en = {
   },
   feed: {
     intro: "Nursing does not need millilitres. Bottles do.",
-    add: "Add milk",
+    add: "Log milk",
     edit: "Edit milk",
     empty: "No milk logged yet.",
     kindBreast: "Nursing",
@@ -563,7 +563,7 @@ export const en = {
   },
   diaper: {
     intro: "For poop, add a short color and texture. That is the note checkups usually want.",
-    add: "Add diaper",
+    add: "Log diaper",
     edit: "Edit diaper",
     empty: "No diapers logged yet.",
     pee: "Pee",
@@ -592,7 +592,7 @@ export const en = {
   },
   sleep: {
     intro: "Log a start and end. If the end is earlier than the start, it counts as overnight.",
-    add: "Add sleep",
+    add: "Log sleep",
     edit: "Edit sleep",
     empty: "No sleep logged yet.",
     start: "Start",
@@ -613,7 +613,7 @@ export const en = {
   },
   growth: {
     intro: "Usually from a checkup, not every day. Enter whichever measurements you have.",
-    add: "Add measurement",
+    add: "Log measurement",
     edit: "Edit measurement",
     empty: "No measurements yet.",
     weight: "Weight (kg)",
