@@ -53,6 +53,23 @@ function sentKey(payload: Record<string, unknown> | null): string | null {
   return typeof value === "string" ? value : null;
 }
 
+function jwtRole(token: string): string | null {
+  const part = token.split(".")[1];
+  if (!part) return null;
+  try {
+    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded)) as { role?: unknown };
+    return typeof payload.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
+
+function isVerifiedServiceRole(message: string): boolean {
+  return message.toLowerCase().includes("missing sub");
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -72,19 +89,23 @@ Deno.serve(async (request) => {
   webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
   const authHeader = request.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   const admin = createClient(supabaseUrl, serviceKey);
   const body = await request.json().catch(() => ({}));
-
-  if (token === serviceKey) {
-    const sent = await processDue(admin);
-    return json({ sent });
-  }
 
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
   const { data: userData, error: userError } = await userClient.auth.getUser();
+  const serviceRole =
+    token === serviceKey.trim() ||
+    (jwtRole(token) === "service_role" &&
+      !userData.user &&
+      isVerifiedServiceRole(userError?.message ?? ""));
+  if (serviceRole) {
+    const sent = await processDue(admin);
+    return json({ sent });
+  }
   if (userError || !userData.user) return json({ error: "Unauthorized" }, 401);
   if (body?.test !== true) return json({ error: "Unsupported" }, 400);
 

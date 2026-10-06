@@ -467,7 +467,7 @@ export const id: Messages = {
     measureHeightField: "Tinggi (cm)",
     measureEmpty: "Belum diukur",
     measureUpdated: "Diperbarui {date}",
-    measureUpdate: "Perbarui ukuran",
+    measureUpdate: "Catat ukuran",
     measureSave: "Simpan ukuran",
     activityTitle: "Aktivitas hari ini",
     activityHint: "Ringkasan singkat catatan hari ini.",
@@ -516,7 +516,7 @@ export const id: Messages = {
   },
   feed: {
     intro: "Menyusui tidak perlu mililiter. Botol perlu.",
-    add: "Tambah susu",
+    add: "Catat susu",
     edit: "Ubah susu",
     empty: "Belum ada catatan susu.",
     kindBreast: "Menyusui",
@@ -544,7 +544,7 @@ export const id: Messages = {
   },
   diaper: {
     intro: "Untuk pup, tambahkan warna dan tekstur singkat. Ini yang biasanya ditanyakan saat kontrol.",
-    add: "Tambah popok",
+    add: "Catat popok",
     edit: "Ubah popok",
     empty: "Belum ada catatan popok.",
     pee: "Pipis",
@@ -573,7 +573,7 @@ export const id: Messages = {
   },
   sleep: {
     intro: "Catat jam mulai dan selesai. Jika jam selesai lebih awal, itu dihitung melewati tengah malam.",
-    add: "Tambah tidur",
+    add: "Catat tidur",
     edit: "Ubah tidur",
     empty: "Belum ada catatan tidur.",
     start: "Mulai",
@@ -594,7 +594,7 @@ export const id: Messages = {
   },
   growth: {
     intro: "Biasanya saat kontrol, bukan setiap hari. Isi ukuran yang ada.",
-    add: "Tambah ukuran",
+    add: "Catat ukuran",
     edit: "Ubah ukuran",
     empty: "Belum ada ukuran.",
     weight: "Berat (kg)",
