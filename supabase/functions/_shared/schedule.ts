@@ -1,9 +1,10 @@
-export type PushKind = "feed" | "vitamins" | "babyPlus" | "kicks" | "hydration";
+export type PushKind = "feed" | "pump" | "vitamins" | "babyPlus" | "kicks" | "hydration";
 
 export type PushLocale = "en" | "id";
 
 export interface PushReminderPreferences {
   feed: { enabled: boolean; intervalMinutes: number };
+  pump: { enabled: boolean; intervalMinutes: number };
   vitamins: { enabled: boolean; time: string };
   babyPlus: { enabled: boolean };
   kicks: { enabled: boolean; time: string };
@@ -21,6 +22,7 @@ export const MAX_INTERVAL_MINUTES = 7 * 24 * 60;
 
 export const DEFAULT_PUSH_PREFERENCES: PushReminderPreferences = {
   feed: { enabled: false, intervalMinutes: 180 },
+  pump: { enabled: false, intervalMinutes: 180 },
   vitamins: { enabled: false, time: "08:00" },
   babyPlus: { enabled: false },
   kicks: { enabled: false, time: "20:00" },
@@ -34,6 +36,7 @@ export const DEFAULT_PUSH_PREFERENCES: PushReminderPreferences = {
 
 export const PUSH_KINDS: PushKind[] = [
   "feed",
+  "pump",
   "vitamins",
   "babyPlus",
   "kicks",
@@ -47,6 +50,7 @@ export interface ScheduleSource {
   preferences: PushReminderPreferences;
   sentKeys: Partial<Record<PushKind, string | null>>;
   latestFeed: { date: string; time: string } | null;
+  latestPump: { date: string; time: string } | null;
   vitaminNamedCount: number;
   vitaminDoneCount: number;
   vitaminLogDate: string;
@@ -89,6 +93,11 @@ const COPY: Record<
       body: "Sudah {interval} sejak minum terakhir.",
       url: "/feed",
     },
+    pump: {
+      title: "Waktunya pompa",
+      body: "Sudah {interval} sejak pompa terakhir.",
+      url: "/pump",
+    },
     vitamins: {
       title: "Pengingat vitamin",
       body: "Masih ada vitamin yang belum dicentang hari ini.",
@@ -115,6 +124,11 @@ const COPY: Record<
       title: "Time for milk",
       body: "It has been {interval} since the last feeding.",
       url: "/feed",
+    },
+    pump: {
+      title: "Time to pump",
+      body: "It has been {interval} since the last pump.",
+      url: "/pump",
     },
     vitamins: {
       title: "Vitamin reminder",
@@ -190,6 +204,7 @@ export function parsePushPreferences(value: unknown): PushReminderPreferences {
   const raw = asRecord(value);
   const base = DEFAULT_PUSH_PREFERENCES;
   const feed = asRecord(raw?.feed);
+  const pump = asRecord(raw?.pump);
   const vitamins = asRecord(raw?.vitamins);
   const babyPlus = asRecord(raw?.babyPlus);
   const kicks = asRecord(raw?.kicks);
@@ -198,6 +213,10 @@ export function parsePushPreferences(value: unknown): PushReminderPreferences {
     feed: {
       enabled: bool(feed?.enabled, base.feed.enabled),
       intervalMinutes: intervalMinutes(feed, base.feed.intervalMinutes),
+    },
+    pump: {
+      enabled: bool(pump?.enabled, base.pump.enabled),
+      intervalMinutes: intervalMinutes(pump, base.pump.intervalMinutes),
     },
     vitamins: {
       enabled: bool(vitamins?.enabled, base.vitamins.enabled),
@@ -418,6 +437,41 @@ function feedSchedule(source: ScheduleSource): ScheduleDraft {
   );
 }
 
+function pumpSchedule(source: ScheduleSource): ScheduleDraft {
+  const sentKey = source.sentKeys.pump ?? null;
+  const { enabled, intervalMinutes } = source.preferences.pump;
+  const minutes = clampIntervalMinutes(intervalMinutes);
+  if (!enabled || !source.latestPump) {
+    return idle("pump", "interval", source.locale, sentKey, minutes);
+  }
+  const last = localStampToUtc(
+    source.latestPump.date,
+    source.latestPump.time,
+    source.timeZone,
+  );
+  if (!last) return idle("pump", "interval", source.locale, sentKey, minutes);
+
+  const step = minutes * 60 * 1000;
+  let slot = new Date(last.getTime() + step);
+  for (let guard = 0; guard < 48 && `pump:${slot.toISOString()}` === sentKey; guard += 1) {
+    slot = new Date(slot.getTime() + step);
+  }
+  const pendingKey = `pump:${slot.toISOString()}`;
+  const due = slot.getTime() <= source.now.getTime() && pendingKey !== sentKey;
+  return draftOf(
+    "pump",
+    "interval",
+    source.locale,
+    sentKey,
+    {
+      pendingKey,
+      nextRunAt: due ? source.now : slot,
+      due,
+    },
+    minutes,
+  );
+}
+
 function dailySchedule(
   source: ScheduleSource,
   kind: "vitamins" | "babyPlus" | "kicks",
@@ -567,6 +621,7 @@ function hydrationSchedule(source: ScheduleSource): ScheduleDraft {
 export function computeSchedules(source: ScheduleSource): ScheduleDraft[] {
   return [
     feedSchedule(source),
+    pumpSchedule(source),
     vitaminSchedule(source),
     babyPlusSchedule(source),
     kickSchedule(source),

@@ -193,11 +193,18 @@ async function loadSource(admin: Admin, userId: string): Promise<ScheduleSource>
   const locale: PushLocale = isLocale(profile?.locale) ? profile.locale : "id";
   const today = zonedDateString(new Date(), timeZone);
 
-  const [prefsRes, feedRes, itemsRes, daysRes, kickRes, waterRes, babyRes, scheduleRes] =
+  const [prefsRes, feedRes, pumpRes, itemsRes, daysRes, kickRes, waterRes, babyRes, scheduleRes] =
     await Promise.all([
       admin.from("push_reminder_preferences").select("preferences").eq("user_id", userId).maybeSingle(),
       admin
         .from("feed_logs")
+        .select("logged_date, logged_time")
+        .eq("user_id", userId)
+        .order("logged_date", { ascending: false })
+        .order("logged_time", { ascending: false })
+        .limit(1),
+      admin
+        .from("pump_logs")
         .select("logged_date, logged_time")
         .eq("user_id", userId)
         .order("logged_date", { ascending: false })
@@ -215,7 +222,7 @@ async function loadSource(admin: Admin, userId: string): Promise<ScheduleSource>
       admin.from("scheduled_notifications").select("kind, payload").eq("user_id", userId),
     ]);
 
-  for (const result of [prefsRes, feedRes, itemsRes, daysRes, kickRes, waterRes, babyRes, scheduleRes]) {
+  for (const result of [prefsRes, feedRes, pumpRes, itemsRes, daysRes, kickRes, waterRes, babyRes, scheduleRes]) {
     if (result.error) throw new Error(result.error.message);
   }
 
@@ -228,6 +235,7 @@ async function loadSource(admin: Admin, userId: string): Promise<ScheduleSource>
     if (isKind(row.kind)) sentKeys[row.kind] = sentKey(asRecord(row.payload));
   }
   const latest = feedRes.data?.[0];
+  const latestPump = pumpRes.data?.[0];
 
   return {
     now: new Date(),
@@ -236,6 +244,7 @@ async function loadSource(admin: Admin, userId: string): Promise<ScheduleSource>
     preferences: parsePushPreferences(prefsRes.data?.preferences),
     sentKeys,
     latestFeed: latest ? { date: latest.logged_date, time: latest.logged_time } : null,
+    latestPump: latestPump ? { date: latestPump.logged_date, time: latestPump.logged_time } : null,
     vitaminNamedCount: named.length,
     vitaminDoneCount: done,
     vitaminLogDate: daysRes.data?.[0]?.log_date ?? "",
@@ -322,6 +331,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 function isKind(value: string): value is PushKind {
   return (
     value === "feed" ||
+    value === "pump" ||
     value === "vitamins" ||
     value === "babyPlus" ||
     value === "kicks" ||

@@ -1,5 +1,5 @@
-import { describeFeed } from "@/lib/child/summary";
-import type { DiaperEntry, FeedEntry, PoopColor, PoopTexture } from "@/lib/child/types";
+import { describeFeed, describePump } from "@/lib/child/summary";
+import type { DiaperEntry, FeedEntry, PoopColor, PoopTexture, PumpEntry } from "@/lib/child/types";
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
@@ -20,6 +20,11 @@ const POOP_TEXTURE_KEYS: Record<PoopTexture, string> = {
 export function feedShareText(entry: Omit<FeedEntry, "id">, t: Translate): string {
   const detail = describeFeed({ ...entry, id: "" }, t);
   return `${t("pages.feed.title")} · ${entry.time}\n${detail}`;
+}
+
+export function pumpShareText(entry: Omit<PumpEntry, "id">, t: Translate): string {
+  const detail = describePump({ ...entry, id: "" }, t);
+  return `${t("pages.pump.title")} · ${entry.time}\n${detail}`;
 }
 
 export function diaperShareText(entry: Omit<DiaperEntry, "id">, t: Translate): string {

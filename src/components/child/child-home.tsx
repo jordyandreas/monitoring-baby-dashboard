@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FeatureLink } from "@/components/layout/feature-link";
+import { childMoreRoutes } from "@/components/layout/child-more-routes";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import {
@@ -11,7 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDot,
-  Flag,
   Milk,
   Moon,
   Pencil,
@@ -23,14 +23,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AgeCelebrationCard } from "@/components/child/age-celebration-card";
-import { ChildHomeSkeleton } from "@/components/layout/data-skeletons";
+import { ChildHomeSkeleton, LoadFailed } from "@/components/layout/data-skeletons";
 import { LiveGreetingClock } from "@/components/layout/live-greeting-clock";
 import { ChildProfileForm } from "@/components/child/child-profile-form";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { formatLogWhen, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
-import { DiaperLogForm, FeedLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
+import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
 import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
+import { PumpIcon } from "@/components/icons/pump-icon";
 import { GenderIcon } from "@/components/pregnancy/baby/gender-icon";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
@@ -40,6 +41,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatChildAge } from "@/lib/child/age";
 import { DEFAULT_CHILD_STORAGE, type ChildStorage } from "@/lib/child/types";
 import {
@@ -50,11 +52,12 @@ import {
   type TimelineKind,
 } from "@/lib/child/summary";
 import { genderLabel } from "@/lib/i18n/baby";
-import { diaperShareText, feedShareText } from "@/lib/child/whatsapp-share";
+import { diaperShareText, feedShareText, pumpShareText } from "@/lib/child/whatsapp-share";
 import { getTodayDateStr } from "@/lib/pregnancy/vitamins";
 import { saveChildProfile } from "@/services/child.service";
 import { deleteDiaper } from "@/services/diapers.service";
 import { deleteFeed } from "@/services/feed.service";
+import { deletePump } from "@/services/pump.service";
 import { saveMergedGrowth } from "@/services/growth.service";
 import { deleteHealth } from "@/services/health.service";
 import { deleteMeal } from "@/services/meals.service";
@@ -67,12 +70,13 @@ import { cn } from "@/utils/cn";
 
 const PAGE_SIZE = 20;
 
-type QuickKind = "feed" | "diaper" | "sleep";
+type QuickKind = "feed" | "pump" | "diaper" | "sleep";
 type LogFilter = "all" | QuickKind;
-type IconType = LucideIcon | typeof DiaperIcon;
+type IconType = LucideIcon | typeof DiaperIcon | typeof PumpIcon;
 
 const LOG_ICONS: Record<TimelineKind, IconType> = {
   feed: Milk,
+  pump: PumpIcon,
   diaper: DiaperIcon,
   sleep: Moon,
   solid: Apple,
@@ -83,6 +87,7 @@ const LOG_ICONS: Record<TimelineKind, IconType> = {
 
 const LOG_TONE: Record<TimelineKind, string> = {
   feed: "bg-lilac/70 text-lilac-foreground",
+  pump: "bg-violet-100 text-violet-800",
   diaper: "bg-amber-100 text-amber-800",
   sleep: "bg-indigo-100 text-indigo-800",
   solid: "bg-emerald-100 text-emerald-800",
@@ -94,7 +99,7 @@ const LOG_TONE: Record<TimelineKind, string> = {
 export function ChildHome() {
   const { t, locale } = useLocale();
   const { signedIn, requestLogin } = useSupabase();
-  const { data, ready } = useChildBoard(signedIn);
+  const { data, ready, error, reload, extrasReady, extrasError, reloadExtras } = useChildBoard(signedIn);
   const [editing, setEditing] = useState(false);
   const [editingLog, setEditingLog] = useState<{ kind: QuickKind; id: string } | null>(null);
   const [quick, setQuick] = useState<QuickKind | null>(null);
@@ -102,11 +107,11 @@ export function ChildHome() {
   const [logPage, setLogPage] = useState(1);
   const today = getTodayDateStr();
 
-  if (!ready) {
+  if (!ready || (error && !data)) {
     return (
       <div className="space-y-6">
         <LiveGreetingClock />
-        <ChildHomeSkeleton />
+        {!ready ? <ChildHomeSkeleton /> : <LoadFailed onRetry={reload} />}
       </div>
     );
   }
@@ -116,16 +121,15 @@ export function ChildHome() {
   const profile = board.profile;
   const dfLocale = locale === "id" ? idLocale : enUS;
 
-  const more = [
-    { href: "/solids", label: t("child.moreSolids"), icon: Apple },
-    { href: "/health", label: t("child.moreHealth"), icon: Thermometer },
-    { href: "/potty", label: t("child.morePotty"), icon: CircleDot },
-    { href: "/meals", label: t("child.moreMeals"), icon: Utensils },
-    { href: "/milestones", label: t("child.moreMilestones"), icon: Flag },
-  ];
+  const more = childMoreRoutes.map((item) => ({
+    href: item.href,
+    label: t(item.labelKey),
+    icon: item.icon,
+  }));
 
   const shortcuts: { kind: QuickKind; label: string; icon: IconType }[] = [
     { kind: "feed", label: t("child.quickFeed"), icon: Milk },
+    { kind: "pump", label: t("child.quickPump"), icon: PumpIcon },
     { kind: "diaper", label: t("child.quickDiaper"), icon: DiaperIcon },
     { kind: "sleep", label: t("child.quickSleep"), icon: Moon },
   ];
@@ -202,12 +206,18 @@ export function ChildHome() {
         )}
       </section>
 
-      <GrowthSnapshot name={profile?.name} entries={board.growth} />
+      <GrowthSnapshot
+        name={profile?.name}
+        entries={board.growth}
+        pending={Boolean(data) && !extrasReady && !extrasError}
+        failed={Boolean(data) && !extrasReady && Boolean(extrasError)}
+        onRetry={reloadExtras}
+      />
 
       <TodayActivity totals={todayStats} />
 
       <section className="space-y-3">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {shortcuts.map((item) => {
             const active = quick === item.kind;
             const Icon = item.icon;
@@ -237,6 +247,7 @@ export function ChildHome() {
           })}
         </div>
         {quick === "feed" ? <FeedLogForm /> : null}
+        {quick === "pump" ? <PumpLogForm /> : null}
         {quick === "diaper" ? <DiaperLogForm /> : null}
         {quick === "sleep" ? <SleepLogForm /> : null}
       </section>
@@ -286,7 +297,9 @@ export function ChildHome() {
             const remove =
               parsed.kind === "feed"
                 ? () => deleteFeed(parsed.id)
-                : parsed.kind === "diaper"
+                : parsed.kind === "pump"
+                  ? () => deletePump(parsed.id)
+                  : parsed.kind === "diaper"
                   ? () => deleteDiaper(parsed.id)
                   : parsed.kind === "sleep"
                     ? () => deleteSleep(parsed.id)
@@ -325,7 +338,7 @@ export function ChildHome() {
   );
 }
 
-const QUICK_KINDS: QuickKind[] = ["feed", "diaper", "sleep"];
+const QUICK_KINDS: QuickKind[] = ["feed", "pump", "diaper", "sleep"];
 
 function isQuickKind(kind: TimelineKind): kind is QuickKind {
   return QUICK_KINDS.includes(kind as QuickKind);
@@ -350,6 +363,10 @@ function timelineShareText(
   if (parsed.kind === "feed") {
     const entry = board.feeds.find((row) => row.id === parsed.id);
     return entry ? feedShareText(entry, t) : undefined;
+  }
+  if (parsed.kind === "pump") {
+    const entry = board.pumps.find((row) => row.id === parsed.id);
+    return entry ? pumpShareText(entry, t) : undefined;
   }
   if (parsed.kind === "diaper") {
     const entry = board.diapers.find((row) => row.id === parsed.id);
@@ -398,7 +415,7 @@ function TodayLogList({
               key={item.id}
               className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
             >
-              <span className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
+              <span className="w-16 shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums">
                 {formatTimeLabel(item.time)}
               </span>
               <span className="h-8 w-px shrink-0 bg-border" aria-hidden />
@@ -502,10 +519,11 @@ function LogEditDialog({
 }) {
   const { t } = useLocale();
   const feed = editing?.kind === "feed" ? board.feeds.find((entry) => entry.id === editing.id) : null;
+  const pump = editing?.kind === "pump" ? board.pumps.find((entry) => entry.id === editing.id) : null;
   const diaper = editing?.kind === "diaper" ? board.diapers.find((entry) => entry.id === editing.id) : null;
   const sleep = editing?.kind === "sleep" ? board.sleeps.find((entry) => entry.id === editing.id) : null;
-  const open = Boolean(feed || diaper || sleep);
-  const title = feed ? t("feed.edit") : diaper ? t("diaper.edit") : t("sleep.edit");
+  const open = Boolean(feed || pump || diaper || sleep);
+  const title = feed ? t("feed.edit") : pump ? t("pump.edit") : diaper ? t("diaper.edit") : t("sleep.edit");
 
   return (
     <Dialog
@@ -517,6 +535,7 @@ function LogEditDialog({
       <DialogContent className="max-h-[min(90vh,760px)] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
         <DialogTitle className="sr-only">{title}</DialogTitle>
         {feed ? <FeedLogForm key={feed.id} initial={feed} onSaved={onClose} /> : null}
+        {pump ? <PumpLogForm key={pump.id} initial={pump} onSaved={onClose} /> : null}
         {diaper ? <DiaperLogForm key={diaper.id} initial={diaper} onSaved={onClose} /> : null}
         {sleep ? <SleepLogForm key={sleep.id} initial={sleep} onSaved={onClose} /> : null}
       </DialogContent>
@@ -527,6 +546,7 @@ function LogEditDialog({
 function LogEmpty({ filter }: { filter: LogFilter }) {
   const { t } = useLocale();
   if (filter === "feed") return t("child.filterEmptyFeed");
+  if (filter === "pump") return t("child.filterEmptyPump");
   if (filter === "diaper") return t("child.filterEmptyDiaper");
   if (filter === "sleep") return t("child.filterEmptySleep");
   return t("child.timelineEmpty");
@@ -545,6 +565,7 @@ function LogFilters({
   const options: { id: LogFilter; label: string }[] = [
     { id: "all", label: t("child.filterAll") },
     { id: "feed", label: t("child.filterFeed") },
+    { id: "pump", label: t("child.filterPump") },
     { id: "diaper", label: t("child.filterDiaper") },
     { id: "sleep", label: t("child.filterSleep") },
   ];
@@ -604,7 +625,19 @@ function growthChange(
   };
 }
 
-function GrowthSnapshot({ name, entries }: { name?: string; entries: ChildStorage["growth"] }) {
+function GrowthSnapshot({
+  name,
+  entries,
+  pending,
+  failed,
+  onRetry,
+}: {
+  name?: string;
+  entries: ChildStorage["growth"];
+  pending: boolean;
+  failed: boolean;
+  onRetry: () => void;
+}) {
   const { t, locale } = useLocale();
   const { signedIn, requestLogin } = useSupabase();
   const compared = growthComparison(entries);
@@ -643,7 +676,7 @@ function GrowthSnapshot({ name, entries }: { name?: string; entries: ChildStorag
             {name ? t("child.measureHint", { name }) : t("child.measureHintPlain")}
           </p>
         </div>
-        {open ? (
+        {pending || failed ? null : open ? (
           <Button type="button" variant="outline" className="shrink-0 rounded-full" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>
@@ -661,6 +694,16 @@ function GrowthSnapshot({ name, entries }: { name?: string; entries: ChildStorag
           </Button>
         )}
       </div>
+      {failed ? (
+        <LoadFailed onRetry={onRetry} />
+      ) : pending ? (
+        <div className="grid gap-3 sm:grid-cols-3" aria-busy="true">
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+        </div>
+      ) : null}
+      {pending || failed ? null : (
       <div className="grid gap-3 sm:grid-cols-3">
         <MeasureStat
           icon={Weight}
@@ -711,7 +754,8 @@ function GrowthSnapshot({ name, entries }: { name?: string; entries: ChildStorag
           }
         />
       </div>
-      {open ? (
+      )}
+      {open && !pending && !failed ? (
         <LogForm
           title={t("child.measureUpdate")}
           onSubmit={(event) => {
@@ -840,6 +884,17 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
       tint: "bg-muted/40",
     },
     {
+      href: "/pump",
+      kind: "pump",
+      label: t("child.tagPump"),
+      value:
+        totals.pumpCount === 1
+          ? t("child.pumpsCountOne")
+          : t("child.pumpsCount", { count: totals.pumpCount }),
+      detail: t("child.mlTotal", { ml: totals.pumpMl }),
+      tint: "bg-violet-50",
+    },
+    {
       href: "/diapers",
       kind: "diaper",
       label: t("child.tagDiaper"),
@@ -868,7 +923,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
             : t("child.activityCount", { count: totals.logCount })}
         </span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.map((card) => {
           const Icon = LOG_ICONS[card.kind];
           return (

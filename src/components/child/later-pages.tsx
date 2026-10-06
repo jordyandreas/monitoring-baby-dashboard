@@ -13,7 +13,7 @@ import {
   newestFirst,
 } from "@/components/child/form-bits";
 import { HistoryList } from "@/components/child/history-list";
-import { ListPageSkeleton, MilestonesSkeleton } from "@/components/layout/data-skeletons";
+import { ListPageSkeleton, MilestonesSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -39,11 +39,12 @@ function useClock() {
 export function SolidsPageContent() {
   const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("solid", listSolids, signedIn);
+  const { data, ready, error, reload } = useRemote("solid", listSolids, signedIn);
   const { date, setDate, time, setTime } = useClock();
   const [name, setName] = useState("");
   const [allergy, setAllergy] = useState("");
-  if (!ready) return <ListPageSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <ListPageSkeleton />);
+  if (placeholder) return placeholder;
   const items = newestFirst(data ?? []).map((entry) => ({
     id: entry.id,
     title: formatLogWhen(entry.date, entry.time, locale),
@@ -99,12 +100,13 @@ export function SolidsPageContent() {
 export function HealthPageContent() {
   const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("health", listHealth, signedIn);
+  const { data, ready, error, reload } = useRemote("health", listHealth, signedIn);
   const { date, setDate, time, setTime } = useClock();
   const [name, setName] = useState("");
   const [dose, setDose] = useState("");
   const [temp, setTemp] = useState("");
-  if (!ready) return <ListPageSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <ListPageSkeleton />);
+  if (placeholder) return placeholder;
   const temperatureC = temp.trim() ? Number(temp) : undefined;
   const tempOk = temperatureC === undefined || (Number.isFinite(temperatureC) && temperatureC > 30 && temperatureC < 45);
   const canSave = Boolean(date && time && tempOk && (name.trim() || temperatureC !== undefined));
@@ -166,10 +168,11 @@ export function HealthPageContent() {
 export function PottyPageContent() {
   const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("potty", listPotty, signedIn);
+  const { data, ready, error, reload } = useRemote("potty", listPotty, signedIn);
   const { date, setDate, time, setTime } = useClock();
   const [kind, setKind] = useState<PottyKind>("pee");
-  if (!ready) return <ListPageSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <ListPageSkeleton />);
+  if (placeholder) return placeholder;
   const items = newestFirst(data ?? []).map((entry) => ({
     id: entry.id,
     title: formatLogWhen(entry.date, entry.time, locale),
@@ -224,11 +227,12 @@ export function PottyPageContent() {
 export function MealsPageContent() {
   const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("meal", listMeals, signedIn);
+  const { data, ready, error, reload } = useRemote("meal", listMeals, signedIn);
   const { date, setDate, time, setTime } = useClock();
   const [slot, setSlot] = useState<MealSlot>("breakfast");
   const [note, setNote] = useState("");
-  if (!ready) return <ListPageSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <ListPageSkeleton />);
+  if (placeholder) return placeholder;
   const items = newestFirst(data ?? []).map((entry) => ({
     id: entry.id,
     title: formatLogWhen(entry.date, entry.time, locale),
@@ -307,8 +311,9 @@ function milestoneLabel(key: MilestoneKey, t: (key: string) => string): string {
 export function MilestonesPageContent() {
   const { t } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("milestone", listMilestones, signedIn);
-  if (!ready) return <MilestonesSkeleton />;
+  const { data, ready, error, reload } = useRemote("milestone", listMilestones, signedIn);
+  const placeholder = remotePlaceholder(ready, error, data, reload, <MilestonesSkeleton />);
+  if (placeholder) return placeholder;
   const milestones = data ?? [];
   const setMilestone = (key: MilestoneKey, date: string | null) => {
     void commitSave(

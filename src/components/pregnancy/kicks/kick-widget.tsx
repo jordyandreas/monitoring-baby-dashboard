@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DashboardCardSkeleton } from "@/components/layout/data-skeletons";
+import { DashboardCardSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useRemote } from "@/hooks/use-remote";
@@ -20,10 +20,17 @@ import { cn } from "@/utils/cn";
 
 export function KickWidget({ className }: { className?: string }) {
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("kicks", listKicks, signedIn);
+  const { data, ready, error, reload } = useRemote("kicks", listKicks, signedIn);
   const { t } = useLocale();
 
-  if (!ready) return <DashboardCardSkeleton className={className} lines={3} />;
+  const placeholder = remotePlaceholder(
+    ready,
+    error,
+    data,
+    reload,
+    <DashboardCardSkeleton className={className} lines={3} />,
+  );
+  if (placeholder) return placeholder;
 
   const kicks = data ?? [];
   const last7 = getKicksInRange(kicks, 7).length;

@@ -8,6 +8,7 @@ import {
   type PushReminderPreferences,
 } from "@/lib/push-reminders/schedule";
 import { DEFAULT_LOCALE, isLocale, LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
+import { getAccountAccessToken } from "@/lib/supabase/account-session";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 import type { Json } from "@/lib/supabase/database.types";
 import { rowToBabyPlus, rowsToVitaminState } from "@/lib/supabase/mappers";
@@ -53,7 +54,7 @@ export async function syncPushSchedules(): Promise<void> {
     const locale = browserLocale();
     const today = zonedDateString(new Date(), timeZone);
 
-    const [prefsRes, feedRes, vitaminItemsRes, vitaminDaysRes, kickRes, waterRes, babyRes, scheduleRes] =
+    const [prefsRes, feedRes, pumpRes, vitaminItemsRes, vitaminDaysRes, kickRes, waterRes, babyRes, scheduleRes] =
       await Promise.all([
         supabase
           .from("push_reminder_preferences")
@@ -62,6 +63,13 @@ export async function syncPushSchedules(): Promise<void> {
           .maybeSingle(),
         supabase
           .from("feed_logs")
+          .select("logged_date, logged_time")
+          .eq("user_id", userId)
+          .order("logged_date", { ascending: false })
+          .order("logged_time", { ascending: false })
+          .limit(1),
+        supabase
+          .from("pump_logs")
           .select("logged_date, logged_time")
           .eq("user_id", userId)
           .order("logged_date", { ascending: false })
@@ -87,6 +95,7 @@ export async function syncPushSchedules(): Promise<void> {
     for (const result of [
       prefsRes,
       feedRes,
+      pumpRes,
       vitaminItemsRes,
       vitaminDaysRes,
       kickRes,
@@ -113,6 +122,7 @@ export async function syncPushSchedules(): Promise<void> {
       if (isPushKind(row.kind)) sentKeys[row.kind] = sentKeyFrom(row.payload);
     }
     const latest = feedRes.data?.[0];
+    const latestPump = pumpRes.data?.[0];
     const baby = babyRes.data ? rowToBabyPlus(babyRes.data) : null;
     const drafts = computeSchedules({
       now: new Date(),
@@ -122,6 +132,9 @@ export async function syncPushSchedules(): Promise<void> {
       sentKeys,
       latestFeed: latest
         ? { date: latest.logged_date, time: latest.logged_time }
+        : null,
+      latestPump: latestPump
+        ? { date: latestPump.logged_date, time: latestPump.logged_time }
         : null,
       vitaminNamedCount: named.length,
       vitaminDoneCount: todayLog ? countCompleted(named, todayLog.completed) : 0,
@@ -155,6 +168,7 @@ export async function syncPushSchedules(): Promise<void> {
 function isPushKind(value: string): value is PushKind {
   return (
     value === "feed" ||
+    value === "pump" ||
     value === "vitamins" ||
     value === "babyPlus" ||
     value === "kicks" ||
@@ -201,9 +215,7 @@ export async function sendTestPush(title: string, body: string): Promise<void> {
   const url = getSupabaseUrl();
   const anon = getSupabaseAnonKey();
   if (!supabase || !url || !anon) throw new Error("Supabase is not configured");
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw new Error(error.message);
-  const token = data.session?.access_token;
+  const token = getAccountAccessToken();
   if (!token) throw new Error("Not signed in");
   const response = await fetch(`${url}/functions/v1/send-due-reminders`, {
     method: "POST",

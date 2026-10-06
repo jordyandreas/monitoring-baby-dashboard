@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SummaryChartSkeleton } from "@/components/layout/data-skeletons";
+import { remotePlaceholder, SummaryChartSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useRemote } from "@/hooks/use-remote";
@@ -56,11 +56,12 @@ export function KickSummary({
   link: ReturnType<typeof useSummaryLink>;
 }) {
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("kicks", listKicks, signedIn);
+  const { data, ready, error, reload } = useRemote("kicks", listKicks, signedIn);
   const { locale, t } = useLocale();
   const range: RangeDays = compact ? 7 : link.range;
 
-  if (!ready) return <SummaryChartSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <SummaryChartSkeleton />);
+  if (placeholder) return placeholder;
 
   const kicks = data ?? [];
   const today = getTodayDateStr();

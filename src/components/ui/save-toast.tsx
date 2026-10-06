@@ -15,6 +15,7 @@ type SaveToastAction = "save" | "update" | "delete";
 
 export type SaveToastTopic =
   | "feed"
+  | "pump"
   | "diaper"
   | "sleep"
   | "growth"
@@ -48,6 +49,8 @@ function toastMessage(
     switch (topic) {
       case "feed":
         return t("toast.feedDeleteFailed");
+      case "pump":
+        return t("toast.pumpDeleteFailed");
       case "diaper":
         return t("toast.diaperDeleteFailed");
       case "sleep":
@@ -77,6 +80,8 @@ function toastMessage(
     switch (topic) {
       case "feed":
         return t("toast.feedUpdateFailed");
+      case "pump":
+        return t("toast.pumpUpdateFailed");
       case "diaper":
         return t("toast.diaperUpdateFailed");
       case "sleep":
@@ -92,6 +97,8 @@ function toastMessage(
     switch (topic) {
       case "feed":
         return t("toast.feedFailed");
+      case "pump":
+        return t("toast.pumpFailed");
       case "diaper":
         return t("toast.diaperFailed");
       case "sleep":
@@ -129,6 +136,8 @@ function toastMessage(
     switch (topic) {
       case "feed":
         return t("toast.feedDeleted");
+      case "pump":
+        return t("toast.pumpDeleted");
       case "diaper":
         return t("toast.diaperDeleted");
       case "sleep":
@@ -158,6 +167,8 @@ function toastMessage(
     switch (topic) {
       case "feed":
         return t("toast.feedUpdated");
+      case "pump":
+        return t("toast.pumpUpdated");
       case "diaper":
         return t("toast.diaperUpdated");
       case "sleep":
@@ -172,6 +183,8 @@ function toastMessage(
   switch (topic) {
     case "feed":
       return t("toast.feedSaved");
+    case "pump":
+      return t("toast.pumpSaved");
     case "diaper":
       return t("toast.diaperSaved");
     case "sleep":

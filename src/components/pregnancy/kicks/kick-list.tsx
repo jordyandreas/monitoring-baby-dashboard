@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { DateDayStrip } from "@/components/history/date-day-strip";
 import { HistoryDayList } from "@/components/history/history-day-list";
-import { HistoryListSkeleton } from "@/components/layout/data-skeletons";
+import { HistoryListSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -21,7 +21,7 @@ export function KickList({
   onSelectDate: (date: string) => void;
 }) {
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("kicks", listKicks, signedIn);
+  const { data, ready, error, reload } = useRemote("kicks", listKicks, signedIn);
   const { locale, t } = useLocale();
 
   const kicks = data ?? [];
@@ -31,7 +31,8 @@ export function KickList({
     locale: dfLocale,
   });
 
-  if (!ready) return <HistoryListSkeleton />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <HistoryListSkeleton />);
+  if (placeholder) return placeholder;
 
   return (
     <div className="space-y-3">

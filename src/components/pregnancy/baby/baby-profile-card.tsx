@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ProfileCardSkeleton } from "@/components/layout/data-skeletons";
+import { ProfileCardSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -30,11 +30,18 @@ import { cn } from "@/utils/cn";
 
 export function BabyProfileCard({ className }: { className?: string }) {
   const { signedIn, requestLogin } = useSupabase();
-  const { data, ready } = useRemote("baby", getBaby, signedIn);
+  const { data, ready, error, reload } = useRemote("baby", getBaby, signedIn);
   const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
 
-  if (!ready) return <ProfileCardSkeleton className={className} />;
+  const placeholder = remotePlaceholder(
+    ready,
+    error,
+    data,
+    reload,
+    <ProfileCardSkeleton className={className} />,
+  );
+  if (placeholder) return placeholder;
 
   const baby = data;
 

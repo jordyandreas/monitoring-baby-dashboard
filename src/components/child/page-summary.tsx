@@ -5,6 +5,7 @@ import { format, parseISO, startOfDay } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { Baby, Milk, Moon, Ruler, Weight } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
+import { PumpIcon } from "@/components/icons/pump-icon";
 import {
   Card,
   CardContent,
@@ -18,11 +19,12 @@ import {
   feedDaySummary,
   formatDuration,
   growthComparison,
+  pumpDaySummary,
   recentDates,
   sleepDaySummary,
   sleepMinutes,
 } from "@/lib/child/summary";
-import type { DiaperEntry, FeedEntry, GrowthEntry, SleepEntry } from "@/lib/child/types";
+import type { DiaperEntry, FeedEntry, GrowthEntry, PumpEntry, SleepEntry } from "@/lib/child/types";
 import {
   describePercentile,
   englishOrdinal,
@@ -318,6 +320,71 @@ export function FeedRangeSummary({
       )}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("feed.logPatterns")}</p>
+      ) : null}
+    </SummaryShell>
+  );
+}
+
+export function PumpRangeSummary({
+  entries,
+  link,
+}: {
+  entries: PumpEntry[];
+  link: ReturnType<typeof useSummaryLink>;
+}) {
+  const { t } = useLocale();
+  const period = useSummaryWindow(
+    entries.map((entry) => entry.date),
+    link,
+  );
+  const { range, day, today, axis, locale } = period;
+  const byDay = axis.map((item) => ({
+    ...item,
+    entries: entries.filter((entry) => entry.date === item.date),
+  }));
+  const inRange = byDay.flatMap((item) => item.entries);
+  const summary = pumpDaySummary(inRange);
+  const counts = byDay.map((item) => item.entries.length);
+  const maxCount = Math.max(...counts, 1);
+  const dateLabel = shortDayLabel(day, locale);
+
+  return (
+    <SummaryShell icon={PumpIcon} title={t("pump.summaryTitle")} subtitle={t("pump.summarySubtitle")}>
+      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
+      <div className="grid grid-cols-3 gap-3">
+        <StatTile
+          value={String(summary.count)}
+          caption={
+            range !== 1
+              ? t("pump.sessionsInRange", { count: range })
+              : day === today
+                ? t("pump.sessionsToday")
+                : t("pump.sessionsOnDay", { date: dateLabel })
+          }
+          emphasis
+        />
+        <StatTile value={t("child.summaryMl", { ml: summary.ml })} caption={t("pump.summaryTotal")} />
+        <StatTile
+          value={summary.avgMl === null ? "—" : t("child.summaryMl", { ml: summary.avgMl })}
+          caption={t("pump.summaryAvg")}
+        />
+      </div>
+      {range === 1 && inRange.length === 0 && entries.length > 0 ? (
+        <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
+      ) : null}
+      {range === 1 ? null : (
+        <ActivityChart
+          title={t("pump.dailyActivity")}
+          hint={t("pump.dailyActivityHint")}
+          days={byDay.map((item) => ({ ...item, value: item.entries.length }))}
+          maxValue={maxCount}
+          barLabel={(value) => String(value)}
+          ariaLabel={(value, date) => t("pump.barAria", { count: value, date })}
+          locale={locale}
+        />
+      )}
+      {entries.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground">{t("pump.logPatterns")}</p>
       ) : null}
     </SummaryShell>
   );

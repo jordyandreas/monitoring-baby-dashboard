@@ -2,10 +2,36 @@
 
 import type { ReactNode } from "react";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/utils/cn";
 
 const CHART_BARS = [46, 72, 28, 64, 80, 36, 58];
+
+export function LoadFailed({ onRetry, className }: { onRetry: () => void; className?: string }) {
+  const { t } = useLocale();
+  return (
+    <div role="alert" className={cn("rounded-2xl glass-regular px-4 py-8 text-center", className)}>
+      <p className="text-sm font-medium text-foreground">{t("common.loadFailed")}</p>
+      <Button type="button" className="mt-4 min-h-11 rounded-full px-5" onClick={onRetry}>
+        {t("toast.retry")}
+      </Button>
+    </div>
+  );
+}
+
+/** Skeleton while the first load is in flight, or a retry prompt if it failed. */
+export function remotePlaceholder(
+  ready: boolean,
+  error: string | null,
+  data: unknown,
+  reload: () => void,
+  skeleton: ReactNode,
+): ReactNode | null {
+  if (!ready) return skeleton;
+  if (error && data == null) return <LoadFailed onRetry={reload} />;
+  return null;
+}
 
 function SkeletonStatus({ className, children }: { className?: string; children: ReactNode }) {
   const { t } = useLocale();
@@ -32,7 +58,7 @@ function ChartBars({ className }: { className?: string }) {
 function LogRow() {
   return (
     <div className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm">
-      <Skeleton className="h-4 w-[4.5rem]" />
+      <Skeleton className="h-4 w-16" />
       <span className="h-8 w-px shrink-0 bg-border" />
       <Skeleton className="size-8 rounded-full" />
       <div className="min-w-0 flex-1 space-y-2">

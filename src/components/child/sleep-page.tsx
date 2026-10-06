@@ -5,7 +5,7 @@ import { ChildDayHistory } from "@/components/child/day-history";
 import { SleepRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { SleepLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
-import { LogPageSkeleton } from "@/components/layout/data-skeletons";
+import { LogPageSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -17,13 +17,14 @@ import { deleteSleep, listSleeps } from "@/services/sleep.service";
 export function SleepPageContent() {
   const { t } = useLocale();
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("sleep", listSleeps, signedIn);
+  const { data, ready, error, reload } = useRemote("sleep", listSleeps, signedIn);
   const [editingId, setEditingId] = useState<string | null>(null);
   const summary = useSummaryLink();
   const sleeps = data ?? [];
   const editing = sleeps.find((entry) => entry.id === editingId) ?? null;
 
-  if (!ready) return <LogPageSkeleton tiles={4} />;
+  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={4} />);
+  if (placeholder) return placeholder;
 
   return (
     <LogScreen>

@@ -20,14 +20,16 @@ import type {
   FeedSide,
   PoopColor,
   PoopTexture,
+  PumpEntry,
   SleepEntry,
   SleepPeriod,
 } from "@/lib/child/types";
 import { getCurrentTimeString } from "@/utils/time";
 import { getTodayDateStr } from "@/lib/pregnancy/vitamins";
-import { diaperShareText, feedShareText } from "@/lib/child/whatsapp-share";
+import { diaperShareText, feedShareText, pumpShareText } from "@/lib/child/whatsapp-share";
 import { saveDiaper } from "@/services/diapers.service";
 import { saveFeed } from "@/services/feed.service";
+import { savePump } from "@/services/pump.service";
 import { saveSleep } from "@/services/sleep.service";
 
 /** Per-feed shortcuts. Steps grow from a newborn feed toward a typical feed by age 2. */
@@ -133,6 +135,65 @@ export function FeedLogForm({
         />
       )}
       <SubmitButton label={editing ? t("common.save") : t("feed.add")} disabled={!canSave} />
+    </LogForm>
+  );
+}
+
+export function PumpLogForm({
+  onSaved,
+  initial,
+  embedded,
+}: {
+  onSaved?: () => void;
+  initial?: PumpEntry;
+  embedded?: boolean;
+}) {
+  const { t } = useLocale();
+  const [date, setDate] = useState(initial?.date ?? getTodayDateStr);
+  const [time, setTime] = useState(initial?.time ?? getCurrentTimeString);
+  const [amount, setAmount] = useState(initial?.amountMl !== undefined ? String(initial.amountMl) : "");
+  const editing = Boolean(initial);
+  const fieldId = initial ? `pump-edit-${initial.id}` : "pump";
+  const ml = Number(amount);
+  const canSave = Boolean(date && time) && amount.trim() !== "" && Number.isFinite(ml) && ml >= 0 && ml <= 2000;
+
+  return (
+    <LogForm
+      title={editing ? t("pump.edit") : t("pump.add")}
+      embedded={embedded ?? editing}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!canSave) return;
+        const entry: PumpEntry = {
+          id: initial?.id ?? crypto.randomUUID(),
+          date,
+          time,
+          amountMl: Math.round(ml),
+        };
+        const text = pumpShareText(entry, t);
+        void commitSave("pump", () => savePump(entry), initial ? "update" : "save", text, "pump").then((ok) => {
+          if (!ok) return;
+          if (!initial) {
+            setAmount("");
+            setTime(getCurrentTimeString());
+          }
+          onSaved?.();
+        });
+      }}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <DateField date={date} onDate={setDate} />
+        <TimeField label={t("child.time")} time={time} onTime={setTime} />
+      </div>
+      <NumberField
+        id={`${fieldId}-amount`}
+        label={t("pump.amount")}
+        value={amount}
+        onChange={setAmount}
+        presets={BOTTLE_ML}
+        presetUnit="ml"
+      />
+      <SubmitButton label={editing ? t("common.save") : t("pump.add")} disabled={!canSave} />
     </LogForm>
   );
 }

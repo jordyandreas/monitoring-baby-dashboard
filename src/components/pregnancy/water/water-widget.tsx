@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DashboardCardSkeleton } from "@/components/layout/data-skeletons";
+import { DashboardCardSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useRemote } from "@/hooks/use-remote";
@@ -30,10 +30,17 @@ import { cn } from "@/utils/cn";
 
 export function WaterWidget({ className }: { className?: string }) {
   const { signedIn } = useSupabase();
-  const { data, ready } = useRemote("water", getWater, signedIn);
+  const { data, ready, error, reload } = useRemote("water", getWater, signedIn);
   const { locale, t } = useLocale();
 
-  if (!ready) return <DashboardCardSkeleton className={className} lines={2} />;
+  const placeholder = remotePlaceholder(
+    ready,
+    error,
+    data,
+    reload,
+    <DashboardCardSkeleton className={className} lines={2} />,
+  );
+  if (placeholder) return placeholder;
 
   const entries = data?.entries ?? [];
   const glassSizeMl = data?.glassSizeMl ?? 250;
