@@ -10,7 +10,6 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { AppModeProvider } from "@/components/providers/app-mode-provider";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { SupabaseSyncStatus } from "@/components/dev/supabase-sync-status";
-import { PushWorker } from "@/components/push-reminders/push-worker";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { SaveToaster } from "@/components/ui/save-toast";
 import "./globals.css";
@@ -59,7 +58,6 @@ export default function RootLayout({
               <SiteFooter />
               <BottomNav />
               <QuickLogFab />
-              <PushWorker />
               <SupabaseSyncStatus />
           </SupabaseProvider>
           </AppModeProvider>

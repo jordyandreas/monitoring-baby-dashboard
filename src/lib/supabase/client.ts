@@ -17,6 +17,23 @@ async function noOpAuthLock<T>(
 
 let browserClient: SupabaseClient<Database> | null = null;
 
+const AUTH_FETCH_TIMEOUT_MS = 8_000;
+
+/**
+ * Abort auth HTTP calls that never finish. A hung refresh holds GoTrue's
+ * in-process lock and blocks every later auth call on this client.
+ */
+function authFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AUTH_FETCH_TIMEOUT_MS);
+  const abort = () => controller.abort();
+  init?.signal?.addEventListener("abort", abort);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => {
+    clearTimeout(timer);
+    init?.signal?.removeEventListener("abort", abort);
+  });
+}
+
 /** Browser Supabase client. Session lives in cookies so proxy can see it. */
 export function createSupabaseBrowserClient() {
   const url = getSupabaseUrl();
@@ -27,9 +44,12 @@ export function createSupabaseBrowserClient() {
     );
   }
   return createBrowserClient<Database>(url, anonKey, {
+    global: { fetch: authFetch },
     auth: {
       persistSession: true,
-      autoRefreshToken: true,
+      // Refresh is owned by refreshAccountSession. The library timer would
+      // rotate the same refresh token and leave data queries waiting on it.
+      autoRefreshToken: false,
       detectSessionInUrl: false,
       lock: noOpAuthLock,
       skipAutoInitialize: true,

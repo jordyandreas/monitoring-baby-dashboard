@@ -427,6 +427,15 @@ export interface Database {
         milestone_key: string;
         achieved_on: string;
       }>;
+      feedback: TableShape<{
+        user_id: string;
+        id: string;
+        name: string;
+        email: string;
+        whatsapp: string;
+        message: string;
+        updated_at: string;
+      }>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
