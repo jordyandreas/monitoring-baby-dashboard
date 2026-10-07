@@ -129,8 +129,8 @@ export function ChildHome() {
 
   const shortcuts: { kind: QuickKind; label: string; icon: IconType }[] = [
     { kind: "feed", label: t("child.quickFeed"), icon: Milk },
-    { kind: "pump", label: t("child.quickPump"), icon: PumpIcon },
     { kind: "diaper", label: t("child.quickDiaper"), icon: DiaperIcon },
+    { kind: "pump", label: t("child.quickPump"), icon: PumpIcon },
     { kind: "sleep", label: t("child.quickSleep"), icon: Moon },
   ];
 
@@ -565,8 +565,8 @@ function LogFilters({
   const options: { id: LogFilter; label: string }[] = [
     { id: "all", label: t("child.filterAll") },
     { id: "feed", label: t("child.filterFeed") },
-    { id: "pump", label: t("child.filterPump") },
     { id: "diaper", label: t("child.filterDiaper") },
+    { id: "pump", label: t("child.filterPump") },
     { id: "sleep", label: t("child.filterSleep") },
   ];
 
@@ -884,6 +884,13 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
       tint: "bg-muted/40",
     },
     {
+      href: "/diapers",
+      kind: "diaper",
+      label: t("child.tagDiaper"),
+      value: t("child.peePoop", { pee: totals.pee, poop: totals.poop }),
+      tint: "bg-amber-50",
+    },
+    {
       href: "/pump",
       kind: "pump",
       label: t("child.tagPump"),
@@ -893,13 +900,6 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
           : t("child.pumpsCount", { count: totals.pumpCount }),
       detail: t("child.mlTotal", { ml: totals.pumpMl }),
       tint: "bg-violet-50",
-    },
-    {
-      href: "/diapers",
-      kind: "diaper",
-      label: t("child.tagDiaper"),
-      value: t("child.peePoop", { pee: totals.pee, poop: totals.poop }),
-      tint: "bg-amber-50",
     },
     {
       href: "/sleep",
