@@ -10,7 +10,8 @@ import {
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { setAccountSession } from "@/lib/supabase/account-session";
+import { isAccessTokenStale, setAccountSession } from "@/lib/supabase/account-session";
+import { refreshAccountSession } from "@/lib/supabase/refresh-session";
 import {
   ensureSupabaseSession,
   resetEnsureSupabaseSession,
@@ -139,6 +140,21 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     notifyDataRefresh("*");
     return { error: null, notice: null };
   }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const wake = () => {
+      if (document.visibilityState === "hidden") return;
+      if (!isAccessTokenStale()) return;
+      void refreshAccountSession().catch(() => {});
+    };
+    document.addEventListener("visibilitychange", wake);
+    window.addEventListener("pageshow", wake);
+    return () => {
+      document.removeEventListener("visibilitychange", wake);
+      window.removeEventListener("pageshow", wake);
+    };
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) {

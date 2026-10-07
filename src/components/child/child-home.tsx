@@ -884,6 +884,13 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
       tint: "bg-muted/40",
     },
     {
+      href: "/diapers",
+      kind: "diaper",
+      label: t("child.tagDiaper"),
+      value: t("child.peePoop", { pee: totals.pee, poop: totals.poop }),
+      tint: "bg-amber-50",
+    },
+    {
       href: "/pump",
       kind: "pump",
       label: t("child.tagPump"),
@@ -893,13 +900,6 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
           : t("child.pumpsCount", { count: totals.pumpCount }),
       detail: t("child.mlTotal", { ml: totals.pumpMl }),
       tint: "bg-violet-50",
-    },
-    {
-      href: "/diapers",
-      kind: "diaper",
-      label: t("child.tagDiaper"),
-      value: t("child.peePoop", { pee: totals.pee, poop: totals.poop }),
-      tint: "bg-amber-50",
     },
     {
       href: "/sleep",
