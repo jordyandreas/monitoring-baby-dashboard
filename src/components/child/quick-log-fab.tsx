@@ -38,8 +38,8 @@ export function QuickLogFab() {
 
   const actions: ExpandableFabAction[] = [
     { id: "feed", label: t("nav.feed"), icon: Milk },
-    { id: "diaper", label: t("nav.diaper"), icon: DiaperIcon },
     { id: "pump", label: t("nav.pump"), icon: PumpIcon },
+    { id: "diaper", label: t("nav.diaper"), icon: DiaperIcon },
     { id: "sleep", label: t("nav.sleep"), icon: Moon },
   ];
 
