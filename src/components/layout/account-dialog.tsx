@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { LogOut, MessageSquare, UserRound } from "lucide-react";
+import { LogOut, MessageSquare, ScrollText, UserRound } from "lucide-react";
+import { ChangelogDialog } from "@/components/layout/changelog-dialog";
 import { headerIconButtonClassName } from "@/components/layout/header-icon-button";
 import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
@@ -75,6 +76,7 @@ export function AccountDialog() {
   const childRemote = useRemote("child", getChildProfile, signedIn);
   const [freshUser, setFreshUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -158,6 +160,17 @@ export function AccountDialog() {
               className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted"
               onClick={() => {
                 setMenuOpen(false);
+                setChangelogOpen(true);
+              }}
+            >
+              <ScrollText className="size-4 text-muted-foreground" aria-hidden />
+              {t("changelog.open")}
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted"
+              onClick={() => {
+                setMenuOpen(false);
                 setFeedbackOpen(true);
               }}
             >
@@ -180,6 +193,7 @@ export function AccountDialog() {
             </button>
           </PopoverContent>
         </Popover>
+        <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
         <FeedbackDialog
           open={feedbackOpen}
           onOpenChange={setFeedbackOpen}

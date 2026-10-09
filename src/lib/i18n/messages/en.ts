@@ -44,6 +44,22 @@ export const en = {
     feedbackFailed: "Couldn't send feedback.",
     feedbackSent: "Feedback sent",
   },
+  changelog: {
+    open: "Changelog",
+    title: "What's new",
+    poopAmount: "Diaper logs can record how much poop, and it shows up in summaries and share text.",
+    feedback: "Send feedback from the account menu.",
+    pump: "Log pumping sessions.",
+    pushReminders: "Browser reminder notifications.",
+    glass: "A new look with a glass effect.",
+    quickLog: "Quick log button.",
+    whatsappShare: "Share a log on WhatsApp.",
+    ageCelebration: "Age celebrations for weeks, months, 100 days, and birthdays, with confetti.",
+    childMode:
+      "Child mode: milk, diapers, sleep, growth (WHO charts), health, milestones, meals, solids, and potty.",
+    accountSync: "Logs stay with your account.",
+    editDelete: "Logs can be edited and deleted.",
+  },
   nav: {
     main: "Main navigation",
     home: "Home",

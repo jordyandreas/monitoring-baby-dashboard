@@ -45,6 +45,22 @@ export const id: Messages = {
     feedbackFailed: "Masukan gagal terkirim.",
     feedbackSent: "Masukan terkirim",
   },
+  changelog: {
+    open: "Changelog",
+    title: "Yang baru",
+    poopAmount: "Jumlah pup bisa dicatat di log popok, ikut ke ringkasan dan teks bagikan.",
+    feedback: "Kirim masukan dari menu akun.",
+    pump: "Log sesi pompa ASI.",
+    pushReminders: "Pengingat notifikasi di browser.",
+    glass: "Tampilan baru dengan efek kaca.",
+    quickLog: "Tombol log cepat.",
+    whatsappShare: "Bagikan catatan lewat WhatsApp.",
+    ageCelebration: "Perayaan usia (minggu, bulan, 100 hari, ulang tahun) dengan confetti.",
+    childMode:
+      "Mode anak: susu, popok, tidur, pertumbuhan (grafik WHO), kesehatan, milestone, makan, MPASI, dan potty.",
+    accountSync: "Data ikut akun.",
+    editDelete: "Catatan bisa diubah dan dihapus.",
+  },
   nav: {
     main: "Navigasi utama",
     home: "Beranda",
