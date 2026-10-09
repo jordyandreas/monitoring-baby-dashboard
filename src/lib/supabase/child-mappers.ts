@@ -110,6 +110,7 @@ export function diaperToRow(userId: string, entry: DiaperEntry): Tables["diaper_
     kind: entry.kind,
     poop_color: entry.poopColor ?? null,
     poop_texture: entry.poopTexture ?? null,
+    poop_amount: entry.poopAmount ?? null,
   };
 }
 
@@ -126,6 +127,9 @@ export function rowToDiaper(row: Tables["diaper_logs"]["Row"]): DiaperEntry {
   }
   if (row.poop_texture === "liquid" || row.poop_texture === "soft" || row.poop_texture === "solid") {
     entry.poopTexture = row.poop_texture;
+  }
+  if (row.poop_amount === "little" || row.poop_amount === "much") {
+    entry.poopAmount = row.poop_amount;
   }
   return entry;
 }

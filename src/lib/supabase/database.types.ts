@@ -373,6 +373,7 @@ export interface Database {
         kind: string;
         poop_color: string | null;
         poop_texture: string | null;
+        poop_amount: string | null;
       }>;
       sleep_logs: TableShape<{
         user_id: string;

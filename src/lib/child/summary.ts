@@ -202,7 +202,11 @@ export function diaperHistoryParts(
   const title = diaperKindLabel(entry.kind, t);
   return {
     title,
-    subtitle: [diaperColorLabel(entry.poopColor, t), diaperTextureLabel(entry.poopTexture, t)]
+    subtitle: [
+      diaperColorLabel(entry.poopColor, t),
+      diaperTextureLabel(entry.poopTexture, t),
+      diaperAmountLabel(entry.poopAmount, t),
+    ]
       .filter(Boolean)
       .join(", "),
     tone: "amber",
@@ -270,6 +274,12 @@ function diaperColorLabel(color: DiaperEntry["poopColor"], t: Translate): string
   }
 }
 
+function diaperAmountLabel(amount: DiaperEntry["poopAmount"], t: Translate): string {
+  if (amount === "little") return t("diaper.little");
+  if (amount === "much") return t("diaper.much");
+  return "";
+}
+
 function diaperTextureLabel(texture: DiaperEntry["poopTexture"], t: Translate): string {
   switch (texture) {
     case "liquid":
@@ -285,9 +295,11 @@ function diaperTextureLabel(texture: DiaperEntry["poopTexture"], t: Translate): 
 
 export function describeDiaper(entry: DiaperEntry, t: Translate): string {
   const kind = diaperKindLabel(entry.kind, t);
-  const extra = [diaperColorLabel(entry.poopColor, t), diaperTextureLabel(entry.poopTexture, t)].filter(
-    Boolean,
-  );
+  const extra = [
+    diaperColorLabel(entry.poopColor, t),
+    diaperTextureLabel(entry.poopTexture, t),
+    diaperAmountLabel(entry.poopAmount, t),
+  ].filter(Boolean);
   return extra.length ? `${kind} · ${extra.join(", ")}` : kind;
 }
 
