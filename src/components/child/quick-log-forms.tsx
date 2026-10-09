@@ -15,6 +15,7 @@ import { sleepMinutes } from "@/lib/child/summary";
 import type {
   DiaperEntry,
   DiaperKind,
+  PoopAmount,
   FeedEntry,
   FeedKind,
   FeedSide,
@@ -24,6 +25,7 @@ import type {
   SleepEntry,
   SleepPeriod,
 } from "@/lib/child/types";
+import { cn } from "@/utils/cn";
 import { getCurrentTimeString } from "@/utils/time";
 import { getTodayDateStr } from "@/lib/pregnancy/vitamins";
 import { diaperShareText, feedShareText, pumpShareText } from "@/lib/child/whatsapp-share";
@@ -213,8 +215,10 @@ export function DiaperLogForm({
   const [kind, setKind] = useState<DiaperKind>(initial?.kind ?? "pee");
   const [color, setColor] = useState<PoopColor>(initial?.poopColor ?? "yellow");
   const [texture, setTexture] = useState<PoopTexture>(initial?.poopTexture ?? "soft");
+  const [amount, setAmount] = useState<PoopAmount | "">(initial?.poopAmount ?? "");
   const editing = Boolean(initial);
   const needsPoop = kind === "poop" || kind === "both";
+  const canSave = Boolean(date && time) && (!needsPoop || amount !== "");
 
   return (
     <LogForm
@@ -222,12 +226,14 @@ export function DiaperLogForm({
       embedded={embedded ?? editing}
       onSubmit={(event) => {
         event.preventDefault();
-        if (!date || !time) return;
+        if (!canSave) return;
         const next = {
           date,
           time,
           kind,
-          ...(needsPoop ? { poopColor: color, poopTexture: texture } : {}),
+          ...(needsPoop && amount !== ""
+            ? { poopColor: color, poopTexture: texture, poopAmount: amount }
+            : {}),
         };
         const entry: DiaperEntry = { id: initial?.id ?? crypto.randomUUID(), ...next };
         const text = diaperShareText(entry, t);
@@ -247,16 +253,31 @@ export function DiaperLogForm({
         <DateField date={date} onDate={setDate} />
         <TimeField label={t("child.time")} time={time} onTime={setTime} />
       </div>
-      <ChoiceRow
-        label={t("pages.diapers.title")}
-        value={kind}
-        onChange={setKind}
-        options={[
-          { value: "pee", label: t("diaper.pee") },
-          { value: "poop", label: t("diaper.poop") },
-          { value: "both", label: t("diaper.both") },
-        ]}
-      />
+      <div className={cn("grid gap-3", needsPoop && "grid-cols-2")}>
+        <ChoiceRow
+          className="min-w-0"
+          label={t("pages.diapers.title")}
+          value={kind}
+          onChange={setKind}
+          options={[
+            { value: "pee", label: t("diaper.pee") },
+            { value: "poop", label: t("diaper.poop") },
+            { value: "both", label: t("diaper.both") },
+          ]}
+        />
+        {needsPoop ? (
+          <ChoiceRow
+            className="min-w-0"
+            label={t("diaper.amount")}
+            value={amount}
+            onChange={setAmount}
+            options={[
+              { value: "little", label: t("diaper.little") },
+              { value: "much", label: t("diaper.much") },
+            ]}
+          />
+        ) : null}
+      </div>
       {needsPoop ? (
         <div className="grid gap-3 md:grid-cols-2">
           <ChoiceRow
@@ -285,7 +306,7 @@ export function DiaperLogForm({
           />
         </div>
       ) : null}
-      <SubmitButton label={editing ? t("common.save") : t("diaper.add")} disabled={!date || !time} />
+      <SubmitButton label={editing ? t("common.save") : t("diaper.add")} disabled={!canSave} />
     </LogForm>
   );
 }
