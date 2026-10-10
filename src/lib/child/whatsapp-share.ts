@@ -19,6 +19,7 @@ const POOP_TEXTURE_KEYS: Record<PoopTexture, string> = {
 
 const POOP_AMOUNT_KEYS: Record<PoopAmount, string> = {
   little: "diaper.little",
+  medium: "diaper.medium",
   much: "diaper.much",
 };
 

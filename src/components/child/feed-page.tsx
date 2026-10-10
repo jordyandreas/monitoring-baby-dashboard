@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
+import { LastLogLine } from "@/components/child/last-log-line";
 import { FeedRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { FeedLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
@@ -11,7 +12,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { feedHistoryParts } from "@/lib/child/summary";
+import { feedHistoryParts, feedLastStatus } from "@/lib/child/summary";
 import { feedShareText } from "@/lib/child/whatsapp-share";
 import { deleteFeed, listFeeds } from "@/services/feed.service";
 
@@ -24,11 +25,14 @@ export function FeedPageContent() {
   const feeds = data ?? [];
   const editing = feeds.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={4} />);
+  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={4} withLast />);
   if (placeholder) return placeholder;
+
+  const last = feedLastStatus(feeds, t);
 
   return (
     <LogScreen>
+      <LastLogLine items={last ? [last] : []} />
       <FeedLogForm />
       <FeedRangeSummary entries={feeds} link={summary} />
       <ChildDayHistory

@@ -80,6 +80,43 @@ function DayStrip() {
   );
 }
 
+function LastLogSkeleton() {
+  return (
+    <div className="rounded-2xl bg-lilac/60 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <Skeleton className="mt-2 h-6 w-28" />
+      <Skeleton className="mt-2 h-4 w-40" />
+    </div>
+  );
+}
+
+function IntervalSkeleton() {
+  return (
+    <div className="space-y-2">
+      <Skeleton className="h-4 w-36" />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="space-y-2 rounded-xl bg-lilac/40 px-3 py-3">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <div className="space-y-2 rounded-xl bg-baby-sky/40 px-3 py-3">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-3 w-14" />
+          </div>
+          <div className="space-y-2 rounded-xl bg-mint/40 px-3 py-3">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FormCard({ fields = 3 }: { fields?: number }) {
   return (
     <div className="space-y-4 rounded-2xl glass-regular p-4">
@@ -137,13 +174,14 @@ export function ChildHomeSkeleton() {
           </div>
           <Skeleton className="h-7 w-20 rounded-full" />
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="flex items-center gap-3 rounded-2xl bg-muted/40 px-3 py-3">
-              <Skeleton className="size-10 rounded-full" />
-              <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="flex items-start gap-3 rounded-2xl bg-muted/40 px-3 py-3">
+              <Skeleton className="size-10 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
                 <Skeleton className="h-3 w-12" />
-                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-16" />
+                {index < 3 ? <Skeleton className="h-3 w-24" /> : null}
               </div>
             </div>
           ))}
@@ -182,9 +220,10 @@ export function ChildHomeSkeleton() {
   );
 }
 
-export function LogPageSkeleton({ tiles = 4 }: { tiles?: number }) {
+export function LogPageSkeleton({ tiles = 4, withLast = false }: { tiles?: number; withLast?: boolean }) {
   return (
     <SkeletonStatus className="w-full min-w-0 space-y-6">
+      {withLast ? <LastLogSkeleton /> : null}
       <FormCard fields={3} />
       <section className="space-y-5 rounded-2xl glass-regular p-5 shadow-sm">
         <div className="space-y-2">
@@ -203,6 +242,7 @@ export function LogPageSkeleton({ tiles = 4 }: { tiles?: number }) {
             </div>
           ))}
         </div>
+        {withLast ? <IntervalSkeleton /> : null}
         <ChartBars />
       </section>
       <section className="space-y-3">

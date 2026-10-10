@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
+import { LastLogLine } from "@/components/child/last-log-line";
 import { DiaperRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { DiaperLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
@@ -11,7 +12,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { diaperHistoryParts } from "@/lib/child/summary";
+import { diaperHistoryParts, diaperLastStatuses } from "@/lib/child/summary";
 import { diaperShareText } from "@/lib/child/whatsapp-share";
 import { deleteDiaper, listDiapers } from "@/services/diapers.service";
 
@@ -24,11 +25,15 @@ export function DiaperPageContent() {
   const diapers = data ?? [];
   const editing = diapers.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={3} />);
+  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={3} withLast />);
   if (placeholder) return placeholder;
+
+  const last = diaperLastStatuses(diapers, t);
+  const lastItems = last ? [last.change, last.poop].filter((item) => item !== null) : [];
 
   return (
     <LogScreen>
+      <LastLogLine items={lastItems} />
       <DiaperLogForm />
       <DiaperRangeSummary entries={diapers} link={summary} />
       <ChildDayHistory

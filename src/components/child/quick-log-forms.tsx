@@ -253,7 +253,7 @@ export function DiaperLogForm({
         <DateField date={date} onDate={setDate} />
         <TimeField label={t("child.time")} time={time} onTime={setTime} />
       </div>
-      <div className={cn("grid gap-3", needsPoop && "grid-cols-2")}>
+      <div className={cn("grid gap-3", needsPoop && "sm:grid-cols-2")}>
         <ChoiceRow
           className="min-w-0"
           label={t("pages.diapers.title")}
@@ -273,6 +273,7 @@ export function DiaperLogForm({
             onChange={setAmount}
             options={[
               { value: "little", label: t("diaper.little") },
+              { value: "medium", label: t("diaper.medium") },
               { value: "much", label: t("diaper.much") },
             ]}
           />
