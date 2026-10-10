@@ -128,7 +128,7 @@ export function rowToDiaper(row: Tables["diaper_logs"]["Row"]): DiaperEntry {
   if (row.poop_texture === "liquid" || row.poop_texture === "soft" || row.poop_texture === "solid") {
     entry.poopTexture = row.poop_texture;
   }
-  if (row.poop_amount === "little" || row.poop_amount === "much") {
+  if (row.poop_amount === "little" || row.poop_amount === "medium" || row.poop_amount === "much") {
     entry.poopAmount = row.poop_amount;
   }
   return entry;

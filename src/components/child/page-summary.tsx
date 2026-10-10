@@ -21,6 +21,7 @@ import {
   growthComparison,
   pumpDaySummary,
   recentDates,
+  sessionIntervals,
   sleepDaySummary,
   sleepMinutes,
 } from "@/lib/child/summary";
@@ -146,6 +147,73 @@ function RangeToggle({
   );
 }
 
+function IntervalStat({
+  value,
+  caption,
+  className,
+  valueClass,
+  captionClass,
+}: {
+  value: string;
+  caption: string;
+  className: string;
+  valueClass: string;
+  captionClass: string;
+}) {
+  return (
+    <div className={cn("rounded-xl px-3 py-3", className)}>
+      <p className={cn("font-bold tabular-nums", valueClass)}>{value}</p>
+      <p className={cn("text-xs font-semibold", captionClass)}>{caption}</p>
+    </div>
+  );
+}
+
+function IntervalBand({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: { date: string; time: string }[];
+}) {
+  const { t } = useLocale();
+  const interval = sessionIntervals(entries);
+  const label = (minutes: number | undefined) => (minutes === undefined ? "—" : formatDuration(minutes, t));
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <IntervalStat
+          value={label(interval?.average)}
+          caption={t("child.intervalAvg")}
+          className="bg-lilac/40"
+          valueClass="text-xl text-lilac-foreground"
+          captionClass="text-lilac-foreground/70"
+        />
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <IntervalStat
+            value={label(interval?.shortest)}
+            caption={t("child.intervalShortest")}
+            className="bg-baby-sky/40"
+            valueClass="text-lg text-sky-foreground"
+            captionClass="text-sky-foreground/70"
+          />
+          <IntervalStat
+            value={label(interval?.longest)}
+            caption={t("child.intervalLongest")}
+            className="bg-mint/40"
+            valueClass="text-lg text-mint-foreground"
+            captionClass="text-mint-foreground/70"
+          />
+        </div>
+      </div>
+      {interval ? null : (
+        <p className="text-xs leading-relaxed text-muted-foreground">{t("child.intervalNeedTwo")}</p>
+      )}
+    </div>
+  );
+}
+
 function StatTile({
   value,
   caption,
@@ -166,6 +234,15 @@ function StatTile({
       <p className="text-xs text-muted-foreground">{caption}</p>
     </div>
   );
+}
+
+function chartAnchorIndexes(count: number): number[] {
+  const slots = 5;
+  const indexes = new Set<number>();
+  for (let slot = 0; slot < slots; slot += 1) {
+    indexes.add(Math.round((slot * (count - 1)) / (slots - 1)));
+  }
+  return [...indexes].sort((a, b) => a - b);
 }
 
 function ActivityChart({
@@ -193,6 +270,7 @@ function ActivityChart({
     : "";
   const hasChartData = days.some((day) => day.value > 0);
   const wide = days.length > 7;
+  const anchors = wide ? chartAnchorIndexes(days.length) : [];
 
   return (
     <div className="space-y-2">
@@ -215,45 +293,70 @@ function ActivityChart({
         ) : null}
         <div className={cn("flex items-end justify-between", wide ? "h-24 gap-px" : "h-28 gap-1")}>
           {days.map((day) => {
-            const barHeight = day.value > 0 ? Math.max(Math.round((day.value / maxValue) * 72), 12) : 4;
+            const barHeight = day.value > 0 ? Math.max(Math.round((day.value / maxValue) * 72), 12) : 0;
             const label = day.value > 0 ? barLabel(day.value) : "";
             return (
               <div key={day.date} className="flex min-w-0 flex-1 flex-col items-center gap-1">
                 <div
-                  className={cn(
-                    "relative flex w-full flex-col items-center justify-end",
-                    wide ? "max-w-4" : "max-w-8",
-                  )}
-                  style={{ height: 80 }}
+                  className="flex h-20 w-full items-end justify-center border-b border-border/60"
                   title={day.fullLabel}
                   aria-label={ariaLabel(day.value, day.fullLabel)}
                 >
-                  {label && !wide ? (
-                    <span className="mb-0.5 font-semibold text-[10px] tabular-nums text-lilac-deep">
-                      {label}
-                    </span>
-                  ) : null}
                   <div
                     className={cn(
-                      "w-full rounded-t-sm bg-lilac-deep transition-colors",
-                      day.value > 0 ? "opacity-100" : "opacity-15",
+                      "flex h-full w-full flex-col items-center justify-end",
+                      wide ? "max-w-4" : "max-w-8",
                     )}
-                    style={{ height: barHeight }}
-                  />
+                  >
+                    {label && !wide ? (
+                      <span className="mb-0.5 font-semibold text-[10px] tabular-nums text-lilac-deep">
+                        {label}
+                      </span>
+                    ) : null}
+                    {barHeight > 0 ? (
+                      <div className="w-full rounded-t-sm bg-lilac-deep" style={{ height: barHeight }} />
+                    ) : null}
+                  </div>
                 </div>
-                <span
-                  className={cn(
-                    "max-w-full truncate text-center font-medium text-muted-foreground",
-                    wide ? "text-[8px]" : "text-[10px]",
-                    day.isToday && "font-semibold text-lilac-deep",
-                  )}
-                >
-                  {day.isToday && !wide ? t("common.today") : day.dayLabel}
-                </span>
+                {wide ? null : (
+                  <span
+                    className={cn(
+                      "max-w-full truncate text-center text-[10px] font-medium text-muted-foreground",
+                      day.isToday && "font-semibold text-lilac-deep",
+                    )}
+                  >
+                    {day.isToday ? t("common.today") : day.dayLabel}
+                  </span>
+                )}
               </div>
             );
           })}
         </div>
+        {wide ? (
+          <div className="relative mt-1 h-4">
+            {anchors.map((index) => {
+              const day = days[index];
+              if (!day) return null;
+              const isFirst = index === 0;
+              const isLast = index === days.length - 1;
+              return (
+                <span
+                  key={day.date}
+                  className={cn(
+                    "absolute top-0 text-[10px] font-medium text-muted-foreground",
+                    isFirst && "left-0",
+                    isLast && "right-0",
+                    !isFirst && !isLast && "-translate-x-1/2",
+                    day.isToday && "font-semibold text-lilac-deep",
+                  )}
+                  style={!isFirst && !isLast ? { left: `${(index / (days.length - 1)) * 100}%` } : undefined}
+                >
+                  {format(parseISO(day.date), "d MMM", { locale: dfLocale })}
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -304,6 +407,7 @@ export function FeedRangeSummary({
         />
         <StatTile value={formatDuration(summary.nursingMin, t)} caption={t("feed.summaryNursing")} />
       </div>
+      <IntervalBand title={t("feed.intervalTitle")} entries={inRange} />
       {range === 1 && inRange.length === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}
@@ -369,6 +473,7 @@ export function PumpRangeSummary({
           caption={t("pump.summaryAvg")}
         />
       </div>
+      <IntervalBand title={t("pump.intervalTitle")} entries={inRange} />
       {range === 1 && inRange.length === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}
@@ -429,6 +534,7 @@ export function DiaperRangeSummary({
         <StatTile value={String(summary.pee)} caption={t("diaper.pee")} />
         <StatTile value={String(summary.poop)} caption={t("diaper.poop")} />
       </div>
+      <IntervalBand title={t("diaper.intervalTitle")} entries={byDay.flatMap((item) => item.entries)} />
       {range === 1 && summary.count === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}

@@ -23,7 +23,7 @@ export type PumpEntry = {
 export type DiaperKind = "pee" | "poop" | "both";
 export type PoopColor = "yellow" | "green" | "black" | "brown" | "other";
 export type PoopTexture = "liquid" | "soft" | "solid";
-export type PoopAmount = "little" | "much";
+export type PoopAmount = "little" | "medium" | "much";
 
 export type DiaperEntry = {
   id: string;

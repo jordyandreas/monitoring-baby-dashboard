@@ -43,12 +43,16 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatChildAge } from "@/lib/child/age";
-import { DEFAULT_CHILD_STORAGE, type ChildStorage } from "@/lib/child/types";
+import { DEFAULT_CHILD_STORAGE, type ChildStorage, type DiaperEntry, type FeedEntry, type PumpEntry } from "@/lib/child/types";
 import {
+  diaperLastStatuses,
+  feedLastStatus,
   formatDuration,
   growthComparison,
+  pumpLastStatus,
   todayTimeline,
   todayTotals,
+  type LastLogStatus,
   type TimelineKind,
 } from "@/lib/child/summary";
 import { genderLabel } from "@/lib/i18n/baby";
@@ -214,7 +218,7 @@ export function ChildHome() {
         onRetry={reloadExtras}
       />
 
-      <TodayActivity totals={todayStats} />
+      <TodayActivity totals={todayStats} feeds={board.feeds} pumps={board.pumps} diapers={board.diapers} />
 
       <section className="space-y-3">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -862,14 +866,32 @@ function MeasureStat({
   );
 }
 
-function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
+function activityNotes(items: Array<LastLogStatus | null | undefined>): LastLogStatus[] {
+  return items.filter((item): item is LastLogStatus => Boolean(item));
+}
+
+function TodayActivity({
+  totals,
+  feeds,
+  pumps,
+  diapers,
+}: {
+  totals: ReturnType<typeof todayTotals>;
+  feeds: FeedEntry[];
+  pumps: PumpEntry[];
+  diapers: DiaperEntry[];
+}) {
   const { t } = useLocale();
+  const feedLast = feedLastStatus(feeds, t);
+  const pumpLast = pumpLastStatus(pumps, t);
+  const diaperLast = diaperLastStatuses(diapers, t);
   const cards: {
     href: string;
     kind: QuickKind;
     label: string;
     value: string;
     detail?: string;
+    notes?: LastLogStatus[];
     tint: string;
   }[] = [
     {
@@ -881,6 +903,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
           ? t("child.feedsCountOne")
           : t("child.feedsCount", { count: totals.feedCount }),
       detail: t("child.mlTotal", { ml: totals.ml }),
+      notes: activityNotes([feedLast]),
       tint: "bg-muted/40",
     },
     {
@@ -888,6 +911,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
       kind: "diaper",
       label: t("child.tagDiaper"),
       value: t("child.peePoop", { pee: totals.pee, poop: totals.poop }),
+      notes: activityNotes([diaperLast?.change, diaperLast?.poop]),
       tint: "bg-amber-50",
     },
     {
@@ -899,6 +923,7 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
           ? t("child.pumpsCountOne")
           : t("child.pumpsCount", { count: totals.pumpCount }),
       detail: t("child.mlTotal", { ml: totals.pumpMl }),
+      notes: activityNotes([pumpLast]),
       tint: "bg-violet-50",
     },
     {
@@ -931,13 +956,13 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
               key={card.href}
               href={card.href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-muted/60",
+                "flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-muted/60",
                 card.tint,
               )}
             >
               <span
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-full",
+                  "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full",
                   LOG_TONE[card.kind],
                 )}
               >
@@ -949,8 +974,24 @@ function TodayActivity({ totals }: { totals: ReturnType<typeof todayTotals> }) {
                 {card.detail ? (
                   <span className="block text-xs text-muted-foreground">{card.detail}</span>
                 ) : null}
+                {card.notes?.map((note) => (
+                  <span key={`${note.label}-${note.time}`} className="mt-1 block text-xs leading-snug text-lilac-foreground">
+                    {note.label === t("child.lastLine") ? null : (
+                      <span className="text-lilac-foreground/70">{note.label} </span>
+                    )}
+                    <span className="font-semibold">{note.time}</span>
+                    {note.ago ? <span className="font-medium text-lilac-foreground"> {note.ago}</span> : null}
+                    {note.details.length > 0 ? (
+                      <span className="mt-0.5 flex flex-wrap gap-x-2 text-lilac-foreground/75">
+                        {note.details.map((part) => (
+                          <span key={part}>{part}</span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </span>
+                ))}
               </span>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
             </FeatureLink>
           );
         })}

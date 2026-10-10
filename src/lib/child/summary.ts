@@ -1,4 +1,4 @@
-import { format, isSameDay, startOfDay, subDays } from "date-fns";
+import { differenceInCalendarDays, format, isSameDay, parseISO, startOfDay, subDays } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import type { Locale } from "@/lib/i18n/types";
 import { formatTimeLabel, getMinutesFromTimeString } from "@/utils/time";
@@ -32,6 +32,114 @@ export function formatDuration(minutes: number, t: Translate): string {
   if (hours <= 0) return t("child.minutesShort", { minutes: rest });
   if (rest === 0) return t("child.hoursShort", { hours });
   return t("child.hoursMinutes", { hours, minutes: rest });
+}
+
+type Timed = { date: string; time: string };
+
+function timedKey(entry: Timed): string {
+  return `${entry.date}T${entry.time}`;
+}
+
+function timedDate(entry: Timed): Date {
+  const minutes = getMinutesFromTimeString(entry.time) ?? 0;
+  const day = parseISO(entry.date);
+  day.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  return day;
+}
+
+export function latestTimed<T extends Timed>(entries: T[]): T | null {
+  let best: T | null = null;
+  for (const entry of entries) {
+    if (!best || timedKey(entry) > timedKey(best)) best = entry;
+  }
+  return best;
+}
+
+export type LastWhenParts = {
+  time: string;
+  ago?: string;
+};
+
+/** Clock time and, for today, how long ago. Older logs keep the day phrase in `time`. */
+export function lastWhenParts(date: string, time: string, t: Translate, now = new Date()): LastWhenParts {
+  const logged = timedDate({ date, time });
+  const clock = formatTimeLabel(time);
+  const days = differenceInCalendarDays(startOfDay(now), startOfDay(logged));
+  if (days === 0) {
+    const elapsed = Math.max(0, Math.round((now.getTime() - logged.getTime()) / 60000));
+    return { time: clock, ago: t("child.ago", { duration: formatDuration(elapsed, t) }) };
+  }
+  if (days === 1) return { time: t("child.lastYesterday", { time: clock }) };
+  if (days > 1) return { time: t("child.lastDaysAgo", { count: days, time: clock }) };
+  return { time: `${format(logged, "d MMM")} ${clock}` };
+}
+
+export type LastLogStatus = {
+  label: string;
+  time: string;
+  ago?: string;
+  details: string[];
+};
+
+function statusFrom(label: string, when: LastWhenParts, details: string[]): LastLogStatus {
+  return { label, time: when.time, ago: when.ago, details: details.filter(Boolean) };
+}
+
+export function feedLastStatus(entries: FeedEntry[], t: Translate, now = new Date()): LastLogStatus | null {
+  const latest = latestTimed(entries);
+  if (!latest) return null;
+  return statusFrom(t("child.lastLine"), lastWhenParts(latest.date, latest.time, t, now), feedDetailParts(latest, t));
+}
+
+export function pumpLastStatus(entries: PumpEntry[], t: Translate, now = new Date()): LastLogStatus | null {
+  const latest = latestTimed(entries);
+  if (!latest) return null;
+  return statusFrom(t("child.lastLine"), lastWhenParts(latest.date, latest.time, t, now), [
+    t("child.summaryMl", { ml: latest.amountMl }),
+  ]);
+}
+
+export function diaperLastStatuses(
+  entries: DiaperEntry[],
+  t: Translate,
+  now = new Date(),
+): { change: LastLogStatus; poop: LastLogStatus | null } | null {
+  const latest = latestTimed(entries);
+  if (!latest) return null;
+  const change = statusFrom(t("child.lastLine"), lastWhenParts(latest.date, latest.time, t, now), [
+    diaperKindLabel(latest.kind, t),
+  ]);
+  if (latest.kind !== "pee") return { change, poop: null };
+  const latestPoop = latestTimed(entries.filter((entry) => entry.kind === "poop" || entry.kind === "both"));
+  if (!latestPoop) return { change, poop: null };
+  return {
+    change,
+    poop: statusFrom(t("child.lastPoop"), lastWhenParts(latestPoop.date, latestPoop.time, t, now), []),
+  };
+}
+
+export type SessionInterval = {
+  average: number;
+  shortest: number;
+  longest: number;
+};
+
+/** Gaps between consecutive logs in the given list, including overnight gaps. */
+export function sessionIntervals(entries: Timed[]): SessionInterval | null {
+  if (entries.length < 2) return null;
+  const sorted = [...entries].sort((a, b) => timedKey(a).localeCompare(timedKey(b)));
+  const gaps: number[] = [];
+  for (let index = 1; index < sorted.length; index += 1) {
+    const diff = Math.round((timedDate(sorted[index]).getTime() - timedDate(sorted[index - 1]).getTime()) / 60000);
+    if (diff >= 0) gaps.push(diff);
+  }
+  if (gaps.length === 0) return null;
+  const total = gaps.reduce((sum, gap) => sum + gap, 0);
+  return {
+    average: Math.round(total / gaps.length),
+    shortest: Math.min(...gaps),
+    longest: Math.max(...gaps),
+  };
 }
 
 export type TodayTotals = {
@@ -242,19 +350,21 @@ export function describePump(entry: PumpEntry, t: Translate): string {
   return t("child.summaryMl", { ml: entry.amountMl });
 }
 
-export function describeFeed(entry: FeedEntry, t: Translate): string {
+export function feedDetailParts(entry: FeedEntry, t: Translate): string[] {
   if (entry.kind === "breast") {
     return [
       t("feed.kindBreast"),
       feedSideLabel(entry.side, t),
       entry.durationMin ? t("child.minutesShort", { minutes: entry.durationMin }) : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
+    ].filter(Boolean);
   }
   const kind = entry.kind === "formula" ? t("feed.kindFormula") : t("feed.kindBottleBreast");
   const amount = entry.amountMl ? `${entry.amountMl} ml` : "";
-  return [kind, amount].filter(Boolean).join(" · ");
+  return [kind, amount].filter(Boolean);
+}
+
+export function describeFeed(entry: FeedEntry, t: Translate): string {
+  return feedDetailParts(entry, t).join(" · ");
 }
 
 function diaperColorLabel(color: DiaperEntry["poopColor"], t: Translate): string {
@@ -276,6 +386,7 @@ function diaperColorLabel(color: DiaperEntry["poopColor"], t: Translate): string
 
 function diaperAmountLabel(amount: DiaperEntry["poopAmount"], t: Translate): string {
   if (amount === "little") return t("diaper.little");
+  if (amount === "medium") return t("diaper.medium");
   if (amount === "much") return t("diaper.much");
   return "";
 }

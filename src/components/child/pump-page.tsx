@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
+import { LastLogLine } from "@/components/child/last-log-line";
 import { PumpRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { PumpLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
@@ -11,7 +12,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { pumpHistoryParts } from "@/lib/child/summary";
+import { pumpHistoryParts, pumpLastStatus } from "@/lib/child/summary";
 import { pumpShareText } from "@/lib/child/whatsapp-share";
 import { deletePump, listPumps } from "@/services/pump.service";
 
@@ -24,11 +25,14 @@ export function PumpPageContent() {
   const pumps = data ?? [];
   const editing = pumps.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={3} />);
+  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={3} withLast />);
   if (placeholder) return placeholder;
+
+  const last = pumpLastStatus(pumps, t);
 
   return (
     <LogScreen>
+      <LastLogLine items={last ? [last] : []} />
       <PumpLogForm />
       <PumpRangeSummary entries={pumps} link={summary} />
       <ChildDayHistory
