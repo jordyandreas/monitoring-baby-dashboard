@@ -3,11 +3,11 @@
 import { useId, useState, type FormEvent } from "react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { commitSave } from "@/components/ui/save-toast";
 import { useRemote } from "@/hooks/use-remote";
 import {
@@ -37,6 +37,27 @@ function rowFrom(kind: ScheduleKind, draft: Draft, stored: ScheduleReminder): Sc
     return { kind, enabled: true, intervalMinutes: parsed };
   }
   return { kind, enabled: false, intervalMinutes: parsed ?? stored.intervalMinutes };
+}
+
+function KindFieldsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-2xl bg-lilac/40 p-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-4 rounded-[4px]" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-10" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function KindFields({
@@ -158,8 +179,10 @@ export function ScheduleReminderDialog({
               </Button>
             </>
           ) : remote.error ? null : (
-            <div className="flex justify-center py-6">
-              <Spinner />
+            <div role="status" aria-busy="true" aria-label={t("common.loading")} className="space-y-4">
+              <KindFieldsSkeleton />
+              <KindFieldsSkeleton />
+              <Skeleton className="h-11 w-full rounded-full" />
             </div>
           )}
         </form>
