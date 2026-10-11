@@ -14,6 +14,7 @@ export const buildChangelog: readonly BuildChangelogEntry[] = [
   {
     date: "2026-10-11",
     items: [
+      { en: "Milk and pumping amounts include 50 ml and 70 ml.", id: "Jumlah susu dan pompa punya pilihan 50 ml dan 70 ml." },
       { en: "The latest milk, diaper, and pumping note is easier to see.", id: "Catatan terakhir susu, popok, dan pompa lebih mudah dilihat." },
       { en: "Other parts of the app were updated.", id: "Bagian lain aplikasi diperbarui." },
     ],

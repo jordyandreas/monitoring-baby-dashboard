@@ -78,9 +78,20 @@ const AREAS: readonly Area[] = [
     },
   },
   {
+    id: "amount",
+    match: (path) => path.endsWith("/quick-log-forms.tsx"),
+    added: {
+      en: "Milk and pumping amounts include 50 ml and 70 ml.",
+      id: "Jumlah susu dan pompa punya pilihan 50 ml dan 70 ml.",
+    },
+    updated: {
+      en: "Milk and pumping amounts include 50 ml and 70 ml.",
+      id: "Jumlah susu dan pompa punya pilihan 50 ml dan 70 ml.",
+    },
+  },
+  {
     id: "diaper",
     match: (path) =>
-      path.endsWith("/quick-log-forms.tsx") ||
       path === "src/lib/child/types.ts" ||
       path.endsWith("/child-mappers.ts") ||
       path.endsWith("/whatsapp-share.ts"),
