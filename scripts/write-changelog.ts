@@ -66,8 +66,20 @@ const AREAS: readonly Area[] = [
     },
   },
   {
+    id: "growth-summary",
+    match: (path) => path.endsWith("/page-summary.tsx"),
+    added: {
+      en: "The growth summary shows the measurement date and explains percentiles.",
+      id: "Ringkasan tumbuh menampilkan tanggal ukuran dan menjelaskan persentil.",
+    },
+    updated: {
+      en: "The growth summary shows the measurement date and explains percentiles.",
+      id: "Ringkasan tumbuh menampilkan tanggal ukuran dan menjelaskan persentil.",
+    },
+  },
+  {
     id: "summary",
-    match: (path) => path.endsWith("/page-summary.tsx") || path === "src/lib/child/summary.ts",
+    match: (path) => path === "src/lib/child/summary.ts",
     added: {
       en: "Summaries show the gap between logs.",
       id: "Ringkasan menampilkan jarak antar catatan.",
