@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Milk, Moon } from "lucide-react";
 import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { getReminderDialogOpen, subscribeReminderDialog } from "@/lib/reminder-dialog-open";
 import { cn } from "@/utils/cn";
 
 type LogKind = "feed" | "pump" | "diaper" | "sleep";
@@ -33,8 +34,9 @@ export function QuickLogFab() {
   const router = useRouter();
   const pathname = usePathname();
   const [kind, setKind] = useState<LogKind | null>(null);
+  const reminderOpen = useSyncExternalStore(subscribeReminderDialog, getReminderDialogOpen, () => false);
 
-  if (!hydrated || mode !== "child") return null;
+  if (!hydrated || mode !== "child" || reminderOpen) return null;
 
   const actions: ExpandableFabAction[] = [
     { id: "feed", label: t("nav.feed"), icon: Milk },
