@@ -85,9 +85,10 @@ function LastLogSkeleton() {
     <div className="h-full rounded-2xl bg-lilac/60 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-24" />
+        <Skeleton className="hidden h-3 w-24 sm:block" />
       </div>
       <Skeleton className="mt-2 h-6 w-28" />
+      <Skeleton className="mt-2 h-3 w-24 sm:hidden" />
       <Skeleton className="mt-2 h-4 w-40" />
     </div>
   );
