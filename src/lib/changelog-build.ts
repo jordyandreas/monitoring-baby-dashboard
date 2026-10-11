@@ -14,6 +14,8 @@ export const buildChangelog: readonly BuildChangelogEntry[] = [
   {
     date: "2026-10-12",
     items: [
+      { en: "Other parts of the app were updated.", id: "Bagian lain aplikasi diperbarui." },
+      { en: "The home screen was updated.", id: "Beranda diperbarui." },
       { en: "Next milk and pumping cards were updated.", id: "Kartu jadwal susu dan pompa diperbarui." },
       { en: "The growth summary shows the measurement date and explains percentiles.", id: "Ringkasan tumbuh menampilkan tanggal ukuran dan menjelaskan persentil." },
     ],

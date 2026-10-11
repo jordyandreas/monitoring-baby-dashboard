@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useId, useLayoutEffect, useState, type FormEvent } from "react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitSave } from "@/components/ui/save-toast";
 import { useRemote } from "@/hooks/use-remote";
+import { setReminderDialogOpen } from "@/lib/reminder-dialog-open";
 import {
   parseInterval,
   reminderFor,
@@ -123,6 +124,11 @@ export function ScheduleReminderDialog({
 }) {
   const { t } = useLocale();
   const remote = useRemote("schedule", listScheduleReminders, open);
+
+  useLayoutEffect(() => {
+    setReminderDialogOpen(open);
+    return () => setReminderDialogOpen(false);
+  }, [open]);
   const [feedOverride, setFeedOverride] = useState<Draft | null>(null);
   const [pumpOverride, setPumpOverride] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -160,7 +166,8 @@ export function ScheduleReminderDialog({
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent
-        className="max-h-[min(90vh,760px)] overflow-y-auto rounded-2xl sm:max-w-md"
+        className="z-[80] max-h-[min(90vh,760px)] overflow-y-auto rounded-2xl sm:max-w-md"
+        overlayClassName="z-[80]"
         aria-describedby={undefined}
       >
         <DialogHeader>
