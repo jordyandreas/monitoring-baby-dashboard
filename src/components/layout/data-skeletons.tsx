@@ -82,14 +82,14 @@ function DayStrip() {
 
 function LastLogSkeleton() {
   return (
-    <div className="h-full rounded-2xl bg-lilac/60 px-4 py-3">
+    <div className="h-full min-w-0 overflow-hidden rounded-2xl bg-lilac/60 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="hidden h-3 w-24 sm:block" />
+        <Skeleton className="h-3 w-14 max-w-[40%]" />
+        <Skeleton className="hidden h-3 w-16 max-w-[40%] sm:block" />
       </div>
-      <Skeleton className="mt-2 h-6 w-28" />
-      <Skeleton className="mt-2 h-3 w-24 sm:hidden" />
-      <Skeleton className="mt-2 h-4 w-40" />
+      <Skeleton className="mt-2 h-6 w-16 max-w-[55%] sm:w-24" />
+      <Skeleton className="mt-2 h-3 w-14 max-w-[50%] sm:hidden" />
+      <Skeleton className="mt-2 h-3.5 w-20 max-w-[70%] sm:w-28" />
     </div>
   );
 }
