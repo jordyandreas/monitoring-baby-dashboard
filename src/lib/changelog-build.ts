@@ -14,6 +14,7 @@ export const buildChangelog: readonly BuildChangelogEntry[] = [
   {
     date: "2026-10-12",
     items: [
+      { en: "Next milk and pumping cards were updated.", id: "Kartu jadwal susu dan pompa diperbarui." },
       { en: "The growth summary shows the measurement date and explains percentiles.", id: "Ringkasan tumbuh menampilkan tanggal ukuran dan menjelaskan persentil." },
     ],
   },
