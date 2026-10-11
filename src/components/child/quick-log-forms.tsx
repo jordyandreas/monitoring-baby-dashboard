@@ -36,7 +36,7 @@ import { saveSleep } from "@/services/sleep.service";
 
 /** Per-feed shortcuts. Steps grow from a newborn feed toward a typical feed by age 2. */
 const NURSING_MINUTES = [5, 10, 15, 20, 30, 45];
-const BOTTLE_ML = [30, 45, 60, 90, 120, 180, 240];
+const BOTTLE_ML = [30, 45, 50, 60, 70, 90, 120, 180, 240];
 
 export function FeedLogForm({
   onSaved,
