@@ -996,11 +996,7 @@ function TodayActivity({
                     <span className="font-semibold">{note.time}</span>
                     {note.ago ? <span className="font-medium text-lilac-foreground"> {note.ago}</span> : null}
                     {note.details.length > 0 ? (
-                      <span className="mt-0.5 flex flex-wrap gap-x-2 text-lilac-foreground/75">
-                        {note.details.map((part) => (
-                          <span key={part}>{part}</span>
-                        ))}
-                      </span>
+                      <span className="mt-0.5 block text-lilac-foreground/75">{note.details.join(" · ")}</span>
                     ) : null}
                   </span>
                 ))}
