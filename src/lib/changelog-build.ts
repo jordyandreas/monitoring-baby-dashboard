@@ -12,6 +12,12 @@ export type BuildChangelogEntry = {
 
 export const buildChangelog: readonly BuildChangelogEntry[] = [
   {
+    date: "2026-10-12",
+    items: [
+      { en: "The growth summary shows the measurement date and explains percentiles.", id: "Ringkasan tumbuh menampilkan tanggal ukuran dan menjelaskan persentil." },
+    ],
+  },
+  {
     date: "2026-10-11",
     items: [
       { en: "Milk and pumping amounts include 50 ml and 70 ml.", id: "Jumlah susu dan pompa punya pilihan 50 ml dan 70 ml." },

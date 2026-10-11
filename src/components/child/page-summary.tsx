@@ -1,9 +1,9 @@
 "use client";
 
-import { type ComponentType, type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import { format, parseISO, startOfDay } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
-import { Baby, Milk, Moon, Ruler, Weight } from "lucide-react";
+import { Baby, Info, Milk, Moon, Ruler, Weight } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
 import {
@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLocale } from "@/components/providers/locale-provider";
 import {
   diaperDaySummary,
@@ -660,14 +661,18 @@ function GrowthStatTile({
   icon: Icon,
   iconClass,
   label,
+  measuredOn,
   current,
   percentile,
+  onPercentileInfo,
 }: {
   icon: ComponentType<{ className?: string }>;
   iconClass: string;
   label: string;
+  measuredOn?: string;
   current: { value: number; unit: string; digits: number; delta?: number } | null;
   percentile: number | null;
+  onPercentileInfo: () => void;
 }) {
   const { t } = useLocale();
   const grew = current?.delta !== undefined && current.delta > 0;
@@ -678,14 +683,25 @@ function GrowthStatTile({
         <span className={cn("inline-flex size-8 items-center justify-center rounded-lg", iconClass)}>
           <Icon className="size-4" />
         </span>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          {measuredOn ? <p className="text-xs text-muted-foreground">{measuredOn}</p> : null}
+        </div>
       </div>
       <p className="mt-2 text-2xl font-bold tabular-nums">
         {current ? `${formatMeasure(current.value, current.digits)} ${current.unit}` : "—"}
       </p>
       {percentile != null ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
           <PercentileLabel percentile={percentile} />
+          <button
+            type="button"
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+            aria-label={t("growth.percentileInfo")}
+            onClick={onPercentileInfo}
+          >
+            <Info className="size-3.5" aria-hidden />
+          </button>
         </p>
       ) : null}
       <p className="mt-1 text-xs text-muted-foreground">
@@ -720,10 +736,15 @@ export function GrowthCompareSummary({
   birthDate: string | null;
   sex: Gender | null;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const [percentileInfoOpen, setPercentileInfoOpen] = useState(false);
   const compared = growthComparison(entries);
   const hasAny = Boolean(compared.weight || compared.height || compared.head);
   const canCompare = Boolean(birthDate && whoSex(sex));
+  const dfLocale = locale === "id" ? idLocale : enUS;
+  const formatMeasuredOn = (date: string) => format(parseISO(date), "d MMM yyyy", { locale: dfLocale });
+  const sharedDate = sharedMeasurementDate(compared);
+  const tileDate = (date: string | undefined) => (date && !sharedDate ? formatMeasuredOn(date) : undefined);
   return (
     <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl shadow-sm">
       <CardHeader>
@@ -731,7 +752,11 @@ export function GrowthCompareSummary({
           <Ruler className="size-5 text-lilac-deep" />
           {t("growth.summaryTitle")}
         </CardTitle>
-        <CardDescription>{t("growth.summarySubtitle")}</CardDescription>
+        <CardDescription>
+          {sharedDate
+            ? t("growth.summarySubtitleDated", { date: formatMeasuredOn(sharedDate) })
+            : t("growth.summarySubtitle")}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {!hasAny ? (
@@ -742,22 +767,28 @@ export function GrowthCompareSummary({
               icon={Weight}
               iconClass="bg-lilac text-lilac-foreground"
               label={t("child.measureWeight")}
+              measuredOn={tileDate(compared.weight?.date)}
               current={compared.weight ? { ...compared.weight, unit: "kg", digits: 2 } : null}
               percentile={latestPercentile("weight", sex, birthDate, compared.weight)}
+              onPercentileInfo={() => setPercentileInfoOpen(true)}
             />
             <GrowthStatTile
               icon={Ruler}
               iconClass="bg-baby-sky text-sky-foreground"
               label={t("child.measureHeight")}
+              measuredOn={tileDate(compared.height?.date)}
               current={compared.height ? { ...compared.height, unit: "cm", digits: 1 } : null}
               percentile={latestPercentile("length", sex, birthDate, compared.height)}
+              onPercentileInfo={() => setPercentileInfoOpen(true)}
             />
             <GrowthStatTile
               icon={Baby}
               iconClass="bg-amber-100 text-amber-700"
               label={t("child.measureHead")}
+              measuredOn={tileDate(compared.head?.date)}
               current={compared.head ? { ...compared.head, unit: "cm", digits: 1 } : null}
               percentile={latestPercentile("head", sex, birthDate, compared.head)}
+              onPercentileInfo={() => setPercentileInfoOpen(true)}
             />
           </div>
         )}
@@ -765,6 +796,22 @@ export function GrowthCompareSummary({
           <p className="text-xs text-muted-foreground">{t("growth.percentileNeedsSex")}</p>
         ) : null}
       </CardContent>
+      <Dialog open={percentileInfoOpen} onOpenChange={setPercentileInfoOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-md" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>{t("growth.percentileInfoTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm leading-relaxed text-muted-foreground">{t("growth.percentileInfoBody")}</p>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
+}
+
+function sharedMeasurementDate(compared: ReturnType<typeof growthComparison>): string | null {
+  const dates = [compared.weight?.date, compared.height?.date, compared.head?.date].filter(
+    (date): date is string => Boolean(date),
+  );
+  if (dates.length === 0 || dates.some((date) => date !== dates[0])) return null;
+  return dates[0];
 }

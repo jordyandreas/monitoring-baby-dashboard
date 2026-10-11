@@ -711,6 +711,11 @@ export const id: Messages = {
     head: "Kepala (cm)",
     summaryTitle: "Ringkasan tumbuh",
     summarySubtitle: "Ukuran terakhir.",
+    summarySubtitleDated: "Ukuran terakhir, {date}.",
+    percentileInfo: "Penjelasan persentil",
+    percentileInfoTitle: "Persentil WHO",
+    percentileInfoBody:
+      "Persentil membandingkan ukuran ini dengan anak lain yang seusia dan berjenis kelamin sama, menurut grafik WHO. Persentil 50 berarti kira-kira separuh anak seusianya ukurannya lebih kecil. Angka yang lebih tinggi berarti lebih besar dari lebih banyak anak seusianya. Ini perkiraan untuk catatan, bukan diagnosis.",
     noPrevious: "Belum ada ukuran sebelumnya",
     previousValue: "Sebelumnya {value}",
     sinceLast: "sejak ukuran sebelumnya",

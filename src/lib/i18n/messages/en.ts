@@ -730,6 +730,11 @@ export const en = {
     head: "Head (cm)",
     summaryTitle: "Growth summary",
     summarySubtitle: "Latest measurements.",
+    summarySubtitleDated: "Latest measurements, {date}.",
+    percentileInfo: "About percentiles",
+    percentileInfoTitle: "WHO percentile",
+    percentileInfoBody:
+      "A percentile compares this measurement with other children of the same age and sex, using WHO growth charts. The 50th percentile means about half of children that age measure smaller. A higher number means larger than more children of the same age. This is an estimate for your notes, not a diagnosis.",
     noPrevious: "No earlier measurement",
     previousValue: "Was {value}",
     sinceLast: "since last measurement",
