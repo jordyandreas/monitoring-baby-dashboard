@@ -83,10 +83,12 @@ function DayStrip() {
 function LastLogSkeleton() {
   return (
     <div className="h-full rounded-2xl bg-lilac/60 px-4 py-3">
-      <Skeleton className="h-3 w-16" />
-      <Skeleton className="mt-2 h-6 w-24" />
-      <Skeleton className="mt-2 h-3 w-28" />
-      <Skeleton className="mt-2 h-4 w-32" />
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <Skeleton className="mt-2 h-6 w-28" />
+      <Skeleton className="mt-2 h-4 w-40" />
     </div>
   );
 }
@@ -232,10 +234,12 @@ export function LogPageSkeleton({
   tiles = 4,
   withLast = false,
   withNext = false,
+  withLastPair = false,
 }: {
   tiles?: number;
   withLast?: boolean;
   withNext?: boolean;
+  withLastPair?: boolean;
 }) {
   return (
     <SkeletonStatus className="w-full min-w-0 space-y-6">
@@ -244,6 +248,11 @@ export function LogPageSkeleton({
           <div className="grid grid-cols-2 items-stretch gap-2">
             <LastLogSkeleton />
             <NextLogSkeleton />
+          </div>
+        ) : withLastPair ? (
+          <div className="grid grid-cols-2 items-stretch gap-2">
+            <LastLogSkeleton />
+            <LastLogSkeleton />
           </div>
         ) : (
           <LastLogSkeleton />

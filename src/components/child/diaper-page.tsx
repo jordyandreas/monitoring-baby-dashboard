@@ -25,7 +25,13 @@ export function DiaperPageContent() {
   const diapers = data ?? [];
   const editing = diapers.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={3} withLast />);
+  const placeholder = remotePlaceholder(
+    ready,
+    error,
+    data,
+    reload,
+    <LogPageSkeleton tiles={3} withLast withLastPair />,
+  );
   if (placeholder) return placeholder;
 
   const last = diaperLastStatuses(diapers, t);
