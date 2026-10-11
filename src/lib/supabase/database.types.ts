@@ -224,6 +224,33 @@ export interface Database {
         };
         Relationships: [];
       };
+      schedule_reminders: {
+        Row: {
+          user_id: string;
+          kind: string;
+          enabled: boolean;
+          interval_minutes: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          kind: string;
+          enabled?: boolean;
+          interval_minutes?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          kind?: string;
+          enabled?: boolean;
+          interval_minutes?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       push_reminder_preferences: {
         Row: {
           user_id: string;

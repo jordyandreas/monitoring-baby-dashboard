@@ -6,6 +6,10 @@ export type ChangelogEntry = {
 /** Newest first. Add a dated entry here and matching copy in en.ts and id.ts. */
 export const changelog: readonly ChangelogEntry[] = [
   {
+    date: "2026-10-11",
+    itemKeys: ["changelog.schedule"],
+  },
+  {
     date: "2026-10-10",
     itemKeys: ["changelog.lastSeen", "changelog.intervals", "changelog.poopMedium"],
   },

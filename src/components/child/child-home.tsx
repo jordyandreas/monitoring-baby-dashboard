@@ -27,6 +27,7 @@ import { ChildHomeSkeleton, LoadFailed } from "@/components/layout/data-skeleton
 import { LiveGreetingClock } from "@/components/layout/live-greeting-clock";
 import { ChildProfileForm } from "@/components/child/child-profile-form";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
+import { NextScheduleStrip } from "@/components/child/next-schedule-card";
 import { formatLogWhen, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
 import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
 import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button";
@@ -62,6 +63,7 @@ import { saveChildProfile } from "@/services/child.service";
 import { deleteDiaper } from "@/services/diapers.service";
 import { deleteFeed } from "@/services/feed.service";
 import { deletePump } from "@/services/pump.service";
+import { listScheduleReminders } from "@/services/schedule-reminder.service";
 import { saveMergedGrowth } from "@/services/growth.service";
 import { deleteHealth } from "@/services/health.service";
 import { deleteMeal } from "@/services/meals.service";
@@ -69,6 +71,7 @@ import { deletePotty } from "@/services/potty.service";
 import { deleteSleep } from "@/services/sleep.service";
 import { deleteSolid } from "@/services/solids.service";
 import { useChildBoard } from "@/hooks/use-child-board";
+import { useRemote } from "@/hooks/use-remote";
 import { formatTimeLabel } from "@/utils/time";
 import { cn } from "@/utils/cn";
 
@@ -104,6 +107,7 @@ export function ChildHome() {
   const { t, locale } = useLocale();
   const { signedIn, requestLogin } = useSupabase();
   const { data, ready, error, reload, extrasReady, extrasError, reloadExtras } = useChildBoard(signedIn);
+  const schedule = useRemote("schedule", listScheduleReminders, signedIn);
   const [editing, setEditing] = useState(false);
   const [editingLog, setEditingLog] = useState<{ kind: QuickKind; id: string } | null>(null);
   const [quick, setQuick] = useState<QuickKind | null>(null);
@@ -219,6 +223,16 @@ export function ChildHome() {
       />
 
       <TodayActivity totals={todayStats} feeds={board.feeds} pumps={board.pumps} diapers={board.diapers} />
+
+      {schedule.ready ? (
+        <NextScheduleStrip
+          reminders={schedule.data ?? []}
+          feeds={board.feeds}
+          pumps={board.pumps}
+          kinds={["feed", "pump"]}
+          showKind
+        />
+      ) : null}
 
       <section className="space-y-3">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -948,7 +962,7 @@ function TodayActivity({
             : t("child.activityCount", { count: totals.logCount })}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => {
           const Icon = LOG_ICONS[card.kind];
           return (

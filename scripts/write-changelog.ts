@@ -29,6 +29,21 @@ const AREAS: readonly Area[] = [
     updated: { en: "The database setup was updated.", id: "Pengaturan database diperbarui." },
   },
   {
+    id: "schedule",
+    match: (path) =>
+      path.includes("schedule-reminder") ||
+      path.includes("next-schedule") ||
+      path.endsWith("/account-dialog.tsx"),
+    added: {
+      en: "Milk and pumping can show the next time on a card.",
+      id: "Susu dan pompa bisa menampilkan jam berikutnya di kartu.",
+    },
+    updated: {
+      en: "Next milk and pumping cards were updated.",
+      id: "Kartu jadwal susu dan pompa diperbarui.",
+    },
+  },
+  {
     id: "home",
     match: (path) => path === "src/components/child/child-home.tsx",
     added: { en: "The home screen has new activity details.", id: "Beranda punya detail aktivitas baru." },

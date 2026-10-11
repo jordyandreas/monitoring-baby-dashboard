@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
-import { LastLogLine } from "@/components/child/last-log-line";
+import { LastLogLine, SideBySide } from "@/components/child/last-log-line";
+import { NextScheduleStrip } from "@/components/child/next-schedule-card";
 import { FeedRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { FeedLogForm } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
@@ -12,27 +13,48 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
+import { reminderFor } from "@/lib/child/schedule-reminder";
 import { feedHistoryParts, feedLastStatus } from "@/lib/child/summary";
 import { feedShareText } from "@/lib/child/whatsapp-share";
 import { deleteFeed, listFeeds } from "@/services/feed.service";
+import { listScheduleReminders } from "@/services/schedule-reminder.service";
 
 export function FeedPageContent() {
   const { t } = useLocale();
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("feed", listFeeds, signedIn);
+  const schedule = useRemote("schedule", listScheduleReminders, signedIn);
   const [editingId, setEditingId] = useState<string | null>(null);
   const summary = useSummaryLink();
   const feeds = data ?? [];
   const editing = feeds.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={4} withLast />);
+  const nextOn = !schedule.ready || reminderFor(schedule.data ?? [], "feed").enabled;
+  const placeholder = remotePlaceholder(
+    ready,
+    error,
+    data,
+    reload,
+    <LogPageSkeleton tiles={4} withLast withNext={nextOn} />,
+  );
   if (placeholder) return placeholder;
 
   const last = feedLastStatus(feeds, t);
 
   return (
     <LogScreen>
-      <LastLogLine items={last ? [last] : []} />
+      <SideBySide>
+        {last ? <LastLogLine items={[last]} /> : null}
+        {schedule.ready && reminderFor(schedule.data ?? [], "feed").enabled ? (
+          <NextScheduleStrip
+            reminders={schedule.data ?? []}
+            feeds={feeds}
+            pumps={[]}
+            kinds={["feed"]}
+            column
+          />
+        ) : null}
+      </SideBySide>
       <FeedLogForm />
       <FeedRangeSummary entries={feeds} link={summary} />
       <ChildDayHistory

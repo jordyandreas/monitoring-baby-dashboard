@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { LogOut, MessageSquare, ScrollText, UserRound } from "lucide-react";
+import { Clock, LogOut, MessageSquare, ScrollText, UserRound } from "lucide-react";
+import { ScheduleReminderDialog } from "@/components/child/schedule-reminder-dialog";
 import { ChangelogDialog } from "@/components/layout/changelog-dialog";
 import { headerIconButtonClassName } from "@/components/layout/header-icon-button";
 import { useAppMode } from "@/components/providers/app-mode-provider";
@@ -77,6 +78,7 @@ export function AccountDialog() {
   const [freshUser, setFreshUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -160,6 +162,17 @@ export function AccountDialog() {
               className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted"
               onClick={() => {
                 setMenuOpen(false);
+                setScheduleOpen(true);
+              }}
+            >
+              <Clock className="size-4 text-muted-foreground" aria-hidden />
+              {t("schedule.menu")}
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted"
+              onClick={() => {
+                setMenuOpen(false);
                 setChangelogOpen(true);
               }}
             >
@@ -193,6 +206,7 @@ export function AccountDialog() {
             </button>
           </PopoverContent>
         </Popover>
+        <ScheduleReminderDialog open={scheduleOpen} onOpenChange={setScheduleOpen} />
         <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
         <FeedbackDialog
           open={feedbackOpen}
