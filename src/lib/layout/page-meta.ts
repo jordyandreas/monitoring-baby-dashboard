@@ -1,6 +1,5 @@
 import type { ComponentType } from "react";
 import {
-  Apple,
   Baby,
   CircleDot,
   Droplets,
@@ -11,6 +10,7 @@ import {
   Music,
   Pill,
   Ruler,
+  Syringe,
   Thermometer,
   Utensils,
 } from "lucide-react";
@@ -74,10 +74,10 @@ export const pageMetaByPath: Record<string, PageMeta> = {
     descriptionKey: "pages.growth.description",
     icon: Ruler,
   },
-  "/solids": {
-    titleKey: "pages.solids.title",
-    descriptionKey: "pages.solids.description",
-    icon: Apple,
+  "/food": {
+    titleKey: "pages.food.title",
+    descriptionKey: "pages.food.description",
+    icon: Utensils,
   },
   "/health": {
     titleKey: "pages.health.title",
@@ -89,15 +89,15 @@ export const pageMetaByPath: Record<string, PageMeta> = {
     descriptionKey: "pages.potty.description",
     icon: CircleDot,
   },
-  "/meals": {
-    titleKey: "pages.meals.title",
-    descriptionKey: "pages.meals.description",
-    icon: Utensils,
-  },
   "/milestones": {
     titleKey: "pages.milestones.title",
     descriptionKey: "pages.milestones.description",
     icon: Flag,
+  },
+  "/vaccines": {
+    titleKey: "pages.vaccines.title",
+    descriptionKey: "pages.vaccines.description",
+    icon: Syringe,
   },
 };
 

@@ -60,7 +60,7 @@ function axisTicks(min: number, max: number): number[] {
 }
 
 function formatTick(value: number, stepHint: number): string {
-  if (stepHint >= 1) return Math.round(value).toString();
+  if (stepHint >= 1) return Math.round(value).toLocaleString("en-US");
   return value.toFixed(1);
 }
 
@@ -91,12 +91,13 @@ function MetricChart({
   entries: GrowthEntry[];
 }) {
   const { t } = useLocale();
+  const scale = metric === "weight" ? 1000 : 1;
   const points = growthByDay(entries)
     .flatMap((day) => {
       const value = fieldValue(day, metric);
       const ageDays = measurementAgeDays(birthDate, day.date);
       if (value === undefined || ageDays == null) return [];
-      return [{ ageDays, value }];
+      return [{ ageDays, value: value * scale }];
     })
     .sort((a, b) => a.ageDays - b.ageDays);
 
@@ -112,18 +113,22 @@ function MetricChart({
   const toDay = chartEndDay(points.map((point) => point.ageDays));
   const curves = WHO_CHART_PERCENTILES.map((percentile) => ({
     percentile,
-    points: whoSeries(metric, sex, percentile, toDay),
+    points: whoSeries(metric, sex, percentile, toDay).map((point) => ({
+      ...point,
+      value: point.value * scale,
+    })),
   }));
   const curveValues = curves.flatMap((curve) => curve.points.map((point) => point.value));
   const childValues = points.map((point) => point.value);
   const minValue = Math.min(...curveValues, ...childValues);
   const maxValue = Math.max(...curveValues, ...childValues);
-  const span = Math.max(maxValue - minValue, metric === "weight" ? 0.4 : 1);
+  const span = Math.max(maxValue - minValue, metric === "weight" ? 400 : 1);
   const yMin = minValue - span * 0.08;
   const yMax = maxValue + span * 0.08;
-  const innerW = WIDTH - PAD.left - PAD.right;
+  const padLeft = metric === "weight" ? 52 : PAD.left;
+  const innerW = WIDTH - padLeft - PAD.right;
   const innerH = HEIGHT - PAD.top - PAD.bottom;
-  const xOf = (ageDays: number) => PAD.left + (ageDays / toDay) * innerW;
+  const xOf = (ageDays: number) => padLeft + (ageDays / toDay) * innerW;
   const yOf = (value: number) => PAD.top + ((yMax - value) / (yMax - yMin)) * innerH;
   const yTicks = axisTicks(yMin, yMax);
   const yStep = yTicks.length > 1 ? yTicks[1] - yTicks[0] : 1;
@@ -143,14 +148,14 @@ function MetricChart({
         {yTicks.map((tick) => (
           <g key={tick}>
             <line
-              x1={PAD.left}
+              x1={padLeft}
               x2={WIDTH - PAD.right}
               y1={yOf(tick)}
               y2={yOf(tick)}
               stroke="var(--border)"
             />
             <text
-              x={PAD.left - 6}
+              x={padLeft - 6}
               y={yOf(tick)}
               textAnchor="end"
               dominantBaseline="middle"
@@ -221,7 +226,7 @@ export function GrowthChartsSection({
   const { t } = useLocale();
   const comparableSex = whoSex(sex);
   const charts: { metric: WhoMetric; label: string; unit: string }[] = [
-    { metric: "weight", label: t("growth.chartWeight"), unit: "kg" },
+    { metric: "weight", label: t("growth.chartWeight"), unit: "gr" },
     { metric: "length", label: t("growth.chartHeight"), unit: "cm" },
     { metric: "head", label: t("growth.chartHead"), unit: "cm" },
   ];

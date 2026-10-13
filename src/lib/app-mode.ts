@@ -9,11 +9,13 @@ const CHILD_PREFIXES = [
   "/diapers",
   "/sleep",
   "/growth",
+  "/food",
   "/solids",
   "/health",
   "/potty",
   "/meals",
   "/milestones",
+  "/vaccines",
 ];
 
 export function isAppMode(value: string | null): value is AppMode {

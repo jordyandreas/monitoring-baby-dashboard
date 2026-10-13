@@ -1,5 +1,5 @@
-import { MealsPageContent } from "@/components/child/later-pages";
+import { redirect } from "next/navigation";
 
 export default function MealsPage() {
-  return <MealsPageContent />;
+  redirect("/food");
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ComponentType } from "react";
-import { Droplets, Footprints, Milk, Moon, Pencil, Trash2 } from "lucide-react";
+import { Apple, CircleDot, Droplets, Footprints, Milk, Moon, Pencil, Pill, Thermometer, Trash2 } from "lucide-react";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
@@ -16,6 +16,9 @@ const toneClass: Record<HistoryTone, string> = {
   sky: "bg-sky-100 text-sky-700",
   lilac: "bg-lilac/60 text-lilac-foreground",
   violet: "bg-violet-100 text-violet-700",
+  emerald: "bg-emerald-100 text-emerald-800",
+  rose: "bg-rose-100 text-rose-800",
+  orange: "bg-orange-100 text-orange-800",
 };
 
 const historyIcons: Record<HistoryIcon, ComponentType<{ className?: string }>> = {
@@ -25,6 +28,10 @@ const historyIcons: Record<HistoryIcon, ComponentType<{ className?: string }>> =
   sleep: Moon,
   kick: Footprints,
   water: Droplets,
+  food: Apple,
+  temperature: Thermometer,
+  medicine: Pill,
+  potty: CircleDot,
 };
 
 export function HistoryDayList({

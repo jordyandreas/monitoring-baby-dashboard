@@ -53,18 +53,24 @@ export type GrowthEntry = {
   headCm?: number;
 };
 
-export type SolidEntry = {
+export type FoodSlot = "breakfast" | "lunch" | "snack" | "dinner";
+
+export type FoodEntry = {
   id: string;
   date: string;
   time: string;
   name: string;
+  slot?: FoodSlot;
   allergyNote?: string;
 };
+
+export type HealthKind = "temperature" | "medicine";
 
 export type HealthEntry = {
   id: string;
   date: string;
   time: string;
+  kind: HealthKind;
   name: string;
   dose: string;
   temperatureC?: number;
@@ -77,16 +83,6 @@ export type PottyEntry = {
   date: string;
   time: string;
   kind: PottyKind;
-};
-
-export type MealSlot = "breakfast" | "lunch" | "snack" | "dinner";
-
-export type MealEntry = {
-  id: string;
-  date: string;
-  time: string;
-  slot: MealSlot;
-  note: string;
 };
 
 export const MILESTONE_KEYS = [
@@ -107,10 +103,39 @@ export type MilestoneEntry = {
   date: string;
 };
 
+export type FoodTracking = "auto" | "on" | "off";
+export type EliminationTracking = "auto" | "diaper" | "potty";
+export type EliminationMode = "diaper" | "potty";
+
+export const VACCINE_KEYS = [
+  "hb0",
+  "bcg",
+  "opv1",
+  "dpt1",
+  "opv2",
+  "pcv1",
+  "dpt2",
+  "opv3",
+  "dpt3",
+  "opv4",
+  "ipv",
+  "pcv2",
+  "mr",
+] as const;
+
+export type VaccineKey = (typeof VACCINE_KEYS)[number];
+
+export type VaccineEntry = {
+  key: VaccineKey;
+  date: string;
+};
+
 export type ChildProfile = {
   name: string;
   gender: Gender;
   birthDate: string;
+  foodTracking: FoodTracking;
+  eliminationTracking: EliminationTracking;
 };
 
 export interface ChildStorage {
@@ -121,11 +146,11 @@ export interface ChildStorage {
   diapers: DiaperEntry[];
   sleeps: SleepEntry[];
   growth: GrowthEntry[];
-  solids: SolidEntry[];
+  foods: FoodEntry[];
   health: HealthEntry[];
   potty: PottyEntry[];
-  meals: MealEntry[];
   milestones: MilestoneEntry[];
+  vaccines: VaccineEntry[];
 }
 
 export const DEFAULT_CHILD_STORAGE: ChildStorage = {
@@ -136,9 +161,9 @@ export const DEFAULT_CHILD_STORAGE: ChildStorage = {
   diapers: [],
   sleeps: [],
   growth: [],
-  solids: [],
+  foods: [],
   health: [],
   potty: [],
-  meals: [],
   milestones: [],
+  vaccines: [],
 };

@@ -2,34 +2,38 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Milk, Moon } from "lucide-react";
+import { CircleDot, Milk, Moon } from "lucide-react";
 import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
+import { PottyLogForm } from "@/components/child/extra-log-forms";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
 import { ExpandableFab, type ExpandableFabAction } from "@/components/ui/expandable-fab";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAppMode } from "@/components/providers/app-mode-provider";
+import { useChildTracking } from "@/components/providers/child-tracking-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { getReminderDialogOpen, subscribeReminderDialog } from "@/lib/reminder-dialog-open";
 import { cn } from "@/utils/cn";
 
-type LogKind = "feed" | "pump" | "diaper" | "sleep";
+type LogKind = "feed" | "pump" | "diaper" | "sleep" | "potty";
 
 const destinations: Record<LogKind, string> = {
   feed: "/feed",
   pump: "/pump",
   diaper: "/diapers",
   sleep: "/sleep",
+  potty: "/potty",
 };
 
 function isLogKind(value: string): value is LogKind {
-  return value === "feed" || value === "pump" || value === "diaper" || value === "sleep";
+  return value === "feed" || value === "pump" || value === "diaper" || value === "sleep" || value === "potty";
 }
 
 export function QuickLogFab() {
   const { t } = useLocale();
   const { mode, hydrated } = useAppMode();
+  const { elimination } = useChildTracking();
   const { enabled, signedIn, authStatus, requestLogin } = useSupabase();
   const router = useRouter();
   const pathname = usePathname();
@@ -38,9 +42,13 @@ export function QuickLogFab() {
 
   if (!hydrated || mode !== "child" || reminderOpen) return null;
 
+  const eliminationAction =
+    elimination === "potty"
+      ? { id: "potty", label: t("nav.potty"), icon: CircleDot }
+      : { id: "diaper", label: t("nav.diaper"), icon: DiaperIcon };
   const actions: ExpandableFabAction[] = [
     { id: "feed", label: t("nav.feed"), icon: Milk },
-    { id: "diaper", label: t("nav.diaper"), icon: DiaperIcon },
+    eliminationAction,
     { id: "pump", label: t("nav.pump"), icon: PumpIcon },
     { id: "sleep", label: t("nav.sleep"), icon: Moon },
   ];
@@ -54,11 +62,13 @@ export function QuickLogFab() {
   const title =
     kind === "diaper"
       ? t("diaper.add")
-      : kind === "sleep"
-        ? t("sleep.add")
-        : kind === "pump"
-          ? t("pump.add")
-          : t("feed.add");
+      : kind === "potty"
+        ? t("potty.add")
+        : kind === "sleep"
+          ? t("sleep.add")
+          : kind === "pump"
+            ? t("pump.add")
+            : t("feed.add");
 
   return (
     <>
@@ -94,6 +104,7 @@ export function QuickLogFab() {
           {kind === "feed" ? <FeedLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "pump" ? <PumpLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "diaper" ? <DiaperLogForm embedded onSaved={closeAndGo} /> : null}
+          {kind === "potty" ? <PottyLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "sleep" ? <SleepLogForm embedded onSaved={closeAndGo} /> : null}
         </DialogContent>
       </Dialog>

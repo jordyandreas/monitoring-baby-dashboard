@@ -6,23 +6,20 @@ import { DEFAULT_CHILD_STORAGE, type ChildStorage } from "@/lib/child/types";
 import { getChildProfile } from "@/services/child.service";
 import { listDiapers } from "@/services/diapers.service";
 import { listFeeds } from "@/services/feed.service";
+import { listFoods } from "@/services/food.service";
 import { listGrowth } from "@/services/growth.service";
 import { listHealth } from "@/services/health.service";
-import { listMeals } from "@/services/meals.service";
 import { listMilestones } from "@/services/milestones.service";
 import { listPotty } from "@/services/potty.service";
 import { listPumps } from "@/services/pump.service";
 import { listSleeps } from "@/services/sleep.service";
-import { listSolids } from "@/services/solids.service";
+import { listVaccines } from "@/services/vaccines.service";
 
 const PRIMARY_FEATURES = ["child", "profile", "feed", "pump", "diaper", "sleep"] as const;
-const EXTRA_FEATURES = ["growth", "solid", "health", "potty", "meal", "milestone"] as const;
+const EXTRA_FEATURES = ["growth", "food", "health", "potty", "milestone", "vaccine"] as const;
 
 type PrimaryBoard = Pick<ChildStorage, "profile" | "feeds" | "pumps" | "diapers" | "sleeps">;
-type ExtraBoard = Pick<
-  ChildStorage,
-  "growth" | "solids" | "health" | "potty" | "meals" | "milestones"
->;
+type ExtraBoard = Pick<ChildStorage, "growth" | "foods" | "health" | "potty" | "milestones" | "vaccines">;
 
 async function loadPrimaryBoard(): Promise<PrimaryBoard> {
   const [profile, feeds, pumps, diapers, sleeps] = await Promise.all([
@@ -36,15 +33,15 @@ async function loadPrimaryBoard(): Promise<PrimaryBoard> {
 }
 
 async function loadExtraBoard(): Promise<ExtraBoard> {
-  const [growth, solids, health, potty, meals, milestones] = await Promise.all([
+  const [growth, foods, health, potty, milestones, vaccines] = await Promise.all([
     listGrowth(),
-    listSolids(),
+    listFoods(),
     listHealth(),
     listPotty(),
-    listMeals(),
     listMilestones(),
+    listVaccines(),
   ]);
-  return { growth, solids, health, potty, meals, milestones };
+  return { growth, foods, health, potty, milestones, vaccines };
 }
 
 export function useChildBoard(enabled: boolean) {

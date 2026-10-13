@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { FeatureLink } from "@/components/layout/feature-link";
-import { childMoreRoutes } from "@/components/layout/child-more-routes";
+import { childMoreRoutesFor } from "@/components/layout/child-more-routes";
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import {
-  Apple,
   Baby,
   Calendar,
   ChevronLeft,
@@ -15,11 +14,12 @@ import {
   Milk,
   Moon,
   Pencil,
+  Pill,
   Ruler,
-  Trash2,
-  Weight,
   Thermometer,
+  Trash2,
   Utensils,
+  Weight,
   type LucideIcon,
 } from "lucide-react";
 import { AgeCelebrationCard } from "@/components/child/age-celebration-card";
@@ -29,12 +29,15 @@ import { ChildProfileForm } from "@/components/child/child-profile-form";
 import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { NextScheduleStrip } from "@/components/child/next-schedule-card";
 import { formatLogWhen, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
+import { FoodLogForm, MedicineLogForm, PottyLogForm, TemperatureLogForm } from "@/components/child/extra-log-forms";
 import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
+import { DateDayStrip } from "@/components/history/date-day-strip";
 import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
 import { GenderIcon } from "@/components/pregnancy/baby/gender-icon";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useChildTracking } from "@/components/providers/child-tracking-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Button } from "@/components/ui/button";
@@ -50,26 +53,27 @@ import {
   feedLastStatus,
   formatDuration,
   growthComparison,
+  logDates,
   pumpLastStatus,
   todayTimeline,
   todayTotals,
   type LastLogStatus,
   type TimelineKind,
 } from "@/lib/child/summary";
+import { formatGrams, gramsToKg, kgToGrams } from "@/lib/child/weight";
 import { genderLabel } from "@/lib/i18n/baby";
-import { diaperShareText, feedShareText, pumpShareText } from "@/lib/child/whatsapp-share";
+import { diaperShareText, dayShareText, feedShareText, pumpShareText } from "@/lib/child/whatsapp-share";
 import { getTodayDateStr } from "@/lib/pregnancy/vitamins";
 import { saveChildProfile } from "@/services/child.service";
 import { deleteDiaper } from "@/services/diapers.service";
 import { deleteFeed } from "@/services/feed.service";
+import { deleteFood } from "@/services/food.service";
 import { deletePump } from "@/services/pump.service";
 import { listScheduleReminders } from "@/services/schedule-reminder.service";
 import { saveMergedGrowth } from "@/services/growth.service";
 import { deleteHealth } from "@/services/health.service";
-import { deleteMeal } from "@/services/meals.service";
 import { deletePotty } from "@/services/potty.service";
 import { deleteSleep } from "@/services/sleep.service";
-import { deleteSolid } from "@/services/solids.service";
 import { useChildBoard } from "@/hooks/use-child-board";
 import { useRemote } from "@/hooks/use-remote";
 import { formatTimeLabel } from "@/utils/time";
@@ -78,6 +82,7 @@ import { cn } from "@/utils/cn";
 const PAGE_SIZE = 20;
 
 type QuickKind = "feed" | "pump" | "diaper" | "sleep";
+type ShortcutKind = QuickKind | "potty";
 type LogFilter = "all" | QuickKind;
 type IconType = LucideIcon | typeof DiaperIcon | typeof PumpIcon;
 
@@ -86,10 +91,10 @@ const LOG_ICONS: Record<TimelineKind, IconType> = {
   pump: PumpIcon,
   diaper: DiaperIcon,
   sleep: Moon,
-  solid: Apple,
-  health: Thermometer,
+  food: Utensils,
+  temperature: Thermometer,
+  medicine: Pill,
   potty: CircleDot,
-  meal: Utensils,
 };
 
 const LOG_TONE: Record<TimelineKind, string> = {
@@ -97,22 +102,24 @@ const LOG_TONE: Record<TimelineKind, string> = {
   pump: "bg-violet-100 text-violet-800",
   diaper: "bg-amber-100 text-amber-800",
   sleep: "bg-indigo-100 text-indigo-800",
-  solid: "bg-emerald-100 text-emerald-800",
-  health: "bg-rose-100 text-rose-800",
+  food: "bg-emerald-100 text-emerald-800",
+  temperature: "bg-rose-100 text-rose-800",
+  medicine: "bg-violet-100 text-violet-800",
   potty: "bg-sky-100 text-sky-800",
-  meal: "bg-orange-100 text-orange-800",
 };
 
 export function ChildHome() {
   const { t, locale } = useLocale();
   const { signedIn, requestLogin } = useSupabase();
+  const tracking = useChildTracking();
   const { data, ready, error, reload, extrasReady, extrasError, reloadExtras } = useChildBoard(signedIn);
   const schedule = useRemote("schedule", listScheduleReminders, signedIn);
   const [editing, setEditing] = useState(false);
-  const [editingLog, setEditingLog] = useState<{ kind: QuickKind; id: string } | null>(null);
-  const [quick, setQuick] = useState<QuickKind | null>(null);
+  const [editingLog, setEditingLog] = useState<{ kind: TimelineKind; id: string } | null>(null);
+  const [quick, setQuick] = useState<ShortcutKind | null>(null);
   const [logFilter, setLogFilter] = useState<LogFilter>("all");
   const [logPage, setLogPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState(getTodayDateStr);
   const today = getTodayDateStr();
 
   if (!ready || (error && !data)) {
@@ -125,19 +132,37 @@ export function ChildHome() {
   }
   const board = data ?? DEFAULT_CHILD_STORAGE;
   const todayStats = todayTotals(board, today);
-  const timeline = todayTimeline(board, today, t);
+  const timeline = todayTimeline(board, selectedDate, t);
   const profile = board.profile;
   const dfLocale = locale === "id" ? idLocale : enUS;
+  const selectedLabel = format(parseISO(selectedDate), "EEEE, dd MMMM yyyy", { locale: dfLocale });
+  const dayText = dayShareText(
+    {
+      name: profile?.name ?? "",
+      date: selectedDate,
+      dateLabel: selectedLabel,
+      feeds: board.feeds,
+      diapers: board.diapers,
+      potty: board.potty,
+      sleeps: board.sleeps,
+      growth: board.growth,
+      elimination: tracking.elimination,
+      locale,
+    },
+    t,
+  );
 
-  const more = childMoreRoutes.map((item) => ({
+  const more = childMoreRoutesFor(tracking).map((item) => ({
     href: item.href,
     label: t(item.labelKey),
     icon: item.icon,
   }));
 
-  const shortcuts: { kind: QuickKind; label: string; icon: IconType }[] = [
+  const shortcuts: { kind: ShortcutKind; label: string; icon: IconType }[] = [
     { kind: "feed", label: t("child.quickFeed"), icon: Milk },
-    { kind: "diaper", label: t("child.quickDiaper"), icon: DiaperIcon },
+    tracking.elimination === "potty"
+      ? { kind: "potty", label: t("nav.potty"), icon: CircleDot }
+      : { kind: "diaper", label: t("child.quickDiaper"), icon: DiaperIcon },
     { kind: "pump", label: t("child.quickPump"), icon: PumpIcon },
     { kind: "sleep", label: t("child.quickSleep"), icon: Moon },
   ];
@@ -267,6 +292,7 @@ export function ChildHome() {
         {quick === "feed" ? <FeedLogForm /> : null}
         {quick === "pump" ? <PumpLogForm /> : null}
         {quick === "diaper" ? <DiaperLogForm /> : null}
+        {quick === "potty" ? <PottyLogForm /> : null}
         {quick === "sleep" ? <SleepLogForm /> : null}
       </section>
 
@@ -274,25 +300,35 @@ export function ChildHome() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">{t("child.timelineTitle")}</h2>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(), "EEEE, dd MMMM yyyy", { locale: dfLocale })}
-            </p>
+            <p className="text-sm text-muted-foreground">{selectedLabel}</p>
           </div>
-          <LogFilters
-            value={logFilter}
-            timeline={timeline}
-            onChange={(next) => {
-              setLogFilter(next);
-              setLogPage(1);
-            }}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <WhatsAppShareButton text={dayText} />
+            <LogFilters
+              value={logFilter}
+              timeline={timeline}
+              onChange={(next) => {
+                setLogFilter(next);
+                setLogPage(1);
+              }}
+            />
+          </div>
         </div>
+        <DateDayStrip
+          selectedDate={selectedDate}
+          onSelect={(next) => {
+            setSelectedDate(next);
+            setLogPage(1);
+          }}
+          markedDates={logDates(board)}
+        />
         <TodayLogList
           items={visibleTimeline(timeline, logFilter).map((item) => ({
             ...item,
             shareText: timelineShareText(item, board, t),
           }))}
           filter={logFilter}
+          viewingToday={selectedDate === today}
           page={logPage}
           onPage={setLogPage}
           onEdit={(id) => {
@@ -301,9 +337,7 @@ export function ChildHome() {
               return;
             }
             const parsed = parseTimelineId(id);
-            if (parsed && isQuickKind(parsed.kind)) {
-              setEditingLog({ kind: parsed.kind, id: parsed.id });
-            }
+            if (parsed) setEditingLog(parsed);
           }}
           onDelete={(id) => {
             if (!signedIn) {
@@ -318,17 +352,16 @@ export function ChildHome() {
                 : parsed.kind === "pump"
                   ? () => deletePump(parsed.id)
                   : parsed.kind === "diaper"
-                  ? () => deleteDiaper(parsed.id)
-                  : parsed.kind === "sleep"
-                    ? () => deleteSleep(parsed.id)
-                    : parsed.kind === "solid"
-                      ? () => deleteSolid(parsed.id)
-                      : parsed.kind === "health"
-                        ? () => deleteHealth(parsed.id)
-                        : parsed.kind === "potty"
-                          ? () => deletePotty(parsed.id)
-                          : () => deleteMeal(parsed.id);
-            void commitSave(parsed.kind === "solid" ? "solid" : parsed.kind, remove, "delete", undefined, parsed.kind === "solid" ? "solid" : parsed.kind);
+                    ? () => deleteDiaper(parsed.id)
+                    : parsed.kind === "sleep"
+                      ? () => deleteSleep(parsed.id)
+                      : parsed.kind === "food"
+                        ? () => deleteFood(parsed.id)
+                        : parsed.kind === "temperature" || parsed.kind === "medicine"
+                          ? () => deleteHealth(parsed.id)
+                          : () => deletePotty(parsed.id);
+            const feature = parsed.kind === "temperature" || parsed.kind === "medicine" ? "health" : parsed.kind;
+            void commitSave(feature, remove, "delete", undefined, parsed.kind);
           }}
         />
         <LogEditDialog editing={editingLog} board={board} onClose={() => setEditingLog(null)} />
@@ -354,12 +387,6 @@ export function ChildHome() {
       </section>
     </div>
   );
-}
-
-const QUICK_KINDS: QuickKind[] = ["feed", "pump", "diaper", "sleep"];
-
-function isQuickKind(kind: TimelineKind): kind is QuickKind {
-  return QUICK_KINDS.includes(kind as QuickKind);
 }
 
 function parseTimelineId(value: string): { kind: TimelineKind; id: string } | null {
@@ -396,6 +423,7 @@ function timelineShareText(
 function TodayLogList({
   items,
   filter,
+  viewingToday,
   page,
   onPage,
   onEdit,
@@ -403,6 +431,7 @@ function TodayLogList({
 }: {
   items: (ReturnType<typeof todayTimeline>[number] & { shareText?: string })[];
   filter: LogFilter;
+  viewingToday: boolean;
   page: number;
   onPage: (page: number) => void;
   onEdit: (id: string) => void;
@@ -418,7 +447,7 @@ function TodayLogList({
   if (items.length === 0) {
     return (
       <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-        <LogEmpty filter={filter} />
+        <LogEmpty filter={filter} viewingToday={viewingToday} />
       </p>
     );
   }
@@ -451,16 +480,14 @@ function TodayLogList({
               </div>
               <div className="flex shrink-0 items-center gap-0.5">
                 {item.shareText ? <WhatsAppShareButton text={item.shareText} /> : null}
-                {isQuickKind(item.kind) ? (
-                  <button
-                    type="button"
-                    aria-label={t("child.edit")}
-                    onClick={() => onEdit(item.id)}
-                    className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <Pencil className="size-4" />
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  aria-label={t("child.edit")}
+                  onClick={() => onEdit(item.id)}
+                  className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Pencil className="size-4" />
+                </button>
                 <button
                   type="button"
                   aria-label={t("child.remove")}
@@ -531,7 +558,7 @@ function LogEditDialog({
   board,
   onClose,
 }: {
-  editing: { kind: QuickKind; id: string } | null;
+  editing: { kind: TimelineKind; id: string } | null;
   board: ChildStorage;
   onClose: () => void;
 }) {
@@ -540,8 +567,32 @@ function LogEditDialog({
   const pump = editing?.kind === "pump" ? board.pumps.find((entry) => entry.id === editing.id) : null;
   const diaper = editing?.kind === "diaper" ? board.diapers.find((entry) => entry.id === editing.id) : null;
   const sleep = editing?.kind === "sleep" ? board.sleeps.find((entry) => entry.id === editing.id) : null;
-  const open = Boolean(feed || pump || diaper || sleep);
-  const title = feed ? t("feed.edit") : pump ? t("pump.edit") : diaper ? t("diaper.edit") : t("sleep.edit");
+  const food = editing?.kind === "food" ? board.foods.find((entry) => entry.id === editing.id) : null;
+  const temperature =
+    editing?.kind === "temperature"
+      ? board.health.find((entry) => entry.id === editing.id && entry.kind === "temperature")
+      : null;
+  const medicine =
+    editing?.kind === "medicine"
+      ? board.health.find((entry) => entry.id === editing.id && entry.kind === "medicine")
+      : null;
+  const potty = editing?.kind === "potty" ? board.potty.find((entry) => entry.id === editing.id) : null;
+  const open = Boolean(feed || pump || diaper || sleep || food || temperature || medicine || potty);
+  const title = feed
+    ? t("feed.edit")
+    : pump
+      ? t("pump.edit")
+      : diaper
+        ? t("diaper.edit")
+        : food
+          ? t("food.edit")
+          : temperature
+            ? t("health.temperatureEdit")
+            : medicine
+              ? t("health.medicineEdit")
+              : potty
+                ? t("potty.edit")
+                : t("sleep.edit");
 
   return (
     <Dialog
@@ -556,18 +607,22 @@ function LogEditDialog({
         {pump ? <PumpLogForm key={pump.id} initial={pump} onSaved={onClose} /> : null}
         {diaper ? <DiaperLogForm key={diaper.id} initial={diaper} onSaved={onClose} /> : null}
         {sleep ? <SleepLogForm key={sleep.id} initial={sleep} onSaved={onClose} /> : null}
+        {food ? <FoodLogForm key={food.id} initial={food} onSaved={onClose} /> : null}
+        {temperature ? <TemperatureLogForm key={temperature.id} initial={temperature} onSaved={onClose} /> : null}
+        {medicine ? <MedicineLogForm key={medicine.id} initial={medicine} onSaved={onClose} /> : null}
+        {potty ? <PottyLogForm key={potty.id} initial={potty} onSaved={onClose} /> : null}
       </DialogContent>
     </Dialog>
   );
 }
 
-function LogEmpty({ filter }: { filter: LogFilter }) {
+function LogEmpty({ filter, viewingToday }: { filter: LogFilter; viewingToday: boolean }) {
   const { t } = useLocale();
   if (filter === "feed") return t("child.filterEmptyFeed");
   if (filter === "pump") return t("child.filterEmptyPump");
   if (filter === "diaper") return t("child.filterEmptyDiaper");
   if (filter === "sleep") return t("child.filterEmptySleep");
-  return t("child.timelineEmpty");
+  return viewingToday ? t("child.timelineEmpty") : t("child.emptyDay");
 }
 
 function LogFilters({
@@ -637,8 +692,9 @@ function growthChange(
   if (previous === undefined) return null;
   const rounded = Number((current - previous).toFixed(digits));
   const prefix = rounded > 0 ? "+" : "";
+  const text = digits === 0 ? formatGrams(rounded) : String(rounded);
   return {
-    text: `${prefix}${rounded} ${unit}`,
+    text: `${prefix}${text} ${unit}`,
     tone: rounded > 0 ? "up" : rounded < 0 ? "down" : "same",
   };
 }
@@ -680,9 +736,10 @@ function GrowthSnapshot({
     setOpen(true);
   }
 
-  const weightKg = optionalNumber(weightInput);
+  const weightGrams = optionalNumber(weightInput);
   const lengthCm = optionalNumber(heightInput);
   const headCm = optionalNumber(headInput);
+  const weightKg = weightGrams !== undefined ? gramsToKg(weightGrams) : undefined;
   const canSave = Boolean(date && (weightKg || lengthCm || headCm));
 
   return (
@@ -727,7 +784,7 @@ function GrowthSnapshot({
           icon={Weight}
           iconClass="bg-lilac text-lilac-foreground"
           label={t("child.measureWeight")}
-          value={weight ? `${weight.value} kg` : "—"}
+          value={weight ? `${formatGrams(kgToGrams(weight.value))} gr` : "—"}
           when={
             weight
               ? t("child.measureUpdated", { date: formatLogWhen(weight.date, "", locale) })
@@ -735,7 +792,12 @@ function GrowthSnapshot({
           }
           change={
             weight
-              ? growthChange(weight.value, weight.previous, 2, "kg")
+              ? growthChange(
+                  kgToGrams(weight.value),
+                  weight.previous !== undefined ? kgToGrams(weight.previous) : undefined,
+                  0,
+                  "gr",
+                )
               : null
           }
         />
@@ -812,8 +874,8 @@ function GrowthSnapshot({
               label={t("growth.weight")}
               value={weightInput}
               onChange={setWeightInput}
-              step="0.01"
-              unit="kg"
+              step="1"
+              unit="gr"
             />
             <NumberField
               id="home-length"

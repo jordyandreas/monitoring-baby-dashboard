@@ -1,4 +1,4 @@
-import { PottyPageContent } from "@/components/child/later-pages";
+import { PottyPageContent } from "@/components/child/potty-page";
 
 export default function PottyPage() {
   return <PottyPageContent />;
