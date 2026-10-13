@@ -373,6 +373,8 @@ export interface Database {
         name: string;
         gender: string;
         birth_date: string | null;
+        food_tracking: string;
+        elimination_tracking: string;
         updated_at: string;
       }>;
       feed_logs: TableShape<{
@@ -426,6 +428,15 @@ export interface Database {
         name: string;
         allergy_note: string | null;
       }>;
+      food_logs: TableShape<{
+        user_id: string;
+        id: string;
+        logged_date: string;
+        logged_time: string;
+        name: string;
+        slot: string | null;
+        allergy_note: string | null;
+      }>;
       health_logs: TableShape<{
         user_id: string;
         id: string;
@@ -434,6 +445,7 @@ export interface Database {
         name: string;
         dose: string;
         temperature_c: number | null;
+        kind: string;
       }>;
       potty_logs: TableShape<{
         user_id: string;
@@ -454,6 +466,11 @@ export interface Database {
         user_id: string;
         milestone_key: string;
         achieved_on: string;
+      }>;
+      vaccine_logs: TableShape<{
+        user_id: string;
+        vaccine_key: string;
+        given_on: string;
       }>;
       feedback: TableShape<{
         user_id: string;

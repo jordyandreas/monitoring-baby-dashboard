@@ -26,6 +26,7 @@ import {
   sleepDaySummary,
   sleepMinutes,
 } from "@/lib/child/summary";
+import { formatGrams, kgToGrams } from "@/lib/child/weight";
 import type { DiaperEntry, FeedEntry, GrowthEntry, PumpEntry, SleepEntry } from "@/lib/child/types";
 import {
   describePercentile,
@@ -625,7 +626,8 @@ export function SleepRangeSummary({
 function signed(value: number, digits: number, unit: string) {
   const rounded = Number(value.toFixed(digits));
   const prefix = rounded > 0 ? "+" : "";
-  return `${prefix}${rounded} ${unit}`;
+  const text = digits === 0 ? formatGrams(rounded) : String(rounded);
+  return `${prefix}${text} ${unit}`;
 }
 
 function PercentileLabel({ percentile }: { percentile: number | null }) {
@@ -724,7 +726,8 @@ function GrowthStatTile({
 }
 
 function formatMeasure(value: number, digits: number): string {
-  return String(Number(value.toFixed(digits)));
+  const rounded = Number(value.toFixed(digits));
+  return digits === 0 ? formatGrams(rounded) : String(rounded);
 }
 
 export function GrowthCompareSummary({
@@ -768,7 +771,18 @@ export function GrowthCompareSummary({
               iconClass="bg-lilac text-lilac-foreground"
               label={t("child.measureWeight")}
               measuredOn={tileDate(compared.weight?.date)}
-              current={compared.weight ? { ...compared.weight, unit: "kg", digits: 2 } : null}
+              current={
+                compared.weight
+                  ? {
+                      value: kgToGrams(compared.weight.value),
+                      unit: "gr",
+                      digits: 0,
+                      ...(compared.weight.previous !== undefined
+                        ? { delta: kgToGrams(compared.weight.value) - kgToGrams(compared.weight.previous) }
+                        : {}),
+                    }
+                  : null
+              }
               percentile={latestPercentile("weight", sex, birthDate, compared.weight)}
               onPercentileInfo={() => setPercentileInfoOpen(true)}
             />

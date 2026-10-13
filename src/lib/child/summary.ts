@@ -6,13 +6,13 @@ import type {
   ChildStorage,
   DiaperEntry,
   FeedEntry,
+  FoodEntry,
+  FoodSlot,
   GrowthEntry,
   HealthEntry,
-  MealEntry,
   PottyEntry,
   PumpEntry,
   SleepEntry,
-  SolidEntry,
 } from "@/lib/child/types";
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
@@ -249,7 +249,15 @@ export function monthTotals(data: ChildStorage, today: string): TodayTotals {
   return rangeTotals(data, (date) => date.startsWith(month));
 }
 
-export type TimelineKind = "feed" | "pump" | "diaper" | "sleep" | "solid" | "health" | "potty" | "meal";
+export type TimelineKind =
+  | "feed"
+  | "pump"
+  | "diaper"
+  | "sleep"
+  | "food"
+  | "temperature"
+  | "medicine"
+  | "potty";
 
 export type TimelineItem = {
   id: string;
@@ -272,8 +280,18 @@ function feedSideLabel(side: FeedEntry["side"], t: Translate): string {
   }
 }
 
-export type HistoryTone = "amber" | "sky" | "lilac" | "violet";
-export type HistoryIcon = "feed" | "pump" | "diaper" | "sleep" | "kick" | "water";
+export type HistoryTone = "amber" | "sky" | "lilac" | "violet" | "emerald" | "rose" | "orange";
+export type HistoryIcon =
+  | "feed"
+  | "pump"
+  | "diaper"
+  | "sleep"
+  | "kick"
+  | "water"
+  | "food"
+  | "temperature"
+  | "medicine"
+  | "potty";
 
 export function feedHistoryParts(
   entry: FeedEntry,
@@ -414,16 +432,70 @@ export function describeDiaper(entry: DiaperEntry, t: Translate): string {
   return extra.length ? `${kind} · ${extra.join(", ")}` : kind;
 }
 
-export function describeSolid(entry: SolidEntry, t: Translate): string {
-  return entry.allergyNote ? `${entry.name} · ${t("solids.allergy")}: ${entry.allergyNote}` : entry.name;
+export function foodSlotLabel(slot: FoodSlot, t: Translate): string {
+  if (slot === "breakfast") return t("food.breakfast");
+  if (slot === "lunch") return t("food.lunch");
+  if (slot === "dinner") return t("food.dinner");
+  return t("food.snack");
+}
+
+export function describeFood(entry: FoodEntry, t: Translate): string {
+  const slot = entry.slot ? foodSlotLabel(entry.slot, t) : "";
+  const allergy = entry.allergyNote ? `${t("food.allergy")}: ${entry.allergyNote}` : "";
+  return [slot, entry.name, allergy].filter(Boolean).join(" · ");
 }
 
 export function describeHealth(entry: HealthEntry, t: Translate): string {
-  const parts = [entry.name, entry.dose].filter(Boolean);
-  if (entry.temperatureC !== undefined) {
-    parts.push(t("health.tempValue", { value: entry.temperatureC }));
+  if (entry.kind === "temperature" && entry.temperatureC !== undefined) {
+    return t("health.tempValue", { value: entry.temperatureC });
   }
-  return parts.join(" · ");
+  return [entry.name, entry.dose].filter(Boolean).join(" · ");
+}
+
+export function foodHistoryParts(
+  entry: FoodEntry,
+  t: Translate,
+): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
+  const slot = entry.slot ? foodSlotLabel(entry.slot, t) : "";
+  const allergy = entry.allergyNote ? `${t("food.allergy")}: ${entry.allergyNote}` : "";
+  return {
+    title: entry.name || slot,
+    subtitle: [entry.name ? slot : "", allergy].filter(Boolean).join(" · "),
+    tone: "emerald",
+    icon: "food",
+  };
+}
+
+export function healthHistoryParts(
+  entry: HealthEntry,
+  t: Translate,
+): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
+  if (entry.kind === "temperature") {
+    return {
+      title: entry.temperatureC !== undefined ? t("health.tempValue", { value: entry.temperatureC }) : t("child.tagTemperature"),
+      subtitle: "",
+      tone: "rose",
+      icon: "temperature",
+    };
+  }
+  return {
+    title: entry.name,
+    subtitle: entry.dose,
+    tone: "violet",
+    icon: "medicine",
+  };
+}
+
+export function pottyHistoryParts(
+  entry: PottyEntry,
+  t: Translate,
+): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
+  return {
+    title: describePotty(entry, t),
+    subtitle: "",
+    tone: "sky",
+    icon: "potty",
+  };
 }
 
 export function describePotty(entry: PottyEntry, t: Translate): string {
@@ -437,18 +509,6 @@ export function describePotty(entry: PottyEntry, t: Translate): string {
     default:
       return t("potty.pee");
   }
-}
-
-export function describeMeal(entry: MealEntry, t: Translate): string {
-  const slot =
-    entry.slot === "breakfast"
-      ? t("meals.breakfast")
-      : entry.slot === "lunch"
-        ? t("meals.lunch")
-        : entry.slot === "dinner"
-          ? t("meals.dinner")
-          : t("meals.snack");
-  return entry.note ? `${slot} · ${entry.note}` : slot;
 }
 
 export function describeSleep(entry: SleepEntry, t: Translate): string {
@@ -494,22 +554,31 @@ export function todayTimeline(data: ChildStorage, today: string, t: Translate): 
         title: t("child.tagSleep"),
         detail: describeSleep(entry, t),
       })),
-    ...data.solids
+    ...data.foods
       .filter((entry) => entry.date === today)
       .map((entry) => ({
-        id: `solid-${entry.id}`,
-        kind: "solid" as const,
+        id: `food-${entry.id}`,
+        kind: "food" as const,
         time: entry.time,
-        title: t("child.tagSolid"),
-        detail: describeSolid(entry, t),
+        title: t("child.tagFood"),
+        detail: describeFood(entry, t),
       })),
     ...data.health
-      .filter((entry) => entry.date === today)
+      .filter((entry) => entry.date === today && entry.kind === "temperature")
       .map((entry) => ({
-        id: `health-${entry.id}`,
-        kind: "health" as const,
+        id: `temperature-${entry.id}`,
+        kind: "temperature" as const,
         time: entry.time,
-        title: t("child.tagHealth"),
+        title: t("child.tagTemperature"),
+        detail: describeHealth(entry, t),
+      })),
+    ...data.health
+      .filter((entry) => entry.date === today && entry.kind === "medicine")
+      .map((entry) => ({
+        id: `medicine-${entry.id}`,
+        kind: "medicine" as const,
+        time: entry.time,
+        title: t("child.tagMedicine"),
         detail: describeHealth(entry, t),
       })),
     ...data.potty
@@ -521,17 +590,20 @@ export function todayTimeline(data: ChildStorage, today: string, t: Translate): 
         title: t("child.tagPotty"),
         detail: describePotty(entry, t),
       })),
-    ...data.meals
-      .filter((entry) => entry.date === today)
-      .map((entry) => ({
-        id: `meal-${entry.id}`,
-        kind: "meal" as const,
-        time: entry.time,
-        title: t("child.tagMeal"),
-        detail: describeMeal(entry, t),
-      })),
   ];
   return items.sort((a, b) => b.time.localeCompare(a.time) || b.id.localeCompare(a.id));
+}
+
+export function logDates(data: ChildStorage): string[] {
+  return [
+    ...data.feeds.map((entry) => entry.date),
+    ...data.pumps.map((entry) => entry.date),
+    ...data.diapers.map((entry) => entry.date),
+    ...data.sleeps.map((entry) => entry.date),
+    ...data.foods.map((entry) => entry.date),
+    ...data.health.map((entry) => entry.date),
+    ...data.potty.map((entry) => entry.date),
+  ];
 }
 
 export function latestGrowth(
@@ -594,7 +666,11 @@ export function growthComparison(entries: GrowthEntry[]) {
       value,
       date: latest.date,
       ...(prev !== undefined && previous
-        ? { previous: prev, previousDate: previous.date, delta: Number((value - prev).toFixed(2)) }
+        ? {
+            previous: prev,
+            previousDate: previous.date,
+            delta: key === "weightKg" ? (value - prev) : Number((value - prev).toFixed(2)),
+          }
         : {}),
     };
   }

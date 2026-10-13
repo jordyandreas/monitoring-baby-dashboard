@@ -14,7 +14,7 @@ import {
 import { GenderIcon } from "@/components/pregnancy/baby/gender-icon";
 import { useLocale } from "@/components/providers/locale-provider";
 import { genderLabel } from "@/lib/i18n/baby";
-import type { ChildProfile } from "@/lib/child/types";
+import type { ChildProfile, FoodTracking, EliminationTracking } from "@/lib/child/types";
 import type { Gender } from "@/lib/pregnancy/types";
 import { cn } from "@/utils/cn";
 
@@ -33,11 +33,15 @@ export function ChildProfileForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [gender, setGender] = useState<Gender | "">(initial?.gender ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birthDate ?? "");
+  const [foodTracking, setFoodTracking] = useState<FoodTracking>(initial?.foodTracking ?? "auto");
+  const [eliminationTracking, setEliminationTracking] = useState<EliminationTracking>(
+    initial?.eliminationTracking ?? "auto",
+  );
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!name.trim() || !gender || !birthDate) return;
-    onSave({ name: name.trim(), gender, birthDate });
+    onSave({ name: name.trim(), gender, birthDate, foodTracking, eliminationTracking });
   };
 
   return (
@@ -90,6 +94,32 @@ export function ChildProfileForm({
           />
         </div>
       </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <TrackingSelect
+          id="child-food-tracking"
+          label={t("child.foodTracking")}
+          hint={t("child.foodTrackingHint")}
+          value={foodTracking}
+          onChange={setFoodTracking}
+          options={[
+            { value: "auto", label: t("child.trackingAuto") },
+            { value: "on", label: t("child.foodOn") },
+            { value: "off", label: t("child.foodOff") },
+          ]}
+        />
+        <TrackingSelect
+          id="child-elimination-tracking"
+          label={t("child.eliminationTracking")}
+          hint={t("child.eliminationTrackingHint")}
+          value={eliminationTracking}
+          onChange={setEliminationTracking}
+          options={[
+            { value: "auto", label: t("child.trackingAuto") },
+            { value: "diaper", label: t("child.eliminationDiaper") },
+            { value: "potty", label: t("child.eliminationPotty") },
+          ]}
+        />
+      </div>
       <div className="flex gap-2 pt-2">
         {onCancel ? (
           <Button type="button" variant="outline" className="min-h-11 flex-1 rounded-xl" onClick={onCancel}>
@@ -101,5 +131,41 @@ export function ChildProfileForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function TrackingSelect<T extends string>({
+  id,
+  label,
+  hint,
+  value,
+  onChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  hint: string;
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string }[];
+}) {
+  const selected = options.find((option) => option.value === value);
+  return (
+    <div className="min-w-0 space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Select value={value} onValueChange={(next) => onChange(next as T)}>
+        <SelectTrigger id={id} className="min-h-11 w-full rounded-xl">
+          <span className="flex-1 text-left text-sm">{selected?.label}</span>
+        </SelectTrigger>
+        <SelectContent className="p-2">
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value} className="rounded-lg py-2.5 pr-8 pl-2.5">
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-sm text-muted-foreground">{hint}</p>
+    </div>
   );
 }

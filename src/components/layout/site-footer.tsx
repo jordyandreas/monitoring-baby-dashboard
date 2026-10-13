@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { childMoreRoutes } from "@/components/layout/child-more-routes";
+import { childMoreRoutesFor } from "@/components/layout/child-more-routes";
 import { FeatureLink } from "@/components/layout/feature-link";
 import { useAppMode } from "@/components/providers/app-mode-provider";
+import { useChildTracking } from "@/components/providers/child-tracking-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { cn } from "@/utils/cn";
 
 export function SiteFooter() {
   const { t } = useLocale();
   const { mode } = useAppMode();
+  const tracking = useChildTracking();
   const year = new Date().getFullYear();
   const child = mode === "child";
+  const more = childMoreRoutesFor(tracking);
 
   return (
     <footer className="glass-bar mt-8 mb-[calc(6.5rem+env(safe-area-inset-bottom))] border-t border-border md:mt-10 md:mb-0">
@@ -33,7 +36,7 @@ export function SiteFooter() {
           </div>
           {child ? (
             <nav aria-label={t("child.moreTitle")} className="flex flex-wrap gap-x-4 gap-y-2 md:max-w-md md:justify-end">
-              {childMoreRoutes.map((item) => (
+              {more.map((item) => (
                 <FeatureLink
                   key={item.href}
                   href={item.href}

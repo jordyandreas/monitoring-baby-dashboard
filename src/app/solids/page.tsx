@@ -1,5 +1,5 @@
-import { SolidsPageContent } from "@/components/child/later-pages";
+import { redirect } from "next/navigation";
 
 export default function SolidsPage() {
-  return <SolidsPageContent />;
+  redirect("/food");
 }

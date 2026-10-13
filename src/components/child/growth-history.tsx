@@ -17,12 +17,14 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useLocale } from "@/components/providers/locale-provider";
 import { measurementAgeDays } from "@/lib/child/who-growth";
+import { formatGrams, gramsToKg, kgToGrams } from "@/lib/child/weight";
 import type { GrowthDay } from "@/lib/child/summary";
 import type { GrowthEntry } from "@/lib/child/types";
 import { cn } from "@/utils/cn";
 
 function formatMeasure(value: number, digits: number): string {
-  return String(Number(value.toFixed(digits)));
+  const rounded = Number(value.toFixed(digits));
+  return digits === 0 ? formatGrams(rounded) : String(rounded);
 }
 
 function MetricCell({
@@ -67,6 +69,7 @@ function DeltaText({
   }
   const rounded = Number((current - previous).toFixed(digits));
   const prefix = rounded > 0 ? "+" : "";
+  const text = digits === 0 ? formatGrams(rounded) : String(rounded);
   return (
     <span
       className={cn(
@@ -77,7 +80,7 @@ function DeltaText({
       )}
     >
       {prefix}
-      {rounded} {unit}
+      {text} {unit}
     </span>
   );
 }
@@ -108,12 +111,13 @@ function GrowthEditForm({
 }) {
   const { t } = useLocale();
   const [date, setDate] = useState(day.date);
-  const [weight, setWeight] = useState(day.weightKg !== undefined ? String(day.weightKg) : "");
+  const [weight, setWeight] = useState(day.weightKg !== undefined ? String(kgToGrams(day.weightKg)) : "");
   const [length, setLength] = useState(day.lengthCm !== undefined ? String(day.lengthCm) : "");
   const [head, setHead] = useState(day.headCm !== undefined ? String(day.headCm) : "");
-  const weightKg = optionalNumber(weight);
+  const weightGrams = optionalNumber(weight);
   const lengthCm = optionalNumber(length);
   const headCm = optionalNumber(head);
+  const weightKg = weightGrams !== undefined ? gramsToKg(weightGrams) : undefined;
   const canSave = Boolean(date && (weightKg || lengthCm || headCm));
 
   return (
@@ -137,8 +141,8 @@ function GrowthEditForm({
         label={t("growth.weight")}
         value={weight}
         onChange={setWeight}
-        step="0.01"
-        unit="kg"
+        step="1"
+        unit="gr"
       />
       <NumberField
         id={`growth-edit-${day.id}-length`}
@@ -205,10 +209,10 @@ export function GrowthHistoryTable({
                   {
                     key: "weight",
                     label: t("child.measureWeight"),
-                    value: day.weightKg,
-                    previous: previous?.weightKg,
-                    digits: 2,
-                    unit: "kg",
+                    value: day.weightKg !== undefined ? kgToGrams(day.weightKg) : undefined,
+                    previous: previous?.weightKg !== undefined ? kgToGrams(previous.weightKg) : undefined,
+                    digits: 0,
+                    unit: "gr",
                   },
                   {
                     key: "height",
@@ -313,9 +317,9 @@ export function GrowthHistoryTable({
                       <td className="px-2 py-3 whitespace-nowrap text-muted-foreground">{ageText}</td>
                       <td className="px-2 py-3">
                         <MetricCell
-                          value={day.weightKg}
-                          digits={2}
-                          unit="kg"
+                          value={day.weightKg !== undefined ? kgToGrams(day.weightKg) : undefined}
+                          digits={0}
+                          unit="gr"
                           icon={Weight}
                           iconClass="bg-lilac text-lilac-foreground"
                         />
@@ -341,10 +345,10 @@ export function GrowthHistoryTable({
                       <td className="px-2 py-3">
                         <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
                           <DeltaText
-                            current={day.weightKg}
-                            previous={previous?.weightKg}
-                            digits={2}
-                            unit="kg"
+                            current={day.weightKg !== undefined ? kgToGrams(day.weightKg) : undefined}
+                            previous={previous?.weightKg !== undefined ? kgToGrams(previous.weightKg) : undefined}
+                            digits={0}
+                            unit="gr"
                           />
                           <DeltaText
                             current={day.lengthCm}

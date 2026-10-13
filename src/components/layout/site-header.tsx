@@ -8,6 +8,7 @@ import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ModeSwitch } from "@/components/layout/mode-switch";
 import { isNavActive, navRoutesFor } from "@/components/layout/nav-routes";
 import { useAppMode } from "@/components/providers/app-mode-provider";
+import { useChildTracking } from "@/components/providers/child-tracking-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { cn } from "@/utils/cn";
 
@@ -15,7 +16,8 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { t } = useLocale();
   const { mode } = useAppMode();
-  const routes = navRoutesFor(mode);
+  const { elimination } = useChildTracking();
+  const routes = navRoutesFor(mode, elimination);
 
   return (
     <>

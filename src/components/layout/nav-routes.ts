@@ -1,8 +1,9 @@
 import type { ComponentType } from "react";
-import { Droplets, Footprints, Home, Milk, Music, Pill, Ruler } from "lucide-react";
+import { CircleDot, Droplets, Footprints, Home, Milk, Music, Pill, Ruler } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
 import type { AppMode } from "@/lib/app-mode";
+import type { EliminationMode } from "@/lib/child/types";
 
 export type NavIcon = ComponentType<{ className?: string }>;
 
@@ -37,8 +38,14 @@ export const childNavRoutes: NavRoute[] = [
   { href: "/growth", labelKey: "nav.growth", icon: Ruler },
 ];
 
-export function navRoutesFor(mode: AppMode): NavRoute[] {
-  return mode === "child" ? childNavRoutes : navRoutes;
+export function navRoutesFor(mode: AppMode, elimination: EliminationMode = "diaper"): NavRoute[] {
+  if (mode !== "child") return navRoutes;
+  if (elimination !== "potty") return childNavRoutes;
+  return childNavRoutes.map((route) =>
+    route.href === "/diapers"
+      ? { href: "/potty", labelKey: "nav.potty", icon: CircleDot }
+      : route,
+  );
 }
 
 export function isNavActive(pathname: string, href: string): boolean {

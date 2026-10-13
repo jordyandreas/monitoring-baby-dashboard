@@ -17,6 +17,7 @@ import { useRemote } from "@/hooks/use-remote";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { growthByDay } from "@/lib/child/summary";
+import { gramsToKg } from "@/lib/child/weight";
 import { getTodayDateStr } from "@/lib/pregnancy/vitamins";
 import { getChildProfile } from "@/services/child.service";
 import { deleteGrowth, listGrowth, replaceGrowthDay, saveMergedGrowth } from "@/services/growth.service";
@@ -53,9 +54,10 @@ export function GrowthPageContent() {
   }
 
   const growth = growthRemote.data ?? [];
-  const weightKg = optionalNumber(weight);
+  const weightGrams = optionalNumber(weight);
   const lengthCm = optionalNumber(length);
   const headCm = optionalNumber(head);
+  const weightKg = weightGrams !== undefined ? gramsToKg(weightGrams) : undefined;
   const canSave = Boolean(date && (weightKg || lengthCm || headCm));
   const days = growthByDay(growth);
   const birthDate = profileRemote.data?.birthDate ?? null;
@@ -110,8 +112,8 @@ export function GrowthPageContent() {
               label={t("growth.weight")}
               value={weight}
               onChange={setWeight}
-              step="0.01"
-              unit="kg"
+              step="1"
+              unit="gr"
             />
             <NumberField
               id="growth-length"

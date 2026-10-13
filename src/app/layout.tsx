@@ -8,6 +8,7 @@ import { RequireLogin } from "@/components/layout/require-login";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { AppModeProvider } from "@/components/providers/app-mode-provider";
+import { ChildTrackingProvider } from "@/components/providers/child-tracking-provider";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { SupabaseSyncStatus } from "@/components/dev/supabase-sync-status";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
@@ -50,6 +51,7 @@ export default function RootLayout({
         <LocaleProvider>
           <AppModeProvider>
           <SupabaseProvider>
+            <ChildTrackingProvider>
               <SiteHeader />
               <RequireLogin />
               <LoginDialog />
@@ -59,6 +61,7 @@ export default function RootLayout({
               <BottomNav />
               <QuickLogFab />
               <SupabaseSyncStatus />
+            </ChildTrackingProvider>
           </SupabaseProvider>
           </AppModeProvider>
         </LocaleProvider>

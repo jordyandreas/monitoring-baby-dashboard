@@ -8,6 +8,8 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { cn } from "@/utils/cn";
 
 const WINDOW = 7;
+const shiftButtonClass =
+  "grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-lilac hover:text-lilac-foreground focus-visible:bg-lilac focus-visible:text-lilac-foreground focus-visible:outline-none active:bg-lilac-deep/25";
 
 export function DateDayStrip({
   selectedDate,
@@ -87,7 +89,7 @@ export function DateDayStrip({
         type="button"
         aria-label={t("common.earlierDays")}
         onClick={() => nudge(-1)}
-        className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/60 hover:text-foreground"
+        className={shiftButtonClass}
       >
         <ChevronLeft className="size-4" />
       </button>
@@ -140,7 +142,7 @@ export function DateDayStrip({
         type="button"
         aria-label={t("common.laterDays")}
         onClick={() => nudge(1)}
-        className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/60 hover:text-foreground"
+        className={shiftButtonClass}
       >
         <ChevronRight className="size-4" />
       </button>

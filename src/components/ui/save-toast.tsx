@@ -20,10 +20,12 @@ export type SaveToastTopic =
   | "sleep"
   | "growth"
   | "profile"
-  | "solid"
+  | "food"
+  | "temperature"
+  | "medicine"
   | "health"
   | "potty"
-  | "meal"
+  | "vaccine"
   | "milestone"
   | "baby"
   | "babyPlus"
@@ -57,14 +59,20 @@ function toastMessage(
         return t("toast.sleepDeleteFailed");
       case "growth":
         return t("toast.growthDeleteFailed");
-      case "solid":
-        return t("toast.solidDeleteFailed");
+      case "profile":
+        return t("toast.profileDeleteFailed");
+      case "food":
+        return t("toast.foodDeleteFailed");
+      case "temperature":
+        return t("toast.temperatureDeleteFailed");
+      case "medicine":
+        return t("toast.medicineDeleteFailed");
       case "health":
         return t("toast.healthDeleteFailed");
       case "potty":
         return t("toast.pottyDeleteFailed");
-      case "meal":
-        return t("toast.mealDeleteFailed");
+      case "vaccine":
+        return t("toast.vaccineDeleteFailed");
       case "milestone":
         return t("toast.milestoneDeleteFailed");
       case "kick":
@@ -88,6 +96,14 @@ function toastMessage(
         return t("toast.sleepUpdateFailed");
       case "growth":
         return t("toast.growthUpdateFailed");
+      case "food":
+        return t("toast.foodUpdateFailed");
+      case "temperature":
+        return t("toast.temperatureUpdateFailed");
+      case "medicine":
+        return t("toast.medicineUpdateFailed");
+      case "potty":
+        return t("toast.pottyUpdateFailed");
       default:
         return t("toast.failed");
     }
@@ -107,14 +123,18 @@ function toastMessage(
         return t("toast.growthFailed");
       case "profile":
         return t("toast.profileFailed");
-      case "solid":
-        return t("toast.solidFailed");
+      case "food":
+        return t("toast.foodFailed");
+      case "temperature":
+        return t("toast.temperatureFailed");
+      case "medicine":
+        return t("toast.medicineFailed");
       case "health":
         return t("toast.healthFailed");
       case "potty":
         return t("toast.pottyFailed");
-      case "meal":
-        return t("toast.mealFailed");
+      case "vaccine":
+        return t("toast.vaccineFailed");
       case "milestone":
         return t("toast.milestoneFailed");
       case "baby":
@@ -144,14 +164,18 @@ function toastMessage(
         return t("toast.sleepDeleted");
       case "growth":
         return t("toast.growthDeleted");
-      case "solid":
-        return t("toast.solidDeleted");
+      case "food":
+        return t("toast.foodDeleted");
+      case "temperature":
+        return t("toast.temperatureDeleted");
+      case "medicine":
+        return t("toast.medicineDeleted");
       case "health":
         return t("toast.healthDeleted");
       case "potty":
         return t("toast.pottyDeleted");
-      case "meal":
-        return t("toast.mealDeleted");
+      case "vaccine":
+        return t("toast.vaccineDeleted");
       case "milestone":
         return t("toast.milestoneDeleted");
       case "kick":
@@ -175,6 +199,14 @@ function toastMessage(
         return t("toast.sleepUpdated");
       case "growth":
         return t("toast.growthUpdated");
+      case "food":
+        return t("toast.foodUpdated");
+      case "temperature":
+        return t("toast.temperatureUpdated");
+      case "medicine":
+        return t("toast.medicineUpdated");
+      case "potty":
+        return t("toast.pottyUpdated");
       default:
         return t("toast.saved");
     }
@@ -193,14 +225,18 @@ function toastMessage(
       return t("toast.growthSaved");
     case "profile":
       return t("toast.profileSaved");
-    case "solid":
-      return t("toast.solidSaved");
+    case "food":
+      return t("toast.foodSaved");
+    case "temperature":
+      return t("toast.temperatureSaved");
+    case "medicine":
+      return t("toast.medicineSaved");
     case "health":
       return t("toast.healthSaved");
     case "potty":
       return t("toast.pottySaved");
-    case "meal":
-      return t("toast.mealSaved");
+    case "vaccine":
+      return t("toast.vaccineSaved");
     case "milestone":
       return t("toast.milestoneSaved");
     case "baby":
