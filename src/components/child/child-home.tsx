@@ -298,12 +298,15 @@ export function ChildHome() {
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">{t("child.timelineTitle")}</h2>
-            <p className="text-sm text-muted-foreground">{selectedLabel}</p>
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto">
+            <div>
+              <h2 className="text-lg font-semibold">{t("child.timelineTitle")}</h2>
+              <p className="text-sm text-muted-foreground">{selectedLabel}</p>
+            </div>
+            <WhatsAppShareButton text={dayText} className="shrink-0 sm:hidden" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <WhatsAppShareButton text={dayText} />
+            <WhatsAppShareButton text={dayText} className="hidden sm:grid" />
             <LogFilters
               value={logFilter}
               timeline={timeline}
@@ -1051,14 +1054,14 @@ function TodayActivity({
                   <span className="block text-xs text-muted-foreground">{card.detail}</span>
                 ) : null}
                 {card.notes?.map((note) => (
-                  <span key={`${note.label}-${note.time}`} className="mt-1 block text-xs leading-snug text-lilac-foreground">
+                  <span key={`${note.label}-${note.time}`} className="mt-1 block space-y-0.5 text-xs leading-snug text-lilac-foreground">
                     {note.label === t("child.lastLine") ? null : (
-                      <span className="text-lilac-foreground/70">{note.label} </span>
+                      <span className="block text-lilac-foreground/70">{note.label}</span>
                     )}
-                    <span className="font-semibold">{note.time}</span>
-                    {note.ago ? <span className="font-medium text-lilac-foreground"> {note.ago}</span> : null}
+                    <span className="block font-semibold">{note.time}</span>
+                    {note.ago ? <span className="block font-medium">{note.ago}</span> : null}
                     {note.details.length > 0 ? (
-                      <span className="mt-0.5 block text-lilac-foreground/75">{note.details.join(" · ")}</span>
+                      <span className="block text-lilac-foreground/75">{note.details.join(" · ")}</span>
                     ) : null}
                   </span>
                 ))}
