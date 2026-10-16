@@ -10,7 +10,6 @@ import { headerIconButtonClassName } from "@/components/layout/header-icon-butto
 import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useLocale } from "@/components/providers/locale-provider";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -22,7 +21,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { isEmailAccount } from "@/lib/supabase/email-auth";
 import { useRemote } from "@/hooks/use-remote";
 import { commitSave } from "@/components/ui/save-toast";
 import { getBaby } from "@/services/baby.service";
@@ -75,7 +73,6 @@ export function AccountDialog() {
   const { enabled, user, signedIn, requestLogin, signOut: signOutAccount } = useSupabase();
   const babyRemote = useRemote("baby", getBaby, signedIn);
   const childRemote = useRemote("child", getChildProfile, signedIn);
-  const [freshUser, setFreshUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -83,22 +80,9 @@ export function AccountDialog() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!enabled || !isEmailAccount(user)) return;
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-    let active = true;
-    void supabase.auth.getUser().then(({ data }) => {
-      if (active && data.user) setFreshUser(data.user);
-    });
-    return () => {
-      active = false;
-    };
-  }, [enabled, user]);
-
   if (!enabled) return null;
 
-  const authUser = freshUser ?? user;
+  const authUser = user;
 
   const signOut = async () => {
     setError(null);

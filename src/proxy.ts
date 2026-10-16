@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isChildPath, isPregnancyPath } from "@/lib/app-mode";
 import { isSupabaseEnabled } from "@/lib/supabase/env";
+import { accessTokenHasSub } from "@/lib/supabase/jwt";
 
 function isFeaturePath(pathname: string) {
   return isPregnancyPath(pathname) || isChildPath(pathname);
@@ -32,8 +33,25 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getUser();
-  if (!data.user && isFeaturePath(request.nextUrl.pathname)) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // Avoid calling Auth /user with a non-user JWT (anon key, truncated cookie).
+  // That returns 403 "missing sub claim" and can hang the page for a long time.
+  let user = session?.user ?? null;
+  if (session?.access_token && accessTokenHasSub(session.access_token)) {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data.user) {
+      user = data.user;
+    } else {
+      user = null;
+    }
+  } else if (session) {
+    user = null;
+  }
+
+  if (!user && isFeaturePath(request.nextUrl.pathname)) {
     const home = request.nextUrl.clone();
     home.pathname = "/";
     home.search = "";

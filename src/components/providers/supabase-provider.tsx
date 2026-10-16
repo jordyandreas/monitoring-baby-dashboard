@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isAccessTokenStale, setAccountSession } from "@/lib/supabase/account-session";
+import { SESSION_CLEARED_EVENT } from "@/lib/supabase/clear-session";
 import { refreshAccountSession } from "@/lib/supabase/refresh-session";
 import {
   ensureSupabaseSession,
@@ -143,14 +144,24 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!enabled) return;
+    const onSessionCleared = () => {
+      setSession(null);
+      setUser(null);
+      setAuthStatus("ready");
+      setAuthError(null);
+      setLoginOpen(true);
+      notifyDataRefresh("*");
+    };
     const wake = () => {
       if (document.visibilityState === "hidden") return;
       if (!isAccessTokenStale()) return;
       void refreshAccountSession().catch(() => {});
     };
+    window.addEventListener(SESSION_CLEARED_EVENT, onSessionCleared);
     document.addEventListener("visibilitychange", wake);
     window.addEventListener("pageshow", wake);
     return () => {
+      window.removeEventListener(SESSION_CLEARED_EVENT, onSessionCleared);
       document.removeEventListener("visibilitychange", wake);
       window.removeEventListener("pageshow", wake);
     };

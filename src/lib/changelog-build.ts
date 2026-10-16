@@ -12,6 +12,13 @@ export type BuildChangelogEntry = {
 
 export const buildChangelog: readonly BuildChangelogEntry[] = [
   {
+    date: "2026-10-16",
+    items: [
+      { en: "Next milk and pumping cards were updated.", id: "Kartu jadwal susu dan pompa diperbarui." },
+      { en: "Other parts of the app were updated.", id: "Bagian lain aplikasi diperbarui." },
+    ],
+  },
+  {
     date: "2026-10-13",
     items: [
       { en: "Other parts of the app were updated.", id: "Bagian lain aplikasi diperbarui." },
