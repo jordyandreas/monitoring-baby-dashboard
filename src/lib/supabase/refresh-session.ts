@@ -11,6 +11,8 @@ import {
   getAccountRefreshToken,
   setAccountSession,
 } from "@/lib/supabase/account-session";
+import { clearAccountSession } from "@/lib/supabase/clear-session";
+import { accessTokenHasSub } from "@/lib/supabase/jwt";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 const REFRESH_TIMEOUT_MS = 3_000;
@@ -63,12 +65,20 @@ async function runRefresh() {
     if (!response.ok || !body.access_token || !body.refresh_token || !body.user) {
       throw new Error(body.error_description || body.msg || body.error || "Session refresh failed");
     }
+    if (!accessTokenHasSub(body.access_token)) {
+      throw new Error("Session refresh returned an invalid access token");
+    }
     const session = toSession(body);
     setAccountSession(session);
     persistSessionCookie(session);
   } catch (error) {
     if (controller.signal.aborted) {
       throw new Error("Session refresh timed out");
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    // Keep the session on a transient network failure; drop it when Auth rejects the refresh.
+    if (/invalid|expired|revoked|not found|access token/i.test(message)) {
+      clearAccountSession("refresh-failed");
     }
     throw error;
   } finally {

@@ -1,6 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
+import { clearAccountSession } from "@/lib/supabase/clear-session";
 import { getSupabaseBrowserClient, resetSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isEmailAccount } from "@/lib/supabase/email-auth";
+import { accessTokenHasSub } from "@/lib/supabase/jwt";
 import { withTimeout } from "@/lib/supabase/with-timeout";
 
 export type AuthStatus = "disabled" | "loading" | "ready" | "error";
@@ -61,6 +63,13 @@ async function readSessionQuickly(
       "getSession",
     );
     if (error || !data.session?.user) return null;
+    // Cookie may still hold a user object while the access token is unusable
+    // (missing `sub`, truncated, or the anon key). Reject and clear it so the
+    // UI does not look signed in while every /user and data call fails.
+    if (!accessTokenHasSub(data.session.access_token)) {
+      clearAccountSession("cookie-missing-sub");
+      return null;
+    }
     return data.session;
   } catch {
     resetSupabaseBrowserClient();

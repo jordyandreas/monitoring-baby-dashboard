@@ -66,10 +66,6 @@ function jwtRole(token: string): string | null {
   }
 }
 
-function isVerifiedServiceRole(message: string): boolean {
-  return message.toLowerCase().includes("missing sub");
-}
-
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -93,19 +89,17 @@ Deno.serve(async (request) => {
   const admin = createClient(supabaseUrl, serviceKey);
   const body = await request.json().catch(() => ({}));
 
+  // Service-role JWTs have no user `sub`. Calling getUser() with them only
+  // produces 403 "missing sub claim" noise in Auth logs.
+  if (token === serviceKey.trim() || jwtRole(token) === "service_role") {
+    const sent = await processDue(admin);
+    return json({ sent });
+  }
+
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
   const { data: userData, error: userError } = await userClient.auth.getUser();
-  const serviceRole =
-    token === serviceKey.trim() ||
-    (jwtRole(token) === "service_role" &&
-      !userData.user &&
-      isVerifiedServiceRole(userError?.message ?? ""));
-  if (serviceRole) {
-    const sent = await processDue(admin);
-    return json({ sent });
-  }
   if (userError || !userData.user) return json({ error: "Unauthorized" }, 401);
   if (body?.test !== true) return json({ error: "Unsupported" }, 400);
 
