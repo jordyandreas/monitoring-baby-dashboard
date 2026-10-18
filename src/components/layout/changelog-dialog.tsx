@@ -31,7 +31,8 @@ export function ChangelogDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[min(90vh,760px)] overflow-y-auto rounded-2xl sm:max-w-md"
+        className="z-[80] max-h-[min(90vh,760px)] overflow-y-auto rounded-2xl sm:max-w-md"
+        overlayClassName="z-[80]"
         aria-describedby={undefined}
       >
         <DialogHeader>
