@@ -66,11 +66,18 @@ function jwtRole(token: string): string | null {
   }
 }
 
+/** Paused while browser push is unused. Match PUSH_REMINDERS_ENABLED in the app. */
+const PUSH_DELIVERY_ENABLED = false;
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
   if (request.method !== "POST") return json({ error: "POST only" }, 405);
+
+  if (!PUSH_DELIVERY_ENABLED) {
+    return json({ sent: 0, disabled: true });
+  }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");

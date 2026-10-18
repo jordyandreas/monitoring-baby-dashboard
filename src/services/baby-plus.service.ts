@@ -1,7 +1,6 @@
 import { babyPlusToRow, rowToBabyPlus } from "@/lib/supabase/mappers";
 import { DEFAULT_STORAGE, type BabyPlusState } from "@/lib/pregnancy/types";
 import { throwOnError, withAccount } from "@/services/account";
-import { syncPushSchedules } from "@/services/push-reminders.service";
 
 export async function getBabyPlus(): Promise<BabyPlusState> {
   return withAccount(async (supabase, userId) => {
@@ -21,5 +20,4 @@ export async function saveBabyPlus(state: BabyPlusState): Promise<void> {
       supabase.from("baby_plus_programs").upsert(babyPlusToRow(userId, state)),
     );
   });
-  await syncPushSchedules();
 }
