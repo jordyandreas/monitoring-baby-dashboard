@@ -1,7 +1,6 @@
 import { kickToRow, rowToKick } from "@/lib/supabase/mappers";
 import type { KickEntry } from "@/lib/pregnancy/types";
 import { throwOnError, withAccount } from "@/services/account";
-import { syncPushSchedules } from "@/services/push-reminders.service";
 
 export async function listKicks(): Promise<KickEntry[]> {
   return withAccount(async (supabase, userId) => {
@@ -20,7 +19,6 @@ export async function insertKick(entry: KickEntry): Promise<void> {
   await withAccount(async (supabase, userId) => {
     await throwOnError(supabase.from("kick_logs").insert(kickToRow(userId, entry)));
   });
-  await syncPushSchedules();
 }
 
 export async function deleteKick(id: string): Promise<void> {
@@ -29,5 +27,4 @@ export async function deleteKick(id: string): Promise<void> {
       supabase.from("kick_logs").delete().eq("user_id", userId).eq("id", id),
     );
   });
-  await syncPushSchedules();
 }

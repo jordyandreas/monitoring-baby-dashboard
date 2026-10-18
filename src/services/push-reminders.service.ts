@@ -1,6 +1,7 @@
 import { countCompleted, getNamedVitamins } from "@/lib/pregnancy/vitamins";
 import {
   computeSchedules,
+  DEFAULT_PUSH_PREFERENCES,
   parsePushPreferences,
   zonedDateString,
   type PushKind,
@@ -15,6 +16,13 @@ import { rowToBabyPlus, rowsToVitaminState } from "@/lib/supabase/mappers";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { DEFAULT_STORAGE } from "@/lib/pregnancy/types";
 import { throwOnError, withAccount } from "@/services/account";
+
+/**
+ * Browser push reminders are paused. Keeping this false stops every feed/pump/
+ * water save from syncing `scheduled_notifications` in the background.
+ * Flip to true when the feature is used again (and re-enable the cron job).
+ */
+export const PUSH_REMINDERS_ENABLED = false;
 
 function browserLocale(): PushLocale {
   if (typeof window === "undefined") return DEFAULT_LOCALE;
@@ -37,6 +45,7 @@ function sentKeyFrom(payload: Json): string | null {
 }
 
 export async function getPushReminders(): Promise<PushReminderPreferences> {
+  if (!PUSH_REMINDERS_ENABLED) return DEFAULT_PUSH_PREFERENCES;
   return withAccount(async (supabase, userId) => {
     const { data, error } = await supabase
       .from("push_reminder_preferences")
@@ -49,6 +58,7 @@ export async function getPushReminders(): Promise<PushReminderPreferences> {
 }
 
 export async function syncPushSchedules(): Promise<void> {
+  if (!PUSH_REMINDERS_ENABLED) return;
   await withAccount(async (supabase, userId) => {
     const timeZone = browserTimeZone();
     const locale = browserLocale();
@@ -179,6 +189,7 @@ function isPushKind(value: string): value is PushKind {
 export async function savePushReminders(
   preferences: PushReminderPreferences,
 ): Promise<void> {
+  if (!PUSH_REMINDERS_ENABLED) return;
   await withAccount(async (supabase, userId) => {
     await throwOnError(
       supabase.from("push_reminder_preferences").upsert({
@@ -195,6 +206,7 @@ export async function savePushSubscription(subscription: {
   p256dh: string;
   auth: string;
 }): Promise<void> {
+  if (!PUSH_REMINDERS_ENABLED) return;
   await withAccount(async (supabase, userId) => {
     await throwOnError(
       supabase.from("push_subscriptions").upsert(
@@ -211,6 +223,7 @@ export async function savePushSubscription(subscription: {
 }
 
 export async function sendTestPush(title: string, body: string): Promise<void> {
+  if (!PUSH_REMINDERS_ENABLED) throw new Error("Push reminders are disabled");
   const supabase = getSupabaseBrowserClient();
   const url = getSupabaseUrl();
   const anon = getSupabaseAnonKey();

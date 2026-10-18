@@ -1,7 +1,6 @@
 import { rowsToVitaminState, vitaminDayToRow, vitaminItemsToRows } from "@/lib/supabase/mappers";
 import { DEFAULT_STORAGE, type VitaminState } from "@/lib/pregnancy/types";
 import { throwOnError, withAccount } from "@/services/account";
-import { syncPushSchedules } from "@/services/push-reminders.service";
 
 export async function getVitamins(): Promise<VitaminState> {
   return withAccount(async (supabase, userId) => {
@@ -30,5 +29,4 @@ export async function saveVitamins(vitamins: VitaminState): Promise<void> {
       await throwOnError(supabase.from("vitamin_day_logs").upsert(days));
     }
   });
-  await syncPushSchedules();
 }

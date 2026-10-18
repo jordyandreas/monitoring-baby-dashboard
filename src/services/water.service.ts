@@ -1,7 +1,6 @@
 import { rowToWater, waterToRow } from "@/lib/supabase/mappers";
 import { DEFAULT_STORAGE, type WaterEntry, type WaterState } from "@/lib/pregnancy/types";
 import { throwOnError, withAccount } from "@/services/account";
-import { syncPushSchedules } from "@/services/push-reminders.service";
 
 export async function getWater(): Promise<WaterState> {
   return withAccount(async (supabase, userId) => {
@@ -27,7 +26,6 @@ export async function insertWater(entry: WaterEntry): Promise<void> {
   await withAccount(async (supabase, userId) => {
     await throwOnError(supabase.from("water_logs").insert(waterToRow(userId, entry)));
   });
-  await syncPushSchedules();
 }
 
 export async function deleteWater(id: string): Promise<void> {
@@ -36,7 +34,6 @@ export async function deleteWater(id: string): Promise<void> {
       supabase.from("water_logs").delete().eq("user_id", userId).eq("id", id),
     );
   });
-  await syncPushSchedules();
 }
 
 export async function saveGlassSize(glassSizeMl: number): Promise<void> {
