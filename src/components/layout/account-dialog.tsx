@@ -71,8 +71,10 @@ export function AccountDialog() {
   const { t } = useLocale();
   const { mode: appMode } = useAppMode();
   const { enabled, user, signedIn, requestLogin, signOut: signOutAccount } = useSupabase();
-  const babyRemote = useRemote("baby", getBaby, signedIn);
-  const childRemote = useRemote("child", getChildProfile, signedIn);
+  // Load only the profile for the active mode — pregnancy widgets must not
+  // fetch while the user is in the child section (and vice versa).
+  const babyRemote = useRemote("baby", getBaby, signedIn && appMode === "pregnancy");
+  const childRemote = useRemote("child", getChildProfile, signedIn && appMode === "child");
   const [menuOpen, setMenuOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -99,7 +101,7 @@ export function AccountDialog() {
   if (signedIn && user?.email) {
     const childName = childRemote.data?.name?.trim() || null;
     const babyName = babyRemote.data?.name?.trim() || null;
-    const setupName = appMode === "child" ? childName || babyName : babyName || childName;
+    const setupName = appMode === "child" ? childName : babyName;
     const name = setupName || (authUser ? accountName(authUser) : null);
     const initials = initialsFrom(name ?? user.email.split("@")[0] ?? user.email);
 
