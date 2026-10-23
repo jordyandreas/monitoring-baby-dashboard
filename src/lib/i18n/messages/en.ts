@@ -544,6 +544,7 @@ export const en = {
     editProfile: "Edit profile",
     ageDays: "{days} days",
     ageMonths: "{months} months",
+    ageMonthsDays: "{months} months {days} days",
     ageYears: "{years} years",
     ageYearsMonths: "{years} years {months} months",
     ageUpcoming: "Birth date is still ahead",
