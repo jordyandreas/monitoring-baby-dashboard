@@ -525,6 +525,7 @@ export const id: Messages = {
     editProfile: "Ubah profil",
     ageDays: "{days} hari",
     ageMonths: "{months} bulan",
+    ageMonthsDays: "{months} bulan {days} hari",
     ageYears: "{years} tahun",
     ageYearsMonths: "{years} tahun {months} bulan",
     ageUpcoming: "Tanggal lahir masih di depan",

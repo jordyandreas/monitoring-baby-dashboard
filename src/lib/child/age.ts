@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, differenceInMonths, isValid, parseISO } from "date-fns";
+import { addMonths, differenceInCalendarDays, differenceInMonths, isValid, parseISO } from "date-fns";
 
 export function childAgeWeeks(birthDate: string, now = new Date()): number | null {
   const birth = parseISO(birthDate);
@@ -28,7 +28,11 @@ export function formatChildAge(birthDate: string, t: Translate, now = new Date()
   if (days < 0) return t("child.ageUpcoming");
   if (days < 31) return t("child.ageDays", { days });
   const months = Math.max(0, differenceInMonths(now, birth));
-  if (months < 24) return t("child.ageMonths", { months });
+  const dayRemainder = Math.max(0, differenceInCalendarDays(now, addMonths(birth, months)));
+  if (months < 24) {
+    if (dayRemainder === 0) return t("child.ageMonths", { months });
+    return t("child.ageMonthsDays", { months, days: dayRemainder });
+  }
   const years = Math.floor(months / 12);
   const remainder = months % 12;
   if (remainder === 0) return t("child.ageYears", { years });
