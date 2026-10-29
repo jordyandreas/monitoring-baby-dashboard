@@ -98,6 +98,17 @@ export function getWaterInRange(
   });
 }
 
+export function getWaterBetween(entries: WaterEntry[], from: string, to: string): WaterEntry[] {
+  const start = startOfDay(parseISO(from));
+  const end = startOfDay(parseISO(to));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const [lo, hi] = start <= end ? [start, end] : [end, start];
+  return entries.filter((entry) => {
+    const date = startOfDay(parseISO(entry.date));
+    return isWithinInterval(date, { start: lo, end: hi });
+  });
+}
+
 export interface WaterPerDayItem {
   date: string;
   dayLabel: string;
@@ -120,6 +131,43 @@ export function getWaterPerDay(
 
   for (let i = days - 1; i >= 0; i--) {
     const day = subDays(today, i);
+    const dateStr = format(day, "yyyy-MM-dd");
+    const dayEntries = entries.filter((e) => e.date === dateStr);
+    const totalMl = getDayTotalMl(dayEntries);
+    result.push({
+      date: dateStr,
+      dayLabel: compactAxis
+        ? format(day, "d/M", { locale: dfLocale })
+        : format(day, "d", { locale: dfLocale }),
+      fullLabel: format(day, "EEE, d MMM yyyy", { locale: dfLocale }),
+      isToday: isSameDay(day, today),
+      totalMl,
+      status: getDayStatus(totalMl),
+    });
+  }
+
+  return result;
+}
+
+export function getWaterPerDayBetween(
+  entries: WaterEntry[],
+  from: string,
+  to: string,
+  reference: Date = new Date(),
+  locale: Locale = "en",
+): WaterPerDayItem[] {
+  const start = startOfDay(parseISO(from));
+  const end = startOfDay(parseISO(to));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const [lo, hi] = start <= end ? [start, end] : [end, start];
+  const today = startOfDay(reference);
+  const dfLocale = dateFnsLocale(locale);
+  const dayCount = Math.round((hi.getTime() - lo.getTime()) / 86_400_000) + 1;
+  const compactAxis = dayCount > 7;
+  const result: WaterPerDayItem[] = [];
+
+  for (let i = 0; i < dayCount; i++) {
+    const day = addDays(lo, i);
     const dateStr = format(day, "yyyy-MM-dd");
     const dayEntries = entries.filter((e) => e.date === dateStr);
     const totalMl = getDayTotalMl(dayEntries);

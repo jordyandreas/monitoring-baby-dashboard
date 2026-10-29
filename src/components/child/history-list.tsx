@@ -1,29 +1,28 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { useLocale } from "@/components/providers/locale-provider";
 
 export function HistoryList({
   items,
   emptyLabel,
+  emptyIcon,
   onDelete,
 }: {
   items: { id: string; title: string; detail: ReactNode }[];
   emptyLabel: string;
+  emptyIcon?: ComponentType<{ className?: string }>;
   onDelete: (id: string) => void;
 }) {
   const { t } = useLocale();
   const [pending, setPending] = useState<string | null>(null);
 
   if (items.length === 0) {
-    return (
-      <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-        {emptyLabel}
-      </p>
-    );
+    return <ListEmptyState icon={emptyIcon} label={emptyLabel} />;
   }
 
   return (

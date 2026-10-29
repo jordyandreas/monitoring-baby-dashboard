@@ -47,6 +47,7 @@ export function PottyPageContent() {
           ...pottyHistoryParts(entry, t),
         }))}
         emptyLabel={t("potty.empty")}
+        emptyIcon="potty"
         onDelete={(id) => {
           void commitSave("potty", () => deletePotty(id), "delete", undefined, "potty");
         }}

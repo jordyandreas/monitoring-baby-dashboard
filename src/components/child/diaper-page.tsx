@@ -51,6 +51,7 @@ export function DiaperPageContent() {
           shareText: diaperShareText(entry, t),
         }))}
         emptyLabel={t("diaper.empty")}
+        emptyIcon="diaper"
         onDelete={(id) => {
           void commitSave("diaper", () => deleteDiaper(id), "delete", undefined, "diaper");
         }}

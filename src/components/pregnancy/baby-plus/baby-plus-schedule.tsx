@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, RotateCcw } from "lucide-react";
+import { Check, Music, RotateCcw } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import {
   Accordion,
   AccordionContent,
@@ -156,9 +157,7 @@ export function BabyPlusSchedule() {
       </section>
 
       {!parsedStart ? (
-        <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-          {t("babyPlus.chooseStartHint")}
-        </p>
+        <ListEmptyState icon={Music} label={t("babyPlus.chooseStartHint")} />
       ) : (
         <Accordion
           type="multiple"

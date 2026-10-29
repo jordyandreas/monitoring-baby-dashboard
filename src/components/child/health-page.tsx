@@ -68,6 +68,7 @@ export function HealthPageContent() {
               ...healthHistoryParts(entry, t),
             }))}
             emptyLabel={t("health.temperatureEmpty")}
+            emptyIcon="temperature"
             onDelete={(id) => {
               void commitSave("health", () => deleteHealth(id), "delete", undefined, "temperature");
             }}
@@ -86,6 +87,7 @@ export function HealthPageContent() {
               ...healthHistoryParts(entry, t),
             }))}
             emptyLabel={t("health.medicineEmpty")}
+            emptyIcon="medicine"
             onDelete={(id) => {
               void commitSave("health", () => deleteHealth(id), "delete", undefined, "medicine");
             }}

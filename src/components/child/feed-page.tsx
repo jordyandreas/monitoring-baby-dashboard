@@ -66,6 +66,7 @@ export function FeedPageContent() {
           shareText: feedShareText(entry, t),
         }))}
         emptyLabel={t("feed.empty")}
+        emptyIcon="feed"
         onDelete={(id) => {
           void commitSave("feed", () => deleteFeed(id), "delete", undefined, "feed");
         }}

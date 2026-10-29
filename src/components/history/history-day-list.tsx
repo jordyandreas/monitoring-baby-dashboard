@@ -7,6 +7,7 @@ import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button"
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { useLocale } from "@/components/providers/locale-provider";
 import type { HistoryIcon, HistoryTone } from "@/lib/child/summary";
 import { cn } from "@/utils/cn";
@@ -21,7 +22,7 @@ const toneClass: Record<HistoryTone, string> = {
   orange: "bg-orange-100 text-orange-800",
 };
 
-const historyIcons: Record<HistoryIcon, ComponentType<{ className?: string }>> = {
+export const historyIcons: Record<HistoryIcon, ComponentType<{ className?: string }>> = {
   feed: Milk,
   pump: PumpIcon,
   diaper: DiaperIcon,
@@ -37,6 +38,7 @@ const historyIcons: Record<HistoryIcon, ComponentType<{ className?: string }>> =
 export function HistoryDayList({
   items,
   emptyLabel,
+  emptyIcon,
   deleteLabel,
   editLabel,
   confirmTitle,
@@ -54,6 +56,7 @@ export function HistoryDayList({
     shareText?: string;
   }[];
   emptyLabel: string;
+  emptyIcon?: HistoryIcon;
   deleteLabel: string;
   editLabel?: string;
   confirmTitle: string;
@@ -66,9 +69,10 @@ export function HistoryDayList({
 
   if (items.length === 0) {
     return (
-      <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-        {emptyLabel}
-      </p>
+      <ListEmptyState
+        icon={emptyIcon ? historyIcons[emptyIcon] : undefined}
+        label={emptyLabel}
+      />
     );
   }
 

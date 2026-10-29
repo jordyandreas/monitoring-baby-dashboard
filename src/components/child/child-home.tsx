@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDot,
+  ClipboardList,
   Milk,
   Moon,
   Pencil,
@@ -45,6 +46,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatChildAge } from "@/lib/child/age";
 import { DEFAULT_CHILD_STORAGE, type ChildStorage, type DiaperEntry, type FeedEntry, type PumpEntry } from "@/lib/child/types";
@@ -448,10 +450,12 @@ function TodayLogList({
   const visible = items.slice(start, start + PAGE_SIZE);
 
   if (items.length === 0) {
+    const EmptyIcon = filter === "all" ? ClipboardList : LOG_ICONS[filter];
     return (
-      <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-        <LogEmpty filter={filter} viewingToday={viewingToday} />
-      </p>
+      <ListEmptyState
+        icon={EmptyIcon}
+        label={<LogEmpty filter={filter} viewingToday={viewingToday} />}
+      />
     );
   }
 

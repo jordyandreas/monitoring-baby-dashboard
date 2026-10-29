@@ -39,6 +39,7 @@ export function SleepPageContent() {
           ...sleepHistoryParts(entry, t),
         }))}
         emptyLabel={t("sleep.empty")}
+        emptyIcon="sleep"
         onDelete={(id) => {
           void commitSave("sleep", () => deleteSleep(id), "delete", undefined, "sleep");
         }}

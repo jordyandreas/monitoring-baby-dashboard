@@ -13,23 +13,25 @@ import {
 import { remotePlaceholder, SummaryChartSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { ActivityAreaChart } from "@/components/summary/activity-area-chart";
+import { SummaryRangeControl } from "@/components/summary/summary-range-control";
 import { useRemote } from "@/hooks/use-remote";
 import type { useSummaryLink } from "@/hooks/use-summary-link";
 import { kickCountLabel } from "@/lib/i18n/kicks";
 import type { Locale } from "@/lib/i18n/types";
 import {
   formatHourLabel,
+  getKicksBetween,
   getKicksForDate,
   getKicksInRange,
   getKicksPerDay,
+  getKicksPerDayBetween,
   getTodayDateStr,
   getTopHours,
+  getTopHoursBetween,
 } from "@/lib/pregnancy/kicks";
 import type { KickEntry } from "@/lib/pregnancy/types";
 import { listKicks } from "@/services/kicks.service";
-import { cn } from "@/utils/cn";
-
-type RangeDays = 1 | 7 | 30;
 
 function topHoursOnDate(kicks: KickEntry[], date: string) {
   const counts = new Map<number, number>();
@@ -58,37 +60,60 @@ export function KickSummary({
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("kicks", listKicks, signedIn);
   const { locale, t } = useLocale();
-  const range: RangeDays = compact ? 7 : link.range;
+  const range = compact && link.range === 1 ? 7 : link.range;
+  const presets = compact ? ([7, 30] as const) : ([1, 7, 30] as const);
 
   const placeholder = remotePlaceholder(ready, error, data, reload, <SummaryChartSkeleton />);
   if (placeholder) return placeholder;
 
   const kicks = data ?? [];
   const today = getTodayDateStr();
-  const chartDays = range === 1 ? 7 : range;
-  const perDay = range === 1 ? [] : getKicksPerDay(kicks, chartDays, new Date(), locale);
-  const maxCount = Math.max(...perDay.map((d) => d.count), 1);
-  const dayCount = getKicksForDate(kicks, link.day).length;
-  const totalInRange = range === 1 ? dayCount : getKicksInRange(kicks, range).length;
-  const topHours = range === 1 ? topHoursOnDate(kicks, link.day) : getTopHours(kicks, range);
-  const hasChartData = perDay.some((d) => d.count > 0);
   const dfLocale = dateFnsLocale(locale);
   const dateLabel = format(parseISO(link.day), "d MMM", { locale: dfLocale });
-  const totalCaption =
-    range === 1
-      ? link.day === today
-        ? t("kicks.kicksToday")
-        : t("kicks.kicksOnDay", { date: dateLabel })
-      : t("kicks.kicksInRange", { count: range });
+  const customReady = Boolean(link.customFrom && link.customTo);
 
-  const chartFrom = perDay[0]
-    ? format(parseISO(perDay[0].date), "d MMM", { locale: dfLocale })
-    : "";
-  const chartTo = perDay[perDay.length - 1]
-    ? format(parseISO(perDay[perDay.length - 1].date), "d MMM yyyy", {
-        locale: dfLocale,
-      })
-    : "";
+  const perDay =
+    range === 1
+      ? []
+      : range === "custom"
+        ? customReady
+          ? getKicksPerDayBetween(kicks, link.customFrom, link.customTo, new Date(), locale)
+          : []
+        : getKicksPerDay(kicks, range, new Date(), locale);
+
+  const maxCount = Math.max(...perDay.map((d) => d.count), 1);
+  const dayCount = getKicksForDate(kicks, link.day).length;
+  const totalInRange =
+    range === 1
+      ? dayCount
+      : range === "custom"
+        ? customReady
+          ? getKicksBetween(kicks, link.customFrom, link.customTo).length
+          : 0
+        : getKicksInRange(kicks, range).length;
+  const topHours =
+    range === 1
+      ? topHoursOnDate(kicks, link.day)
+      : range === "custom"
+        ? customReady
+          ? getTopHoursBetween(kicks, link.customFrom, link.customTo)
+          : []
+        : getTopHours(kicks, range);
+  const showChart = perDay.length > 1;
+
+  const totalCaption =
+    range === "custom" && customReady
+      ? t("kicks.kicksInSpan", {
+          from: format(parseISO(link.customFrom), "d MMM", { locale: dfLocale }),
+          to: format(parseISO(link.customTo), "d MMM yyyy", { locale: dfLocale }),
+        })
+      : range === 1
+        ? link.day === today
+          ? t("kicks.kicksToday")
+          : t("kicks.kicksOnDay", { date: dateLabel })
+        : range === "custom"
+          ? t("kicks.kicksInSpan", { from: "—", to: "—" })
+          : t("kicks.kicksInRange", { count: range });
 
   return (
     <Card className="rounded-2xl shadow-sm">
@@ -102,130 +127,38 @@ export function KickSummary({
         )}
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="space-y-2">
-          <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
-            {(compact ? ([7, 30] as RangeDays[]) : ([1, 7, 30] as RangeDays[])).map((days) => (
-              <button
-                key={days}
-                type="button"
-                onClick={() => link.setRange(days)}
-                className={cn(
-                  "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
-                  range === days
-                    ? "bg-lilac-deep text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-white/55",
-                )}
-              >
-                {days === 1
-                  ? link.day === today
-                    ? t("common.today")
-                    : dateLabel
-                  : t("kicks.rangeDays", { count: days })}
-              </button>
-            ))}
-          </div>
-          {range === 1 ? null : (
-            <p className="text-xs leading-relaxed text-muted-foreground">{t("kicks.rangeHint")}</p>
-          )}
-        </div>
+        <SummaryRangeControl
+          range={range}
+          day={link.day}
+          today={today}
+          customFrom={link.customFrom}
+          customTo={link.customTo}
+          onRangeChange={link.setRange}
+          onCustomFromChange={link.setCustomFrom}
+          onCustomToChange={link.setCustomTo}
+          presets={[...presets]}
+        />
 
         <div className="rounded-xl bg-lilac/35 px-4 py-3 text-center">
           <p className="text-3xl font-bold text-foreground">{totalInRange}</p>
           <p className="text-sm text-muted-foreground">{totalCaption}</p>
         </div>
 
-        {range === 1 && dayCount === 0 && kicks.length > 0 ? (
+        {!showChart && dayCount === 0 && kicks.length > 0 ? (
           <p className="text-center text-sm text-muted-foreground">{t("kicks.emptyDay")}</p>
         ) : null}
 
-        {range === 1 ? null : (
-        <div className="space-y-2">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              {t("kicks.dailyActivity")}
-            </p>
-            {chartFrom && chartTo && (
-              <p className="text-xs text-muted-foreground">
-                {t("kicks.chartDateRange", { from: chartFrom, to: chartTo })}
-              </p>
-            )}
-          </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            {t("kicks.dailyActivityHint")}
-          </p>
-          <div
-            className="rounded-xl border border-border/50 bg-muted/20 px-2 pb-2 pt-3"
-            role="img"
-            aria-label={t("kicks.dailyActivity")}
-          >
-            {!hasChartData && (
-              <p className="mb-2 px-1 text-center text-xs text-muted-foreground">
-                {t("kicks.chartEmptyPeriod")}
-              </p>
-            )}
-            <div
-              className={cn(
-                "flex items-end justify-between gap-0.5",
-                chartDays > 7 ? "h-24 gap-px" : "h-28 gap-1",
-              )}
-            >
-              {perDay.map((day) => {
-                const barHeight =
-                  day.count > 0
-                    ? Math.max(Math.round((day.count / maxCount) * 72), 12)
-                    : 4;
-
-                return (
-                  <div
-                    key={day.date}
-                    className="flex min-w-0 flex-1 flex-col items-center gap-1"
-                  >
-                    <div
-                      className={cn(
-                        "relative flex w-full flex-col items-center justify-end",
-                        chartDays > 7 ? "max-w-4" : "max-w-8",
-                      )}
-                      style={{ height: 80 }}
-                      title={day.fullLabel}
-                      aria-label={t("kicks.barAriaLabel", {
-                        count: day.count,
-                        date: day.fullLabel,
-                      })}
-                    >
-                      {day.count > 0 && (
-                        <span
-                          className={cn(
-                            "mb-0.5 font-semibold tabular-nums text-lilac-deep",
-                            chartDays > 7 ? "text-[8px]" : "text-[10px]",
-                          )}
-                        >
-                          {day.count}
-                        </span>
-                      )}
-                      <div
-                        className={cn(
-                          "w-full rounded-t-sm bg-lilac-deep transition-colors",
-                          day.count > 0 ? "opacity-100" : "opacity-15",
-                        )}
-                        style={{ height: barHeight }}
-                      />
-                    </div>
-                    <span
-                      className={cn(
-                        "max-w-full truncate text-center font-medium text-muted-foreground",
-                        chartDays > 7 ? "text-[8px]" : "text-[10px]",
-                        day.isToday && "font-semibold text-lilac-deep",
-                      )}
-                    >
-                      {day.isToday ? t("common.today") : day.dayLabel}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-        )}
+        {showChart ? (
+          <ActivityAreaChart
+            title={t("kicks.dailyActivity")}
+            hint={t("kicks.dailyActivityHint")}
+            days={perDay.map((day) => ({ ...day, value: day.count }))}
+            maxValue={maxCount}
+            valueLabel={(value) => String(value)}
+            ariaLabel={(value, date) => t("kicks.barAriaLabel", { count: value, date })}
+            locale={locale}
+          />
+        ) : null}
 
         {topHours.length > 0 && (
           <div className="space-y-2">

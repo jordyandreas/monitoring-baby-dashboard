@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/utils/cn";
 
-const CHART_BARS = [46, 72, 28, 64, 80, 36, 58];
-
 export function LoadFailed({ onRetry, className }: { onRetry: () => void; className?: string }) {
   const { t } = useLocale();
   return (
@@ -42,15 +40,58 @@ function SkeletonStatus({ className, children }: { className?: string; children:
   );
 }
 
-function ChartBars({ className }: { className?: string }) {
+function RangeDropdownSkeleton() {
+  return <Skeleton className="h-11 w-full rounded-xl" />;
+}
+
+function AreaChartSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("flex h-28 items-end gap-1 rounded-xl border border-border/50 bg-muted/20 px-2 pt-3 pb-2", className)}>
-      {CHART_BARS.map((height, index) => (
-        <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-          <Skeleton className="w-full max-w-8 rounded-t-sm" style={{ height }} />
-          <Skeleton className="h-2 w-4" />
+    <div className={cn("space-y-2", className)}>
+      <div className="space-y-1">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+      <Skeleton className="h-3 w-full max-w-xs" />
+      <div className="rounded-xl border border-border/50 bg-muted/20 px-2 pb-2 pt-2">
+        <div className="flex gap-2">
+          <div className="flex w-8 shrink-0 flex-col justify-between py-1">
+            <Skeleton className="h-2.5 w-6" />
+            <Skeleton className="h-2.5 w-5" />
+            <Skeleton className="h-2.5 w-4" />
+          </div>
+          <div className="relative h-28 min-w-0 flex-1">
+            <div className="absolute inset-x-0 top-1 border-t border-border/40" />
+            <div className="absolute inset-x-0 top-1/2 border-t border-border/40" />
+            <div className="absolute inset-x-0 bottom-6 border-t border-border/60" />
+            <svg
+              viewBox="0 0 100 40"
+              className="absolute inset-x-0 top-1 bottom-6 h-[calc(100%-1.5rem)] w-full text-muted-foreground/30"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d="M0 32 L12 22 L24 26 L36 14 L48 18 L60 10 L72 16 L84 12 L100 15 L100 40 L0 40 Z"
+                fill="currentColor"
+                opacity="0.35"
+              />
+              <path
+                d="M0 32 L12 22 L24 26 L36 14 L48 18 L60 10 L72 16 L84 12 L100 15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.55"
+              />
+            </svg>
+            <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1">
+              {Array.from({ length: 5 }, (_, index) => (
+                <Skeleton key={index} className="h-2.5 w-8" />
+              ))}
+            </div>
+          </div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -265,10 +306,7 @@ export function LogPageSkeleton({
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-56" />
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-9 flex-1 rounded-full" />
-          <Skeleton className="h-9 flex-1 rounded-full" />
-        </div>
+        <RangeDropdownSkeleton />
         <div className={cn("grid gap-3", tiles === 3 ? "grid-cols-3" : "grid-cols-2")}>
           {Array.from({ length: tiles }, (_, index) => (
             <div key={index} className="space-y-2 rounded-xl bg-lilac/20 px-3 py-3">
@@ -278,7 +316,7 @@ export function LogPageSkeleton({
           ))}
         </div>
         {withLast ? <IntervalSkeleton /> : null}
-        <ChartBars />
+        <AreaChartSkeleton />
       </section>
       <section className="space-y-3">
         <Skeleton className="h-5 w-24" />
@@ -423,20 +461,17 @@ export function DashboardCardSkeleton({ className, lines = 3 }: { className?: st
 
 export function SummaryChartSkeleton() {
   return (
-    <SkeletonStatus className="space-y-4 rounded-2xl glass-regular p-5 shadow-sm">
+    <SkeletonStatus className="space-y-5 rounded-2xl glass-regular p-5 shadow-sm">
       <div className="space-y-2">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-56" />
       </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-9 flex-1 rounded-full" />
-        <Skeleton className="h-9 flex-1 rounded-full" />
-      </div>
+      <RangeDropdownSkeleton />
       <div className="grid grid-cols-2 gap-3">
         <Skeleton className="h-16 rounded-xl" />
         <Skeleton className="h-16 rounded-xl" />
       </div>
-      <ChartBars />
+      <AreaChartSkeleton />
     </SkeletonStatus>
   );
 }

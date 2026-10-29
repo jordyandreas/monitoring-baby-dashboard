@@ -34,6 +34,17 @@ export function getKicksInRange(
   });
 }
 
+export function getKicksBetween(kicks: KickEntry[], from: string, to: string): KickEntry[] {
+  const start = startOfDay(parseISO(from));
+  const end = startOfDay(parseISO(to));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const [lo, hi] = start <= end ? [start, end] : [end, start];
+  return kicks.filter((kick) => {
+    const date = startOfDay(parseISO(kick.date));
+    return isWithinInterval(date, { start: lo, end: hi });
+  });
+}
+
 export interface KicksPerDayItem {
   date: string;
   /** Short x-axis label (day of month, or d/M when span > 7 days). */
@@ -73,6 +84,40 @@ export function getKicksPerDay(
   return result;
 }
 
+export function getKicksPerDayBetween(
+  kicks: KickEntry[],
+  from: string,
+  to: string,
+  reference: Date = new Date(),
+  locale: Locale = "en",
+): KicksPerDayItem[] {
+  const start = startOfDay(parseISO(from));
+  const end = startOfDay(parseISO(to));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const [lo, hi] = start <= end ? [start, end] : [end, start];
+  const today = startOfDay(reference);
+  const dfLocale = dateFnsLocale(locale);
+  const dayCount = Math.round((hi.getTime() - lo.getTime()) / 86_400_000) + 1;
+  const compactAxis = dayCount > 7;
+  const result: KicksPerDayItem[] = [];
+
+  for (let i = 0; i < dayCount; i++) {
+    const day = addDays(lo, i);
+    const dateStr = format(day, "yyyy-MM-dd");
+    result.push({
+      date: dateStr,
+      dayLabel: compactAxis
+        ? format(day, "d/M", { locale: dfLocale })
+        : format(day, "d", { locale: dfLocale }),
+      fullLabel: format(day, "EEE, d MMM yyyy", { locale: dfLocale }),
+      isToday: isSameDay(day, today),
+      count: kicks.filter((k) => k.date === dateStr).length,
+    });
+  }
+
+  return result;
+}
+
 export function getHourlyDistribution(
   kicks: KickEntry[],
   days: number,
@@ -103,6 +148,28 @@ export function getTopHours(
   const distribution = getHourlyDistribution(kicks, days, reference);
 
   return distribution
+    .filter((b) => b.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, topN)
+    .map((b) => ({
+      ...b,
+      label: formatHourLabel(b.hour),
+    }));
+}
+
+export function getTopHoursBetween(
+  kicks: KickEntry[],
+  from: string,
+  to: string,
+  topN = 3,
+): { hour: number; count: number; label: string }[] {
+  const filtered = getKicksBetween(kicks, from, to);
+  const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }));
+  for (const kick of filtered) {
+    const hour = Number.parseInt(kick.time.split(":")[0] ?? "", 10);
+    if (hour >= 0 && hour < 24) buckets[hour].count += 1;
+  }
+  return buckets
     .filter((b) => b.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, topN)
