@@ -40,6 +40,7 @@ export function FoodPageContent() {
           ...foodHistoryParts(entry, t),
         }))}
         emptyLabel={t("food.empty")}
+        emptyIcon="food"
         onDelete={(id) => {
           void commitSave("food", () => deleteFood(id), "delete", undefined, "food");
         }}

@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { Progress } from "@/components/ui/progress";
 import { DashboardCardSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -70,7 +71,7 @@ export function VitaminWidget({ className }: { className?: string }) {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-4">
         {total === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("vitamins.emptyHint")}</p>
+          <ListEmptyState icon={Pill} label={t("vitamins.emptyHint")} className="py-8" />
         ) : (
           <>
             <div className="rounded-xl bg-card/80 px-4 py-3">

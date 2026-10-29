@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { useLocale } from "@/components/providers/locale-provider";
 import { measurementAgeDays } from "@/lib/child/who-growth";
 import { formatGrams, gramsToKg, kgToGrams } from "@/lib/child/weight";
@@ -190,9 +191,7 @@ export function GrowthHistoryTable({
       </CardHeader>
       <CardContent className="min-w-0">
         {days.length === 0 ? (
-          <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-            {t("growth.empty")}
-          </p>
+          <ListEmptyState icon={Ruler} label={t("growth.empty")} />
         ) : (
           <>
             <ul className="space-y-3 md:hidden">

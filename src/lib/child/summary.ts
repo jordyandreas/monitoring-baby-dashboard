@@ -1,4 +1,12 @@
-import { differenceInCalendarDays, format, isSameDay, parseISO, startOfDay, subDays } from "date-fns";
+import {
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  format,
+  isSameDay,
+  parseISO,
+  startOfDay,
+  subDays,
+} from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import type { Locale } from "@/lib/i18n/types";
 import { formatTimeLabel, getMinutesFromTimeString } from "@/utils/time";
@@ -228,6 +236,26 @@ export function recentDates(days: number, locale: Locale, reference = new Date()
       isToday: isSameDay(day, today),
     };
   });
+}
+
+/** Inclusive calendar days from `from` to `to` (yyyy-MM-dd), oldest first. */
+export function datesBetween(from: string, to: string, locale: Locale, reference = new Date()): RangeDay[] {
+  const start = startOfDay(parseISO(from));
+  const end = startOfDay(parseISO(to));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const [lo, hi] = start <= end ? [start, end] : [end, start];
+  const today = startOfDay(reference);
+  const days = eachDayOfInterval({ start: lo, end: hi });
+  const compact = days.length > 7;
+  const dfLocale = locale === "id" ? idLocale : enUS;
+  return days.map((day) => ({
+    date: format(day, "yyyy-MM-dd"),
+    dayLabel: compact
+      ? format(day, "d/M", { locale: dfLocale })
+      : format(day, "d", { locale: dfLocale }),
+    fullLabel: format(day, "EEE, d MMM yyyy", { locale: dfLocale }),
+    isToday: isSameDay(day, today),
+  }));
 }
 
 export function sleepDaySummary(entries: SleepEntry[]) {

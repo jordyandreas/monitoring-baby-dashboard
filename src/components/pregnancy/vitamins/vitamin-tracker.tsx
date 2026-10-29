@@ -1,9 +1,11 @@
 "use client";
 
+import { Pill } from "lucide-react";
 import { remotePlaceholder, VitaminTrackerSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
+import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { useRemote } from "@/hooks/use-remote";
 import {
   formatVitaminDate,
@@ -62,9 +64,7 @@ export function VitaminTracker() {
       />
 
       {named.length === 0 ? (
-        <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-          {t("vitamins.saveNamesHint")}
-        </p>
+        <ListEmptyState icon={Pill} label={t("vitamins.saveNamesHint")} />
       ) : (
         <>
           <VitaminChecklist

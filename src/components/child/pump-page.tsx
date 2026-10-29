@@ -66,6 +66,7 @@ export function PumpPageContent() {
           shareText: pumpShareText(entry, t),
         }))}
         emptyLabel={t("pump.empty")}
+        emptyIcon="pump"
         onDelete={(id) => {
           void commitSave("pump", () => deletePump(id), "delete", undefined, "pump");
         }}

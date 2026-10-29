@@ -53,6 +53,7 @@ export function WaterList({
         <HistoryDayList
           items={[]}
           emptyLabel={t("water.emptyList")}
+          emptyIcon="water"
           deleteLabel={t("water.deleteEntry")}
           confirmTitle={t("common.confirmTitle")}
           confirmBody={t("water.deleteConfirm")}
@@ -82,6 +83,7 @@ export function WaterList({
               icon: "water",
             }))}
             emptyLabel={t("water.emptyDay")}
+            emptyIcon="water"
             deleteLabel={t("water.deleteEntry")}
             confirmTitle={t("common.confirmTitle")}
             confirmBody={t("water.deleteConfirm")}

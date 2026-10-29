@@ -24,6 +24,7 @@ type DayEntry = {
 export function ChildDayHistory<T extends DayEntry>({
   entries,
   emptyLabel,
+  emptyIcon,
   onDelete,
   onEdit,
   selectedDate: selectedDateProp,
@@ -31,6 +32,7 @@ export function ChildDayHistory<T extends DayEntry>({
 }: {
   entries: T[];
   emptyLabel: string;
+  emptyIcon?: HistoryIcon;
   onDelete: (id: string) => void;
   onEdit?: (id: string) => void;
   selectedDate?: string;
@@ -58,6 +60,7 @@ export function ChildDayHistory<T extends DayEntry>({
         <HistoryDayList
           items={[]}
           emptyLabel={emptyLabel}
+          emptyIcon={emptyIcon}
           deleteLabel={t("child.remove")}
           editLabel={t("child.edit")}
           confirmTitle={t("child.deleteTitle")}
@@ -86,6 +89,7 @@ export function ChildDayHistory<T extends DayEntry>({
               shareText: entry.shareText,
             }))}
             emptyLabel={t("child.emptyDay")}
+            emptyIcon={emptyIcon}
             deleteLabel={t("child.remove")}
             editLabel={t("child.edit")}
             confirmTitle={t("child.deleteTitle")}

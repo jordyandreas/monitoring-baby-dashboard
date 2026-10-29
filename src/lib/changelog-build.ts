@@ -12,6 +12,19 @@ export type BuildChangelogEntry = {
 
 export const buildChangelog: readonly BuildChangelogEntry[] = [
   {
+    date: "2026-10-30",
+    items: [
+      { en: "Other parts of the app were updated.", id: "Bagian lain aplikasi diperbarui." },
+      { en: "The home screen was updated.", id: "Beranda diperbarui." },
+      { en: "The latest milk, diaper, and pumping note is easier to see.", id: "Catatan terakhir susu, popok, dan pompa lebih mudah dilihat." },
+      { en: "Growth tracking was updated.", id: "Catatan tumbuh diperbarui." },
+      { en: "The growth summary shows the measurement date and explains percentiles.", id: "Ringkasan tumbuh menampilkan tanggal ukuran dan menjelaskan persentil." },
+      { en: "Sleep logging was updated.", id: "Catatan tidur diperbarui." },
+      { en: "Pregnancy tools were updated.", id: "Alat kehamilan diperbarui." },
+      { en: "Milk, diaper, and pumping summaries were updated.", id: "Ringkasan susu, popok, dan pompa diperbarui." },
+    ],
+  },
+  {
     date: "2026-10-18",
     items: [
       { en: "Other parts of the app were updated.", id: "Bagian lain aplikasi diperbarui." },

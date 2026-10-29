@@ -45,6 +45,7 @@ export function KickList({
         <HistoryDayList
           items={[]}
           emptyLabel={t("kicks.emptyList")}
+          emptyIcon="kick"
           deleteLabel={t("kicks.deleteKick")}
           confirmTitle={t("common.confirmTitle")}
           confirmBody={t("kicks.deleteConfirm")}
@@ -69,6 +70,7 @@ export function KickList({
               icon: "kick",
             }))}
             emptyLabel={t("kicks.emptyDay")}
+            emptyIcon="kick"
             deleteLabel={t("kicks.deleteKick")}
             confirmTitle={t("common.confirmTitle")}
             confirmBody={t("kicks.deleteConfirm")}

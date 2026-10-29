@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLocale } from "@/components/providers/locale-provider";
+import { ActivityAreaChart } from "@/components/summary/activity-area-chart";
+import { SummaryRangeControl } from "@/components/summary/summary-range-control";
 import {
+  datesBetween,
   diaperDaySummary,
   feedDaySummary,
   formatDuration,
@@ -38,12 +41,10 @@ import {
 } from "@/lib/child/who-growth";
 import type { Locale } from "@/lib/i18n/types";
 import type { Gender } from "@/lib/pregnancy/types";
-import { useSummaryLink } from "@/hooks/use-summary-link";
+import { useSummaryLink, type SummaryRange } from "@/hooks/use-summary-link";
 import { cn } from "@/utils/cn";
 
 export { useSummaryLink };
-
-type RangeDays = 1 | 7 | 30;
 
 function SummaryShell({
   icon: Icon,
@@ -76,77 +77,91 @@ function todayKey() {
 
 function useSummaryWindow(
   dates: string[],
-  link: {
-    range: RangeDays;
-    day: string;
-    setRange: (days: RangeDays) => void;
-    setDay: (day: string) => void;
-  },
+  link: ReturnType<typeof useSummaryLink>,
 ) {
   const { locale } = useLocale();
-  const { range, setRange, day, setDay } = link;
+  const { range, setRange, day, setDay, customFrom, customTo, setCustomFrom, setCustomTo } = link;
   const today = todayKey();
   const markedDates = [...new Set(dates)];
+  const dfLocale = locale === "id" ? idLocale : enUS;
   const axis =
     range === 1
       ? [
           {
             date: day,
-            dayLabel: format(parseISO(day), "d", {
-              locale: locale === "id" ? idLocale : enUS,
-            }),
-            fullLabel: format(parseISO(day), "EEE, d MMM yyyy", {
-              locale: locale === "id" ? idLocale : enUS,
-            }),
+            dayLabel: format(parseISO(day), "d", { locale: dfLocale }),
+            fullLabel: format(parseISO(day), "EEE, d MMM yyyy", { locale: dfLocale }),
             isToday: day === today,
           },
         ]
-      : recentDates(range, locale);
-  return { range, setRange, day, setDay, markedDates, axis, today, locale };
+      : range === "custom"
+        ? customFrom && customTo
+          ? datesBetween(customFrom, customTo, locale)
+          : []
+        : recentDates(range, locale);
+  const showChart = axis.length > 1;
+  return {
+    range,
+    setRange,
+    day,
+    setDay,
+    customFrom,
+    customTo,
+    setCustomFrom,
+    setCustomTo,
+    markedDates,
+    axis,
+    today,
+    locale,
+    showChart,
+  };
 }
 
 function shortDayLabel(day: string, locale: Locale) {
   return format(parseISO(day), "d MMM", { locale: locale === "id" ? idLocale : enUS });
 }
 
-function RangeToggle({
+function spanCaption(from: string, to: string, locale: Locale) {
+  const dfLocale = locale === "id" ? idLocale : enUS;
+  return {
+    from: format(parseISO(from), "d MMM", { locale: dfLocale }),
+    to: format(parseISO(to), "d MMM yyyy", { locale: dfLocale }),
+  };
+}
+
+function rangeCaption({
   range,
   day,
   today,
-  onRangeChange,
+  customFrom,
+  customTo,
+  locale,
+  todayKeyName,
+  onDayKey,
+  inRangeKey,
+  inSpanKey,
+  t,
 }: {
-  range: RangeDays;
+  range: SummaryRange;
   day: string;
   today: string;
-  onRangeChange: (days: RangeDays) => void;
+  customFrom: string;
+  customTo: string;
+  locale: Locale;
+  todayKeyName: string;
+  onDayKey: string;
+  inRangeKey: string;
+  inSpanKey: string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }) {
-  const { t, locale } = useLocale();
-  const dayButtonLabel = day === today ? t("common.today") : shortDayLabel(day, locale);
-
-  return (
-    <div className="space-y-2">
-      <div className="flex gap-1 rounded-full bg-white/45 p-1 ring-1 ring-white/70">
-        {([1, 7, 30] as RangeDays[]).map((days) => (
-          <button
-            key={days}
-            type="button"
-            onClick={() => onRangeChange(days)}
-            className={cn(
-              "min-h-9 flex-1 rounded-full text-sm font-semibold transition-all",
-              range === days
-                ? "bg-lilac-deep text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-white/55",
-            )}
-          >
-            {days === 1 ? dayButtonLabel : t("child.rangeDays", { count: days })}
-          </button>
-        ))}
-      </div>
-      {range === 1 ? null : (
-        <p className="text-xs leading-relaxed text-muted-foreground">{t("child.rangeHint")}</p>
-      )}
-    </div>
-  );
+  if (range === "custom" && customFrom && customTo) {
+    return t(inSpanKey, spanCaption(customFrom, customTo, locale));
+  }
+  if (range !== 1 && range !== "custom") {
+    return t(inRangeKey, { count: range });
+  }
+  if (day === today) return t(todayKeyName);
+  return t(onDayKey, { date: shortDayLabel(day, locale) });
 }
 
 function IntervalStat({
@@ -238,132 +253,6 @@ function StatTile({
   );
 }
 
-function chartAnchorIndexes(count: number): number[] {
-  const slots = 5;
-  const indexes = new Set<number>();
-  for (let slot = 0; slot < slots; slot += 1) {
-    indexes.add(Math.round((slot * (count - 1)) / (slots - 1)));
-  }
-  return [...indexes].sort((a, b) => a - b);
-}
-
-function ActivityChart({
-  title,
-  hint,
-  days,
-  maxValue,
-  barLabel,
-  ariaLabel,
-  locale,
-}: {
-  title: string;
-  hint: string;
-  days: { date: string; dayLabel: string; fullLabel: string; isToday: boolean; value: number }[];
-  maxValue: number;
-  barLabel: (value: number) => string;
-  ariaLabel: (value: number, date: string) => string;
-  locale: Locale;
-}) {
-  const { t } = useLocale();
-  const dfLocale = locale === "id" ? idLocale : enUS;
-  const chartFrom = days[0] ? format(parseISO(days[0].date), "d MMM", { locale: dfLocale }) : "";
-  const chartTo = days[days.length - 1]
-    ? format(parseISO(days[days.length - 1].date), "d MMM yyyy", { locale: dfLocale })
-    : "";
-  const hasChartData = days.some((day) => day.value > 0);
-  const wide = days.length > 7;
-  const anchors = wide ? chartAnchorIndexes(days.length) : [];
-
-  return (
-    <div className="space-y-2">
-      <div>
-        <p className="text-sm font-medium text-foreground">{title}</p>
-        {days.length > 1 && chartFrom && chartTo ? (
-          <p className="text-xs text-muted-foreground">
-            {t("child.chartDateRange", { from: chartFrom, to: chartTo })}
-          </p>
-        ) : null}
-      </div>
-      <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>
-      <div
-        className="rounded-xl border border-border/50 bg-muted/20 px-2 pb-2 pt-3"
-        role="img"
-        aria-label={title}
-      >
-        {!hasChartData ? (
-          <p className="mb-2 px-1 text-center text-xs text-muted-foreground">{t("child.chartEmpty")}</p>
-        ) : null}
-        <div className={cn("flex items-end justify-between", wide ? "h-24 gap-px" : "h-28 gap-1")}>
-          {days.map((day) => {
-            const barHeight = day.value > 0 ? Math.max(Math.round((day.value / maxValue) * 72), 12) : 0;
-            const label = day.value > 0 ? barLabel(day.value) : "";
-            return (
-              <div key={day.date} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                <div
-                  className="flex h-20 w-full items-end justify-center border-b border-border/60"
-                  title={day.fullLabel}
-                  aria-label={ariaLabel(day.value, day.fullLabel)}
-                >
-                  <div
-                    className={cn(
-                      "flex h-full w-full flex-col items-center justify-end",
-                      wide ? "max-w-4" : "max-w-8",
-                    )}
-                  >
-                    {label && !wide ? (
-                      <span className="mb-0.5 font-semibold text-[10px] tabular-nums text-lilac-deep">
-                        {label}
-                      </span>
-                    ) : null}
-                    {barHeight > 0 ? (
-                      <div className="w-full rounded-t-sm bg-lilac-deep" style={{ height: barHeight }} />
-                    ) : null}
-                  </div>
-                </div>
-                {wide ? null : (
-                  <span
-                    className={cn(
-                      "max-w-full truncate text-center text-[10px] font-medium text-muted-foreground",
-                      day.isToday && "font-semibold text-lilac-deep",
-                    )}
-                  >
-                    {day.isToday ? t("common.today") : day.dayLabel}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {wide ? (
-          <div className="relative mt-1 h-4">
-            {anchors.map((index) => {
-              const day = days[index];
-              if (!day) return null;
-              const isFirst = index === 0;
-              const isLast = index === days.length - 1;
-              return (
-                <span
-                  key={day.date}
-                  className={cn(
-                    "absolute top-0 text-[10px] font-medium text-muted-foreground",
-                    isFirst && "left-0",
-                    isLast && "right-0",
-                    !isFirst && !isLast && "-translate-x-1/2",
-                    day.isToday && "font-semibold text-lilac-deep",
-                  )}
-                  style={!isFirst && !isLast ? { left: `${(index / (days.length - 1)) * 100}%` } : undefined}
-                >
-                  {format(parseISO(day.date), "d MMM", { locale: dfLocale })}
-                </span>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 export function FeedRangeSummary({
   entries,
   link,
@@ -376,7 +265,7 @@ export function FeedRangeSummary({
     entries.map((entry) => entry.date),
     link,
   );
-  const { range, day, today, axis, locale } = period;
+  const { range, day, today, axis, locale, showChart, customFrom, customTo } = period;
   const byDay = axis.map((item) => ({
     ...item,
     entries: entries.filter((entry) => entry.date === item.date),
@@ -385,21 +274,35 @@ export function FeedRangeSummary({
   const summary = feedDaySummary(inRange);
   const counts = byDay.map((item) => item.entries.length);
   const maxCount = Math.max(...counts, 1);
-  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={Milk} title={t("feed.summaryTitle")} subtitle={t("feed.summarySubtitle")}>
-      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
+      <SummaryRangeControl
+        range={range}
+        day={day}
+        today={today}
+        customFrom={customFrom}
+        customTo={customTo}
+        onRangeChange={period.setRange}
+        onCustomFromChange={period.setCustomFrom}
+        onCustomToChange={period.setCustomTo}
+      />
       <div className="grid grid-cols-2 gap-3">
         <StatTile
           value={String(summary.count)}
-          caption={
-            range !== 1
-              ? t("feed.feedsInRange", { count: range })
-              : day === today
-                ? t("feed.feedsToday")
-                : t("feed.feedsOnDay", { date: dateLabel })
-          }
+          caption={rangeCaption({
+            range,
+            day,
+            today,
+            customFrom,
+            customTo,
+            locale,
+            todayKeyName: "feed.feedsToday",
+            onDayKey: "feed.feedsOnDay",
+            inRangeKey: "feed.feedsInRange",
+            inSpanKey: "feed.feedsInSpan",
+            t,
+          })}
           emphasis
         />
         <StatTile value={t("child.summaryMl", { ml: summary.ml })} caption={t("feed.summaryBottle")} />
@@ -410,20 +313,20 @@ export function FeedRangeSummary({
         <StatTile value={formatDuration(summary.nursingMin, t)} caption={t("feed.summaryNursing")} />
       </div>
       <IntervalBand title={t("feed.intervalTitle")} entries={inRange} />
-      {range === 1 && inRange.length === 0 && entries.length > 0 ? (
+      {!showChart && inRange.length === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}
-      {range === 1 ? null : (
-        <ActivityChart
+      {showChart ? (
+        <ActivityAreaChart
           title={t("feed.dailyActivity")}
           hint={t("feed.dailyActivityHint")}
           days={byDay.map((item) => ({ ...item, value: item.entries.length }))}
           maxValue={maxCount}
-          barLabel={(value) => String(value)}
+          valueLabel={(value) => String(value)}
           ariaLabel={(value, date) => t("feed.barAria", { count: value, date })}
           locale={locale}
         />
-      )}
+      ) : null}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("feed.logPatterns")}</p>
       ) : null}
@@ -443,7 +346,7 @@ export function PumpRangeSummary({
     entries.map((entry) => entry.date),
     link,
   );
-  const { range, day, today, axis, locale } = period;
+  const { range, day, today, axis, locale, showChart, customFrom, customTo } = period;
   const byDay = axis.map((item) => ({
     ...item,
     entries: entries.filter((entry) => entry.date === item.date),
@@ -452,21 +355,35 @@ export function PumpRangeSummary({
   const summary = pumpDaySummary(inRange);
   const counts = byDay.map((item) => item.entries.length);
   const maxCount = Math.max(...counts, 1);
-  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={PumpIcon} title={t("pump.summaryTitle")} subtitle={t("pump.summarySubtitle")}>
-      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
+      <SummaryRangeControl
+        range={range}
+        day={day}
+        today={today}
+        customFrom={customFrom}
+        customTo={customTo}
+        onRangeChange={period.setRange}
+        onCustomFromChange={period.setCustomFrom}
+        onCustomToChange={period.setCustomTo}
+      />
       <div className="grid grid-cols-3 gap-3">
         <StatTile
           value={String(summary.count)}
-          caption={
-            range !== 1
-              ? t("pump.sessionsInRange", { count: range })
-              : day === today
-                ? t("pump.sessionsToday")
-                : t("pump.sessionsOnDay", { date: dateLabel })
-          }
+          caption={rangeCaption({
+            range,
+            day,
+            today,
+            customFrom,
+            customTo,
+            locale,
+            todayKeyName: "pump.sessionsToday",
+            onDayKey: "pump.sessionsOnDay",
+            inRangeKey: "pump.sessionsInRange",
+            inSpanKey: "pump.sessionsInSpan",
+            t,
+          })}
           emphasis
         />
         <StatTile value={t("child.summaryMl", { ml: summary.ml })} caption={t("pump.summaryTotal")} />
@@ -476,20 +393,20 @@ export function PumpRangeSummary({
         />
       </div>
       <IntervalBand title={t("pump.intervalTitle")} entries={inRange} />
-      {range === 1 && inRange.length === 0 && entries.length > 0 ? (
+      {!showChart && inRange.length === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}
-      {range === 1 ? null : (
-        <ActivityChart
+      {showChart ? (
+        <ActivityAreaChart
           title={t("pump.dailyActivity")}
           hint={t("pump.dailyActivityHint")}
           days={byDay.map((item) => ({ ...item, value: item.entries.length }))}
           maxValue={maxCount}
-          barLabel={(value) => String(value)}
+          valueLabel={(value) => String(value)}
           ariaLabel={(value, date) => t("pump.barAria", { count: value, date })}
           locale={locale}
         />
-      )}
+      ) : null}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("pump.logPatterns")}</p>
       ) : null}
@@ -509,48 +426,62 @@ export function DiaperRangeSummary({
     entries.map((entry) => entry.date),
     link,
   );
-  const { range, day, today, axis, locale } = period;
+  const { range, day, today, axis, locale, showChart, customFrom, customTo } = period;
   const byDay = axis.map((item) => ({
     ...item,
     entries: entries.filter((entry) => entry.date === item.date),
   }));
   const summary = diaperDaySummary(byDay.flatMap((item) => item.entries));
   const maxCount = Math.max(...byDay.map((item) => item.entries.length), 1);
-  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={DiaperIcon} title={t("diaper.summaryTitle")} subtitle={t("diaper.summarySubtitle")}>
-      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
+      <SummaryRangeControl
+        range={range}
+        day={day}
+        today={today}
+        customFrom={customFrom}
+        customTo={customTo}
+        onRangeChange={period.setRange}
+        onCustomFromChange={period.setCustomFrom}
+        onCustomToChange={period.setCustomTo}
+      />
       <div className="grid grid-cols-3 gap-3">
         <StatTile
           value={String(summary.count)}
-          caption={
-            range !== 1
-              ? t("diaper.changesInRange", { count: range })
-              : day === today
-                ? t("diaper.changesToday")
-                : t("diaper.changesOnDay", { date: dateLabel })
-          }
+          caption={rangeCaption({
+            range,
+            day,
+            today,
+            customFrom,
+            customTo,
+            locale,
+            todayKeyName: "diaper.changesToday",
+            onDayKey: "diaper.changesOnDay",
+            inRangeKey: "diaper.changesInRange",
+            inSpanKey: "diaper.changesInSpan",
+            t,
+          })}
           emphasis
         />
         <StatTile value={String(summary.pee)} caption={t("diaper.pee")} />
         <StatTile value={String(summary.poop)} caption={t("diaper.poop")} />
       </div>
       <IntervalBand title={t("diaper.intervalTitle")} entries={byDay.flatMap((item) => item.entries)} />
-      {range === 1 && summary.count === 0 && entries.length > 0 ? (
+      {!showChart && summary.count === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}
-      {range === 1 ? null : (
-        <ActivityChart
+      {showChart ? (
+        <ActivityAreaChart
           title={t("diaper.dailyActivity")}
           hint={t("diaper.dailyActivityHint")}
           days={byDay.map((item) => ({ ...item, value: item.entries.length }))}
           maxValue={maxCount}
-          barLabel={(value) => String(value)}
+          valueLabel={(value) => String(value)}
           ariaLabel={(value, date) => t("diaper.barAria", { count: value, date })}
           locale={locale}
         />
-      )}
+      ) : null}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("diaper.logPatterns")}</p>
       ) : null}
@@ -570,7 +501,7 @@ export function SleepRangeSummary({
     entries.map((entry) => entry.date),
     link,
   );
-  const { range, day, today, axis, locale } = period;
+  const { range, day, today, axis, locale, showChart, customFrom, customTo } = period;
   const byDay = axis.map((item) => {
     const dayEntries = entries.filter((entry) => entry.date === item.date);
     return {
@@ -581,41 +512,55 @@ export function SleepRangeSummary({
   });
   const summary = sleepDaySummary(byDay.flatMap((item) => item.entries));
   const maxMinutes = Math.max(...byDay.map((item) => item.minutes), 1);
-  const dateLabel = shortDayLabel(day, locale);
 
   return (
     <SummaryShell icon={Moon} title={t("sleep.summaryTitle")} subtitle={t("sleep.summarySubtitle")}>
-      <RangeToggle range={range} day={day} today={today} onRangeChange={period.setRange} />
+      <SummaryRangeControl
+        range={range}
+        day={day}
+        today={today}
+        customFrom={customFrom}
+        customTo={customTo}
+        onRangeChange={period.setRange}
+        onCustomFromChange={period.setCustomFrom}
+        onCustomToChange={period.setCustomTo}
+      />
       <div className="grid grid-cols-2 gap-3">
         <StatTile
           value={formatDuration(summary.total, t)}
-          caption={
-            range !== 1
-              ? t("sleep.totalInRange", { count: range })
-              : day === today
-                ? t("sleep.totalToday")
-                : t("sleep.totalOnDay", { date: dateLabel })
-          }
+          caption={rangeCaption({
+            range,
+            day,
+            today,
+            customFrom,
+            customTo,
+            locale,
+            todayKeyName: "sleep.totalToday",
+            onDayKey: "sleep.totalOnDay",
+            inRangeKey: "sleep.totalInRange",
+            inSpanKey: "sleep.totalInSpan",
+            t,
+          })}
           emphasis
         />
         <StatTile value={String(summary.count)} caption={t("sleep.summarySessions")} />
         <StatTile value={formatDuration(summary.nap, t)} caption={t("sleep.day")} />
         <StatTile value={formatDuration(summary.night, t)} caption={t("sleep.night")} />
       </div>
-      {range === 1 && summary.count === 0 && entries.length > 0 ? (
+      {!showChart && summary.count === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>
       ) : null}
-      {range === 1 ? null : (
-        <ActivityChart
+      {showChart ? (
+        <ActivityAreaChart
           title={t("sleep.dailyActivity")}
           hint={t("sleep.dailyActivityHint")}
           days={byDay.map((item) => ({ ...item, value: item.minutes }))}
           maxValue={maxMinutes}
-          barLabel={(value) => formatDuration(value, t)}
+          valueLabel={(value) => formatDuration(value, t)}
           ariaLabel={(value, date) => t("sleep.barAria", { duration: formatDuration(value, t), date })}
           locale={locale}
         />
-      )}
+      ) : null}
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("sleep.logPatterns")}</p>
       ) : null}
