@@ -72,14 +72,26 @@ export function FoodLogForm({
       }}
     >
       <DateTimeFields date={date} time={time} onDate={setDate} onTime={setTime} />
-      <TextField id={`${fieldId}-name`} label={t("food.name")} value={name} onChange={setName} />
+      <TextField
+        id={`${fieldId}-name`}
+        label={t("food.name")}
+        value={name}
+        onChange={setName}
+        placeholder={t("food.namePlaceholder")}
+      />
       <ChoiceRow
         label={t("food.slot")}
         value={slot}
         onChange={setSlot}
         options={FOOD_SLOTS.map((value) => ({ value, label: slotLabel(value, t) }))}
       />
-      <TextField id={`${fieldId}-allergy`} label={t("food.allergy")} value={allergy} onChange={setAllergy} />
+      <TextField
+        id={`${fieldId}-allergy`}
+        label={t("food.allergy")}
+        value={allergy}
+        onChange={setAllergy}
+        placeholder={t("food.allergyPlaceholder")}
+      />
       <SubmitButton label={editing ? t("common.save") : t("food.add")} disabled={!canSave} />
     </LogForm>
   );
@@ -140,6 +152,7 @@ export function TemperatureLogForm({
         value={temp}
         onChange={setTemp}
         step="0.1"
+        placeholder={t("health.tempPlaceholder")}
       />
       <SubmitButton label={editing ? t("common.save") : t("health.temperatureAdd")} disabled={!canSave} />
     </LogForm>
@@ -196,8 +209,20 @@ export function MedicineLogForm({
       }}
     >
       <DateTimeFields date={date} time={time} onDate={setDate} onTime={setTime} />
-      <TextField id={`${fieldId}-name`} label={t("health.name")} value={name} onChange={setName} />
-      <TextField id={`${fieldId}-dose`} label={t("health.dose")} value={dose} onChange={setDose} />
+      <TextField
+        id={`${fieldId}-name`}
+        label={t("health.name")}
+        value={name}
+        onChange={setName}
+        placeholder={t("health.namePlaceholder")}
+      />
+      <TextField
+        id={`${fieldId}-dose`}
+        label={t("health.dose")}
+        value={dose}
+        onChange={setDose}
+        placeholder={t("health.dosePlaceholder")}
+      />
       <SubmitButton label={editing ? t("common.save") : t("health.medicineAdd")} disabled={!canSave} />
     </LogForm>
   );

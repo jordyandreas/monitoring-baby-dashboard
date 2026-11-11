@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { CircleDot, Droplets, Footprints, Home, Milk, Music, Pill, Ruler } from "lucide-react";
+import { CircleDot, Droplets, Footprints, Home, Milk, Moon, Music, Pill } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
 import type { AppMode } from "@/lib/app-mode";
@@ -29,13 +29,13 @@ export const navRoutes: NavRoute[] = [
   { href: "/kicks", labelKey: "nav.kicks", icon: Footprints },
 ];
 
-/** Home → Milk → Diapers → Pump → Growth */
+/** Home → Milk → Diapers → Pump → Sleep */
 export const childNavRoutes: NavRoute[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
   { href: "/feed", labelKey: "nav.feed", icon: Milk },
   { href: "/diapers", labelKey: "nav.diaper", icon: DiaperIcon },
   { href: "/pump", labelKey: "nav.pump", icon: PumpIcon },
-  { href: "/growth", labelKey: "nav.growth", icon: Ruler },
+  { href: "/sleep", labelKey: "nav.sleep", icon: Moon },
 ];
 
 export function navRoutesFor(mode: AppMode, elimination: EliminationMode = "diaper"): NavRoute[] {

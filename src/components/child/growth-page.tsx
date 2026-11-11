@@ -114,6 +114,7 @@ export function GrowthPageContent() {
               onChange={setWeight}
               step="1"
               unit="gr"
+              placeholder={t("growth.weightPlaceholder")}
             />
             <NumberField
               id="growth-length"
@@ -122,6 +123,7 @@ export function GrowthPageContent() {
               onChange={setLength}
               step="0.1"
               unit="cm"
+              placeholder={t("growth.lengthPlaceholder")}
             />
             <NumberField
               id="growth-head"
@@ -130,6 +132,7 @@ export function GrowthPageContent() {
               onChange={setHead}
               step="0.1"
               unit="cm"
+              placeholder={t("growth.headPlaceholder")}
             />
           </div>
           <SubmitButton label={t("growth.add")} disabled={!canSave} />

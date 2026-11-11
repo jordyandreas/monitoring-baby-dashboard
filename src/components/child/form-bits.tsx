@@ -156,6 +156,7 @@ export function NumberField({
   unit,
   presets,
   presetUnit,
+  placeholder,
 }: {
   id: string;
   label: string;
@@ -165,6 +166,7 @@ export function NumberField({
   unit?: string;
   presets?: number[];
   presetUnit?: "min" | "ml";
+  placeholder?: string;
 }) {
   const { t } = useLocale();
   return (
@@ -178,6 +180,7 @@ export function NumberField({
           min="0"
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
           className={cn("min-h-11 w-full rounded-xl", unit && "pr-12")}
         />
         {unit ? (
@@ -222,11 +225,13 @@ export function TextField({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -235,6 +240,7 @@ export function TextField({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
         className="min-h-11 rounded-xl"
       />
     </div>
