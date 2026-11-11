@@ -144,6 +144,7 @@ function GrowthEditForm({
         onChange={setWeight}
         step="1"
         unit="gr"
+        placeholder={t("growth.weightPlaceholder")}
       />
       <NumberField
         id={`growth-edit-${day.id}-length`}
@@ -152,6 +153,7 @@ function GrowthEditForm({
         onChange={setLength}
         step="0.1"
         unit="cm"
+        placeholder={t("growth.lengthPlaceholder")}
       />
       <NumberField
         id={`growth-edit-${day.id}-head`}
@@ -160,6 +162,7 @@ function GrowthEditForm({
         onChange={setHead}
         step="0.1"
         unit="cm"
+        placeholder={t("growth.headPlaceholder")}
       />
       <SubmitButton label={t("common.save")} disabled={!canSave} />
     </LogForm>

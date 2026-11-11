@@ -96,6 +96,7 @@ function KindFields({
             disabled={!draft.enabled}
             value={draft.hours}
             onChange={(event) => onChange({ ...draft, hours: event.target.value })}
+            placeholder={t("schedule.hoursPlaceholder")}
             className="min-h-11 rounded-xl border-lilac/40 bg-white/90"
           />
         </div>
@@ -107,6 +108,7 @@ function KindFields({
             disabled={!draft.enabled}
             value={draft.minutes}
             onChange={(event) => onChange({ ...draft, minutes: event.target.value })}
+            placeholder={t("schedule.minutesPlaceholder")}
             className="min-h-11 rounded-xl border-lilac/40 bg-white/90"
           />
         </div>

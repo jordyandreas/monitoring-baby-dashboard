@@ -883,6 +883,7 @@ function GrowthSnapshot({
               onChange={setWeightInput}
               step="1"
               unit="gr"
+              placeholder={t("growth.weightPlaceholder")}
             />
             <NumberField
               id="home-length"
@@ -891,6 +892,7 @@ function GrowthSnapshot({
               onChange={setHeightInput}
               step="0.1"
               unit="cm"
+              placeholder={t("growth.lengthPlaceholder")}
             />
             <NumberField
               id="home-head"
@@ -899,6 +901,7 @@ function GrowthSnapshot({
               onChange={setHeadInput}
               step="0.1"
               unit="cm"
+              placeholder={t("growth.headPlaceholder")}
             />
           </div>
           <SubmitButton label={t("child.measureSave")} disabled={!canSave} />

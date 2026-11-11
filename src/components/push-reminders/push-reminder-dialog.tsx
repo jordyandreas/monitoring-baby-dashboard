@@ -152,6 +152,7 @@ function IntervalField({
             step={1}
             disabled={disabled}
             value={value}
+            placeholder={t("pushReminders.customMinutesPlaceholder")}
             onChange={(event) => {
               if (event.target.value.trim() === "") return;
               const next = Number(event.target.value);

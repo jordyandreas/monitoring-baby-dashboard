@@ -3,9 +3,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { Clock, LogOut, MessageSquare, ScrollText, UserRound } from "lucide-react";
+import { Clock, LogOut, MessageSquare, ScrollText, Settings, UserRound } from "lucide-react";
 import { ScheduleReminderDialog } from "@/components/child/schedule-reminder-dialog";
 import { ChangelogDialog } from "@/components/layout/changelog-dialog";
+import { SettingsDialog } from "@/components/layout/settings-dialog";
 import { headerIconButtonClassName } from "@/components/layout/header-icon-button";
 import { useAppMode } from "@/components/providers/app-mode-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
@@ -78,6 +79,7 @@ export function AccountDialog() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -159,6 +161,17 @@ export function AccountDialog() {
               className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted"
               onClick={() => {
                 setMenuOpen(false);
+                setSettingsOpen(true);
+              }}
+            >
+              <Settings className="size-4 text-muted-foreground" aria-hidden />
+              {t("settings.menu")}
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-muted"
+              onClick={() => {
+                setMenuOpen(false);
                 setChangelogOpen(true);
               }}
             >
@@ -193,6 +206,7 @@ export function AccountDialog() {
           </PopoverContent>
         </Popover>
         <ScheduleReminderDialog open={scheduleOpen} onOpenChange={setScheduleOpen} />
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
         <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
         <FeedbackDialog
           open={feedbackOpen}

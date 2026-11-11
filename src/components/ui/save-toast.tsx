@@ -32,7 +32,8 @@ export type SaveToastTopic =
   | "kick"
   | "water"
   | "vitamin"
-  | "glass";
+  | "glass"
+  | "settings";
 
 function toastMessage(
   t: ReturnType<typeof useLocale>["t"],
@@ -149,6 +150,8 @@ function toastMessage(
         return t("toast.vitaminFailed");
       case "glass":
         return t("toast.glassFailed");
+      case "settings":
+        return t("toast.settingsFailed");
     }
   }
 
@@ -251,6 +254,8 @@ function toastMessage(
       return t("toast.vitaminSaved");
     case "glass":
       return t("toast.glassSaved");
+    case "settings":
+      return t("toast.settingsSaved");
   }
 }
 

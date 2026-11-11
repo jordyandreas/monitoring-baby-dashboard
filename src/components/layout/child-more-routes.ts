@@ -1,4 +1,4 @@
-import { CircleDot, Flag, Moon, Syringe, Thermometer, Utensils } from "lucide-react";
+import { CircleDot, Flag, Ruler, Syringe, Thermometer, Utensils } from "lucide-react";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import type { NavRoute } from "@/components/layout/nav-routes";
 import type { EliminationMode } from "@/lib/child/types";
@@ -8,7 +8,7 @@ export function childMoreRoutesFor(input: {
   elimination: EliminationMode;
   hasPottyLogs: boolean;
 }): NavRoute[] {
-  const routes: NavRoute[] = [{ href: "/sleep", labelKey: "child.moreSleep", icon: Moon }];
+  const routes: NavRoute[] = [{ href: "/growth", labelKey: "child.moreGrowth", icon: Ruler }];
   if (input.showFood) {
     routes.push({ href: "/food", labelKey: "child.moreFood", icon: Utensils });
   }

@@ -11,6 +11,7 @@ import {
 } from "@/components/child/form-bits";
 import { commitSave } from "@/components/ui/save-toast";
 import { useLocale } from "@/components/providers/locale-provider";
+import { useBottleMlPresets } from "@/hooks/use-bottle-ml-presets";
 import { sleepMinutes } from "@/lib/child/summary";
 import type {
   DiaperEntry,
@@ -36,7 +37,6 @@ import { saveSleep } from "@/services/sleep.service";
 
 /** Per-feed shortcuts. Steps grow from a newborn feed toward a typical feed by age 2. */
 const NURSING_MINUTES = [5, 10, 15, 20, 30, 45];
-const BOTTLE_ML = [30, 45, 50, 60, 70, 90, 120, 180, 240];
 
 export function FeedLogForm({
   onSaved,
@@ -48,9 +48,10 @@ export function FeedLogForm({
   embedded?: boolean;
 }) {
   const { t } = useLocale();
+  const bottleMl = useBottleMlPresets();
   const [date, setDate] = useState(initial?.date ?? getTodayDateStr);
   const [time, setTime] = useState(initial?.time ?? getCurrentTimeString);
-  const [kind, setKind] = useState<FeedKind>(initial?.kind ?? "breast");
+  const [kind, setKind] = useState<FeedKind>(initial?.kind ?? "bottle-breast");
   const [side, setSide] = useState<FeedSide>(initial?.side ?? "left");
   const [minutes, setMinutes] = useState(initial?.durationMin !== undefined ? String(initial.durationMin) : "");
   const [amount, setAmount] = useState(initial?.amountMl !== undefined ? String(initial.amountMl) : "");
@@ -98,8 +99,8 @@ export function FeedLogForm({
           value={kind}
           onChange={setKind}
           options={[
-            { value: "breast", label: t("feed.kindBreast") },
             { value: "bottle-breast", label: t("feed.kindBottleBreast") },
+            { value: "breast", label: t("feed.kindBreast") },
             { value: "formula", label: t("feed.kindFormula") },
           ]}
         />
@@ -125,6 +126,7 @@ export function FeedLogForm({
           onChange={setMinutes}
           presets={NURSING_MINUTES}
           presetUnit="min"
+          placeholder={t("feed.minutesPlaceholder")}
         />
       ) : (
         <NumberField
@@ -132,8 +134,9 @@ export function FeedLogForm({
           label={t("feed.amount")}
           value={amount}
           onChange={setAmount}
-          presets={BOTTLE_ML}
+          presets={bottleMl}
           presetUnit="ml"
+          placeholder={t("feed.amountPlaceholder")}
         />
       )}
       <SubmitButton label={editing ? t("common.save") : t("feed.add")} disabled={!canSave} />
@@ -151,6 +154,7 @@ export function PumpLogForm({
   embedded?: boolean;
 }) {
   const { t } = useLocale();
+  const bottleMl = useBottleMlPresets();
   const [date, setDate] = useState(initial?.date ?? getTodayDateStr);
   const [time, setTime] = useState(initial?.time ?? getCurrentTimeString);
   const [amount, setAmount] = useState(initial?.amountMl !== undefined ? String(initial.amountMl) : "");
@@ -192,8 +196,9 @@ export function PumpLogForm({
         label={t("pump.amount")}
         value={amount}
         onChange={setAmount}
-        presets={BOTTLE_ML}
+        presets={bottleMl}
         presetUnit="ml"
+        placeholder={t("pump.amountPlaceholder")}
       />
       <SubmitButton label={editing ? t("common.save") : t("pump.add")} disabled={!canSave} />
     </LogForm>
