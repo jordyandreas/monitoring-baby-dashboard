@@ -10,9 +10,11 @@ import {
 } from "@/lib/child/bottle-presets-cache";
 import { getBottleMlPresets } from "@/services/settings.service";
 
+const refreshedUsers = new Set<string>();
+
 /**
- * Shared ml chips for ASI botol, sufor, and pump. Reads the per-account localStorage copy kept
- * in sync by the settings dialog; only hits Supabase when this device has no copy yet.
+ * Shared ml chips for ASI botol, sufor, and pump. Reads the per-account localStorage copy first,
+ * then refreshes it from Supabase once per app load so edits from other devices still arrive.
  */
 export function useBottleMlPresets(): number[] {
   const { signedIn, user } = useSupabase();
@@ -25,11 +27,12 @@ export function useBottleMlPresets(): number[] {
   const cached = useMemo(() => parseBottleMlCache(raw), [raw]);
 
   useEffect(() => {
-    if (!userId || cached) return;
+    if (!userId || refreshedUsers.has(userId)) return;
+    refreshedUsers.add(userId);
     getBottleMlPresets().catch(() => {
-      // Defaults stay on screen; the next open retries.
+      refreshedUsers.delete(userId);
     });
-  }, [userId, cached]);
+  }, [userId]);
 
   return cached ?? [...DEFAULT_BOTTLE_ML];
 }
