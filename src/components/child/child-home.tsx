@@ -31,7 +31,13 @@ import { EmphasizedDetail } from "@/components/child/emphasized-detail";
 import { NextScheduleStrip } from "@/components/child/next-schedule-card";
 import { formatLogWhen, LogForm, NumberField, SubmitButton } from "@/components/child/form-bits";
 import { FoodLogForm, MedicineLogForm, PottyLogForm, TemperatureLogForm } from "@/components/child/extra-log-forms";
-import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
+import {
+  DiaperLogForm,
+  FeedLogForm,
+  PumpLogForm,
+  SleepLogForm,
+  SleepTracker,
+} from "@/components/child/quick-log-forms";
 import { DateDayStrip } from "@/components/history/date-day-strip";
 import { WhatsAppShareButton } from "@/components/history/whatsapp-share-button";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
@@ -49,7 +55,14 @@ import { Label } from "@/components/ui/label";
 import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatChildAge } from "@/lib/child/age";
-import { DEFAULT_CHILD_STORAGE, type ChildStorage, type DiaperEntry, type FeedEntry, type PumpEntry } from "@/lib/child/types";
+import {
+  DEFAULT_CHILD_STORAGE,
+  type ChildStorage,
+  type DiaperEntry,
+  type FeedEntry,
+  type PumpEntry,
+  type SleepEntry,
+} from "@/lib/child/types";
 import {
   diaperLastStatuses,
   feedLastStatus,
@@ -57,6 +70,7 @@ import {
   growthComparison,
   logDates,
   pumpLastStatus,
+  sleepActiveStatus,
   todayTimeline,
   todayTotals,
   type LastLogStatus,
@@ -249,7 +263,13 @@ export function ChildHome() {
         onRetry={reloadExtras}
       />
 
-      <TodayActivity totals={todayStats} feeds={board.feeds} pumps={board.pumps} diapers={board.diapers} />
+      <TodayActivity
+        totals={todayStats}
+        feeds={board.feeds}
+        pumps={board.pumps}
+        diapers={board.diapers}
+        sleeps={board.sleeps}
+      />
 
       {schedule.ready ? (
         <NextScheduleStrip
@@ -295,7 +315,7 @@ export function ChildHome() {
         {quick === "pump" ? <PumpLogForm /> : null}
         {quick === "diaper" ? <DiaperLogForm /> : null}
         {quick === "potty" ? <PottyLogForm /> : null}
-        {quick === "sleep" ? <SleepLogForm /> : null}
+        {quick === "sleep" ? <SleepTracker entries={board.sleeps} /> : null}
       </section>
 
       <section className="space-y-3">
@@ -961,16 +981,19 @@ function TodayActivity({
   feeds,
   pumps,
   diapers,
+  sleeps,
 }: {
   totals: ReturnType<typeof todayTotals>;
   feeds: FeedEntry[];
   pumps: PumpEntry[];
   diapers: DiaperEntry[];
+  sleeps: SleepEntry[];
 }) {
   const { t } = useLocale();
   const feedLast = feedLastStatus(feeds, t);
   const pumpLast = pumpLastStatus(pumps, t);
   const diaperLast = diaperLastStatuses(diapers, t);
+  const sleepActive = sleepActiveStatus(sleeps, t);
   const cards: {
     href: string;
     kind: QuickKind;
@@ -1017,6 +1040,7 @@ function TodayActivity({
       kind: "sleep",
       label: t("child.tagSleep"),
       value: formatDuration(totals.sleepMin, t),
+      notes: activityNotes([sleepActive]),
       tint: "bg-sky-50",
     },
   ];

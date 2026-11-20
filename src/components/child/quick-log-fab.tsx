@@ -3,7 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CircleDot, Milk, Moon } from "lucide-react";
-import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepLogForm } from "@/components/child/quick-log-forms";
+import { DiaperLogForm, FeedLogForm, PumpLogForm, SleepQuickLog } from "@/components/child/quick-log-forms";
 import { PottyLogForm } from "@/components/child/extra-log-forms";
 import { DiaperIcon } from "@/components/icons/diaper-icon";
 import { PumpIcon } from "@/components/icons/pump-icon";
@@ -65,7 +65,7 @@ export function QuickLogFab() {
       : kind === "potty"
         ? t("potty.add")
         : kind === "sleep"
-          ? t("sleep.add")
+          ? t("sleep.trackerTitle")
           : kind === "pump"
             ? t("pump.add")
             : t("feed.add");
@@ -105,7 +105,7 @@ export function QuickLogFab() {
           {kind === "pump" ? <PumpLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "diaper" ? <DiaperLogForm embedded onSaved={closeAndGo} /> : null}
           {kind === "potty" ? <PottyLogForm embedded onSaved={closeAndGo} /> : null}
-          {kind === "sleep" ? <SleepLogForm embedded onSaved={closeAndGo} /> : null}
+          {kind === "sleep" ? <SleepQuickLog embedded onSaved={closeAndGo} /> : null}
         </DialogContent>
       </Dialog>
     </>

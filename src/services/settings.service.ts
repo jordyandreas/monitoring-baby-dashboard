@@ -3,6 +3,7 @@ import {
   DEFAULT_BOTTLE_ML,
   normalizeBottleMlPresets,
 } from "@/lib/child/bottle-presets";
+import { writeBottleMlCache } from "@/lib/child/bottle-presets-cache";
 import { throwOnError, withAccount } from "@/services/account";
 
 export async function getBottleMlPresets(): Promise<number[]> {
@@ -13,7 +14,9 @@ export async function getBottleMlPresets(): Promise<number[]> {
       .eq("user_id", userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return normalizeBottleMlPresets(data?.bottle_ml_presets);
+    const presets = normalizeBottleMlPresets(data?.bottle_ml_presets);
+    writeBottleMlCache(userId, presets);
+    return presets;
   });
 }
 
@@ -27,5 +30,6 @@ export async function saveBottleMlPresets(presets: number[]): Promise<void> {
         bottle_ml_presets: toStore,
       }),
     );
+    writeBottleMlCache(userId, normalized);
   });
 }

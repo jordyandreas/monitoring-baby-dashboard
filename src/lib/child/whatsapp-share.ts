@@ -1,6 +1,14 @@
 import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
-import { describeFeed, describePump, formatDuration, growthByDay, sleepMinutes } from "@/lib/child/summary";
+import {
+  activeSleep,
+  clockOf,
+  describeFeed,
+  describePump,
+  formatDuration,
+  growthByDay,
+  sleepMinutes,
+} from "@/lib/child/summary";
 import { formatGrams, kgToGrams } from "@/lib/child/weight";
 import type {
   DiaperEntry,
@@ -80,6 +88,7 @@ export function dayShareText(
   const ml = feeds.reduce((sum, entry) => sum + (entry.amountMl ?? 0), 0);
   const sleeps = input.sleeps.filter((entry) => entry.date === input.date);
   const sleepMin = sleeps.reduce((sum, entry) => sum + sleepMinutes(entry), 0);
+  const asleep = input.date === format(new Date(), "yyyy-MM-dd") ? activeSleep(input.sleeps) : null;
   const source = input.elimination === "potty" ? input.potty : input.diapers;
   const dayElimination = source.filter((entry) => entry.date === input.date);
   const pee = dayElimination.filter((entry) => entry.kind === "pee" || entry.kind === "both").length;
@@ -107,6 +116,9 @@ export function dayShareText(
     t("share.milk", { count: feeds.length, ml }),
     t("share.peePoop", { pee, poop }),
     t("share.sleep", { duration: formatDuration(sleepMin, t) }),
+    asleep ? t("sleep.asleepSince", { time: clockOf(asleep.startedAt) }) : "",
     growthLine,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

@@ -16,6 +16,14 @@ export async function saveSleep(entry: SleepEntry): Promise<void> {
   });
 }
 
+export async function endSleep(id: string, endedAt: string): Promise<void> {
+  return withAccount(async (supabase, userId) => {
+    await throwOnError(
+      supabase.from("sleep_logs").update({ ended_at: endedAt }).eq("user_id", userId).eq("id", id),
+    );
+  });
+}
+
 export async function deleteSleep(id: string): Promise<void> {
   return withAccount(async (supabase, userId) => {
     await throwOnError(supabase.from("sleep_logs").delete().eq("user_id", userId).eq("id", id));
