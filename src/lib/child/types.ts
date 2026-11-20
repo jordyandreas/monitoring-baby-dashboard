@@ -39,9 +39,12 @@ export type SleepPeriod = "day" | "night";
 
 export type SleepEntry = {
   id: string;
+  /** Local calendar day the sleep started (yyyy-MM-dd). */
   date: string;
-  startTime: string;
-  endTime: string;
+  /** ISO timestamp. */
+  startedAt: string;
+  /** ISO timestamp. Missing while the baby is still asleep. */
+  endedAt?: string;
   period: SleepPeriod;
 };
 

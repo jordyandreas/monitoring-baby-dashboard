@@ -25,13 +25,53 @@ import type {
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
+/** Past this, an unfinished sleep is more likely a missed "woke up" tap than a real sleep. */
+export const FORGOTTEN_SLEEP_MINUTES = 14 * 60;
+
+/** Local "HH:mm" of an ISO timestamp. */
+export function clockOf(iso: string): string {
+  return format(parseISO(iso), "HH:mm");
+}
+
+function minutesBetween(fromIso: string, to: Date): number {
+  return Math.max(0, Math.round((to.getTime() - parseISO(fromIso).getTime()) / 60000));
+}
+
+/** Finished sleep only. A sleep still in progress counts as 0 so totals do not grow by the minute. */
 export function sleepMinutes(entry: SleepEntry): number {
-  const start = getMinutesFromTimeString(entry.startTime);
-  const end = getMinutesFromTimeString(entry.endTime);
-  if (start === null || end === null) return 0;
-  let diff = end - start;
-  if (diff < 0) diff += 24 * 60;
-  return diff;
+  if (!entry.endedAt) return 0;
+  return minutesBetween(entry.startedAt, parseISO(entry.endedAt));
+}
+
+export function sleepElapsedMinutes(entry: SleepEntry, now = new Date()): number {
+  return minutesBetween(entry.startedAt, entry.endedAt ? parseISO(entry.endedAt) : now);
+}
+
+export function activeSleep(entries: SleepEntry[]): SleepEntry | null {
+  let best: SleepEntry | null = null;
+  for (const entry of entries) {
+    if (entry.endedAt) continue;
+    if (!best || entry.startedAt > best.startedAt) best = entry;
+  }
+  return best;
+}
+
+export function sleepPeriodAt(when: Date): "day" | "night" {
+  const hour = when.getHours();
+  return hour >= 19 || hour < 7 ? "night" : "day";
+}
+
+/** Local date + clock times to timestamps. An end at or before the start is the next morning. */
+export function sleepRange(
+  date: string,
+  startTime: string,
+  endTime?: string,
+): { startedAt: string; endedAt?: string } {
+  const start = parseISO(`${date}T${startTime}`);
+  if (!endTime) return { startedAt: start.toISOString() };
+  const end = parseISO(`${date}T${endTime}`);
+  if (end <= start) end.setDate(end.getDate() + 1);
+  return { startedAt: start.toISOString(), endedAt: end.toISOString() };
 }
 
 export function formatDuration(minutes: number, t: Translate): string {
@@ -105,6 +145,20 @@ export function pumpLastStatus(entries: PumpEntry[], t: Translate, now = new Dat
   return statusFrom(t("child.lastLine"), lastWhenParts(latest.date, latest.time, t, now), [
     t("child.summaryMl", { ml: latest.amountMl }),
   ]);
+}
+
+/** Only while the baby is asleep. */
+export function sleepActiveStatus(entries: SleepEntry[], t: Translate, now = new Date()): LastLogStatus | null {
+  const active = activeSleep(entries);
+  if (!active) return null;
+  return statusFrom(
+    t("sleep.asleepNow"),
+    {
+      time: formatTimeLabel(clockOf(active.startedAt)),
+      ago: t("sleep.forDuration", { duration: formatDuration(sleepElapsedMinutes(active, now), t) }),
+    },
+    [],
+  );
 }
 
 export function diaperLastStatuses(
@@ -265,7 +319,8 @@ export function sleepDaySummary(entries: SleepEntry[]) {
   const night = entries
     .filter((entry) => entry.period === "night")
     .reduce((sum, entry) => sum + sleepMinutes(entry), 0);
-  return { count: entries.length, total: nap + night, nap, night };
+  const count = entries.filter((entry) => entry.endedAt).length;
+  return { count, total: nap + night, nap, night };
 }
 
 export function todayTotals(data: ChildStorage, today: string): TodayTotals {
@@ -374,10 +429,16 @@ export function sleepHistoryParts(
 ): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
   return {
     title: entry.period === "night" ? t("sleep.night") : t("sleep.day"),
-    subtitle: `${formatTimeLabel(entry.startTime)}–${formatTimeLabel(entry.endTime)} · ${formatDuration(sleepMinutes(entry), t)}`,
+    subtitle: sleepSpanLabel(entry, t, formatTimeLabel),
     tone: "sky",
     icon: "sleep",
   };
+}
+
+function sleepSpanLabel(entry: SleepEntry, t: Translate, clockLabel: (time: string) => string): string {
+  const start = clockLabel(clockOf(entry.startedAt));
+  if (!entry.endedAt) return `${start}–… · ${t("sleep.ongoing")}`;
+  return `${start}–${clockLabel(clockOf(entry.endedAt))} · ${formatDuration(sleepMinutes(entry), t)}`;
 }
 
 export function pumpHistoryParts(
@@ -541,7 +602,7 @@ export function describePotty(entry: PottyEntry, t: Translate): string {
 
 export function describeSleep(entry: SleepEntry, t: Translate): string {
   const period = entry.period === "night" ? t("sleep.night") : t("sleep.day");
-  return `${period} · ${entry.startTime}–${entry.endTime} · ${formatDuration(sleepMinutes(entry), t)}`;
+  return `${period} · ${sleepSpanLabel(entry, t, (time) => time)}`;
 }
 
 export function todayTimeline(data: ChildStorage, today: string, t: Translate): TimelineItem[] {
@@ -578,7 +639,7 @@ export function todayTimeline(data: ChildStorage, today: string, t: Translate): 
       .map((entry) => ({
         id: `sleep-${entry.id}`,
         kind: "sleep" as const,
-        time: entry.startTime,
+        time: clockOf(entry.startedAt),
         title: t("child.tagSleep"),
         detail: describeSleep(entry, t),
       })),
