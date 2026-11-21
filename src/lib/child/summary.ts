@@ -148,6 +148,30 @@ export function sleepActiveStatus(entries: SleepEntry[], t: Translate, now = new
   );
 }
 
+function lastWhenAt(iso: string, t: Translate, now: Date): LastWhenParts {
+  return lastWhenParts(format(parseISO(iso), "yyyy-MM-dd"), clockOf(iso), t, now);
+}
+
+/** Latest time the baby fell asleep, and the latest time the baby woke up. */
+export function sleepLastStatuses(entries: SleepEntry[], t: Translate, now = new Date()): LastLogStatus[] {
+  let lastSleep: SleepEntry | null = null;
+  let lastWake: SleepEntry | null = null;
+  for (const entry of entries) {
+    if (!lastSleep || entry.startedAt > lastSleep.startedAt) lastSleep = entry;
+    if (entry.endedAt && (!lastWake?.endedAt || entry.endedAt > lastWake.endedAt)) lastWake = entry;
+  }
+  const items: LastLogStatus[] = [];
+  if (lastSleep) {
+    items.push(
+      statusFrom(t("sleep.lastSleep"), lastWhenAt(lastSleep.startedAt, t, now), [
+        lastSleep.endedAt ? formatDuration(sleepMinutes(lastSleep), t) : t("sleep.ongoing"),
+      ]),
+    );
+  }
+  if (lastWake?.endedAt) items.push(statusFrom(t("sleep.lastWake"), lastWhenAt(lastWake.endedAt, t, now), []));
+  return items;
+}
+
 export function diaperLastStatuses(
   entries: DiaperEntry[],
   t: Translate,

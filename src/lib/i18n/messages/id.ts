@@ -760,6 +760,8 @@ export const id: Messages = {
     intro: "Tekan Mulai tidur saat bayi tidur, lalu Bangun saat ia bangun.",
     add: "Catat tidur",
     manualHint: "Pilih tidur atau bangun, lalu isi tanggal dan jamnya.",
+    lastSleep: "Terakhir tidur",
+    lastWake: "Terakhir bangun",
     momentLabel: "Catat waktu",
     momentSleep: "Tidur",
     momentWake: "Bangun",

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChildDayHistory } from "@/components/child/day-history";
+import { LastLogLine } from "@/components/child/last-log-line";
 import { SleepRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { SleepLogForm, SleepTracker } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
@@ -11,7 +12,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { clockOf, sleepHistoryParts } from "@/lib/child/summary";
+import { clockOf, sleepHistoryParts, sleepLastStatuses } from "@/lib/child/summary";
 import { deleteSleep, listSleeps } from "@/services/sleep.service";
 
 export function SleepPageContent() {
@@ -28,13 +29,14 @@ export function SleepPageContent() {
     error,
     data,
     reload,
-    <LogPageSkeleton tiles={4} form={<SleepFormSkeleton />} />,
+    <LogPageSkeleton tiles={4} withLast withLastPair form={<SleepFormSkeleton />} />,
   );
   if (placeholder) return placeholder;
 
   return (
     <LogScreen>
-      <SleepTracker entries={sleeps} />
+      <LastLogLine items={sleepLastStatuses(sleeps, t)} />
+      <SleepTracker entries={sleeps} withStatus={false} />
       <SleepRangeSummary entries={sleeps} link={summary} />
       <ChildDayHistory
         selectedDate={summary.day}

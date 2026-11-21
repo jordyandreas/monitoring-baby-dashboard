@@ -558,15 +558,17 @@ function SleepMomentForm({
   );
 }
 
-/** Logs sleep and wake-up as separate moments. While a sleep is running, it shows how long it has lasted. */
+/** Logs sleep and wake-up as separate moments. `withStatus` adds a running-sleep card where no "last" cards are shown. */
 export function SleepTracker({
   entries,
   onSaved,
   embedded = false,
+  withStatus = true,
 }: {
   entries: SleepEntry[];
   onSaved?: () => void;
   embedded?: boolean;
+  withStatus?: boolean;
 }) {
   const { t } = useLocale();
   const now = useNow();
@@ -575,24 +577,22 @@ export function SleepTracker({
 
   return (
     <SleepMomentForm key={active?.id ?? "idle"} active={active} onSaved={onSaved} embedded={embedded}>
-        {active ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-3 text-indigo-900">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-800">
-                <Moon className="size-5" aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  {t("sleep.asleepSince", { time: formatTimeLabel(clockOf(active.startedAt)) })}
-                </p>
-                <p className="text-2xl font-bold tabular-nums">{formatDuration(elapsed, t)}</p>
-              </div>
-            </div>
-            {elapsed >= FORGOTTEN_SLEEP_MINUTES ? (
-              <p className="text-sm font-medium text-destructive">{t("sleep.forgotWake")}</p>
-            ) : null}
+      {active && withStatus ? (
+        <div className="flex items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-3 text-indigo-900">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-800">
+            <Moon className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {t("sleep.asleepSince", { time: formatTimeLabel(clockOf(active.startedAt)) })}
+            </p>
+            <p className="text-2xl font-bold tabular-nums">{formatDuration(elapsed, t)}</p>
           </div>
-        ) : null}
+        </div>
+      ) : null}
+      {elapsed >= FORGOTTEN_SLEEP_MINUTES ? (
+        <p className="text-sm font-medium text-destructive">{t("sleep.forgotWake")}</p>
+      ) : null}
     </SleepMomentForm>
   );
 }

@@ -779,6 +779,8 @@ export const en = {
     intro: "Tap Fell asleep when the baby sleeps, then Woke up when they wake.",
     add: "Log sleep",
     manualHint: "Choose sleep or wake, then enter the date and time.",
+    lastSleep: "Last asleep",
+    lastWake: "Last awake",
     momentLabel: "Log time",
     momentSleep: "Fell asleep",
     momentWake: "Woke up",
