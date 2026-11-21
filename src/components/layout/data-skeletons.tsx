@@ -184,6 +184,31 @@ function FormCard({ fields = 3 }: { fields?: number }) {
   );
 }
 
+/** Matches the sleep form: title, hint, sleep/wake dropdown, then date and time side by side. */
+export function SleepFormSkeleton({ embedded = false }: { embedded?: boolean }) {
+  return (
+    <div className={embedded ? "space-y-4" : "space-y-4 rounded-2xl glass-regular p-4"}>
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="h-4 w-64 max-w-full" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-11 w-full rounded-xl" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {Array.from({ length: 2 }, (_, index) => (
+          <div key={index} className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-11 w-full rounded-full" />
+    </div>
+  );
+}
+
 export function ChildHomeSkeleton() {
   return (
     <SkeletonStatus className="space-y-6">
@@ -277,11 +302,13 @@ export function LogPageSkeleton({
   withLast = false,
   withNext = false,
   withLastPair = false,
+  form,
 }: {
   tiles?: number;
   withLast?: boolean;
   withNext?: boolean;
   withLastPair?: boolean;
+  form?: ReactNode;
 }) {
   return (
     <SkeletonStatus className="w-full min-w-0 space-y-6">
@@ -300,7 +327,7 @@ export function LogPageSkeleton({
           <LastLogSkeleton />
         )
       ) : null}
-      <FormCard fields={3} />
+      {form ?? <FormCard fields={3} />}
       <section className="space-y-5 rounded-2xl glass-regular p-5 shadow-sm">
         <div className="space-y-2">
           <Skeleton className="h-5 w-40" />

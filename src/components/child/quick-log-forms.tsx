@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { parseISO } from "date-fns";
-import { Moon, Pencil, Sun } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Moon } from "lucide-react";
 import {
   ChoiceRow,
   DateField,
@@ -12,8 +12,9 @@ import {
   TimeField,
 } from "@/components/child/form-bits";
 import { commitSave } from "@/components/ui/save-toast";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SleepFormSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useBottleMlPresets } from "@/hooks/use-bottle-ml-presets";
@@ -24,9 +25,7 @@ import {
   FORGOTTEN_SLEEP_MINUTES,
   formatDuration,
   sleepElapsedMinutes,
-  sleepMinutes,
   sleepPeriodAt,
-  sleepRange,
 } from "@/lib/child/summary";
 import type {
   DiaperEntry,
@@ -39,7 +38,6 @@ import type {
   PoopTexture,
   PumpEntry,
   SleepEntry,
-  SleepPeriod,
 } from "@/lib/child/types";
 import { cn } from "@/utils/cn";
 import { formatTimeLabel, getCurrentTimeString } from "@/utils/time";
@@ -52,6 +50,11 @@ import { endSleep, listSleeps, saveSleep } from "@/services/sleep.service";
 
 /** Per-feed shortcuts. Steps grow from a newborn feed toward a typical feed by age 2. */
 const NURSING_MINUTES = [5, 10, 15, 20, 30, 45];
+const MAX_SLEEP_MINUTES = 24 * 60;
+
+function dateOf(iso: string): string {
+  return format(parseISO(iso), "yyyy-MM-dd");
+}
 
 export function FeedLogForm({
   onSaved,
@@ -353,23 +356,35 @@ export function SleepLogForm({
   const { t } = useLocale();
   const [date, setDate] = useState(initial?.date ?? getTodayDateStr);
   const [startTime, setStartTime] = useState(() => (initial ? clockOf(initial.startedAt) : getCurrentTimeString()));
+  const [endDate, setEndDate] = useState(() =>
+    initial?.endedAt ? dateOf(initial.endedAt) : (initial?.date ?? getTodayDateStr()),
+  );
   const [endTime, setEndTime] = useState(() =>
     initial?.endedAt ? clockOf(initial.endedAt) : getCurrentTimeString(),
   );
   const [awake, setAwake] = useState(initial ? Boolean(initial.endedAt) : true);
-  const [period, setPeriod] = useState<SleepPeriod>(() => initial?.period ?? sleepPeriodAt(new Date()));
   const editing = Boolean(initial);
   const ongoing = Boolean(initial && !initial.endedAt);
-  const range = date && startTime ? sleepRange(date, startTime, awake ? endTime : undefined) : null;
+  const startedAt = date && startTime ? parseISO(`${date}T${startTime}`) : null;
+  const endedAt = awake && endDate && endTime ? parseISO(`${endDate}T${endTime}`) : null;
+  const duration = startedAt && endedAt ? Math.round((endedAt.getTime() - startedAt.getTime()) / 60000) : 0;
+  const tooLong = duration >= MAX_SLEEP_MINUTES;
   // Clock fields have minute precision and `now` ticks every 30s, so allow the current minute.
   const latest = useNow().getTime() + 60_000;
   const canSave =
-    range !== null &&
-    parseISO(range.startedAt).getTime() <= latest &&
-    (!awake ||
-      (range.endedAt !== undefined &&
-        parseISO(range.endedAt).getTime() <= latest &&
-        sleepMinutes({ id: "draft", date, period, ...range }) > 0));
+    startedAt !== null &&
+    startedAt.getTime() <= latest &&
+    (!awake || (endedAt !== null && endedAt.getTime() <= latest && duration > 0 && !tooLong));
+  const inFuture = (startedAt?.getTime() ?? 0) > latest || (endedAt?.getTime() ?? 0) > latest;
+  const problem = inFuture
+    ? t("sleep.inFuture")
+    : !startedAt || !endedAt
+      ? null
+      : duration <= 0
+        ? t("sleep.wakeBeforeStart")
+        : tooLong
+          ? t("sleep.tooLong")
+          : null;
 
   return (
     <LogForm
@@ -378,24 +393,28 @@ export function SleepLogForm({
       embedded={embedded ?? editing}
       onSubmit={(event) => {
         event.preventDefault();
-        if (!canSave || !range) return;
+        if (!canSave || !startedAt) return;
         const entry: SleepEntry = {
           id: initial?.id ?? crypto.randomUUID(),
           date,
-          period,
-          ...range,
+          period: sleepPeriodAt(startedAt),
+          startedAt: startedAt.toISOString(),
+          ...(endedAt ? { endedAt: endedAt.toISOString() } : {}),
         };
         void commitSave("sleep", () => saveSleep(entry), initial ? "update" : "save", undefined, "sleep").then((ok) => {
           if (!ok) return;
           if (!initial) {
-            setStartTime(getCurrentTimeString());
-            setEndTime(getCurrentTimeString());
+            const today = getTodayDateStr();
+            const now = getCurrentTimeString();
+            setDate(today);
+            setStartTime(now);
+            setEndDate(today);
+            setEndTime(now);
           }
           onSaved?.();
         });
       }}
     >
-      <DateField date={date} onDate={setDate} />
       {ongoing ? (
         <ChoiceRow
           label={t("sleep.status")}
@@ -408,24 +427,138 @@ export function SleepLogForm({
         />
       ) : null}
       <div className="grid grid-cols-2 gap-3">
+        <DateField
+          label={t("sleep.startDate")}
+          date={date}
+          onDate={(value) => {
+            setDate(value);
+            if (value && (!endDate || endDate < value)) setEndDate(value);
+          }}
+        />
         <TimeField label={t("sleep.start")} time={startTime} onTime={setStartTime} />
-        {awake ? <TimeField label={t("sleep.end")} time={endTime} onTime={setEndTime} /> : null}
       </div>
-      <ChoiceRow
-        label={t("pages.sleep.title")}
-        value={period}
-        onChange={setPeriod}
-        options={[
-          { value: "day", label: t("sleep.day") },
-          { value: "night", label: t("sleep.night") },
-        ]}
-      />
+      {awake ? (
+        <div className="grid grid-cols-2 gap-3">
+          <DateField label={t("sleep.endDate")} date={endDate} onDate={setEndDate} />
+          <TimeField label={t("sleep.end")} time={endTime} onTime={setEndTime} />
+        </div>
+      ) : null}
+      {problem ? (
+        <p className="text-sm text-destructive">{problem}</p>
+      ) : canSave && awake ? (
+        <p className="text-sm text-muted-foreground">
+          {t("sleep.durationPreview", { duration: formatDuration(duration, t) })}
+        </p>
+      ) : null}
       <SubmitButton label={editing ? t("common.save") : t("sleep.add")} disabled={!canSave} />
     </LogForm>
   );
 }
 
-/** "Fell asleep" now, "Woke up" later. Manual entry stays available for sleeps logged after the fact. */
+type SleepMoment = "sleep" | "wake";
+
+/** Logs one moment after the fact: a sleep that started, or the wake-up that ends the running sleep. */
+function SleepMomentForm({
+  active,
+  onSaved,
+  embedded,
+  children,
+}: {
+  active: SleepEntry | null;
+  onSaved?: () => void;
+  embedded: boolean;
+  children?: React.ReactNode;
+}) {
+  const { t } = useLocale();
+  const [moment, setMoment] = useState<SleepMoment>(active ? "wake" : "sleep");
+  const [date, setDate] = useState(getTodayDateStr);
+  const [time, setTime] = useState(getCurrentTimeString);
+  const [saving, setSaving] = useState(false);
+  const latest = useNow().getTime() + 60_000;
+  const at = date && time ? parseISO(`${date}T${time}`) : null;
+  const duration =
+    moment === "wake" && active && at ? Math.round((at.getTime() - parseISO(active.startedAt).getTime()) / 60000) : 0;
+
+  let problem: string | null = null;
+  if (moment === "sleep" && active) problem = t("sleep.alreadyAsleep");
+  else if (moment === "wake" && !active) problem = t("sleep.noActiveSleep");
+  else if (at && at.getTime() > latest) problem = t("sleep.inFuture");
+  else if (moment === "wake" && at && duration <= 0) problem = t("sleep.wakeBeforeStart");
+  else if (moment === "wake" && duration >= MAX_SLEEP_MINUTES) problem = t("sleep.tooLong");
+  const canSave = at !== null && problem === null && !saving;
+
+  return (
+    <LogForm
+      title={t("sleep.add")}
+      description={t("sleep.manualHint")}
+      embedded={embedded}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!canSave || !at) return;
+        let save;
+        if (moment === "sleep") {
+          const entry: SleepEntry = {
+            id: crypto.randomUUID(),
+            date,
+            startedAt: at.toISOString(),
+            period: sleepPeriodAt(at),
+          };
+          save = commitSave("sleep", () => saveSleep(entry), "save", undefined, "sleep", t("toast.sleepStarted", {
+            time: formatTimeLabel(time),
+          }));
+        } else if (active) {
+          save = commitSave("sleep", () => endSleep(active.id, at.toISOString()), "update", undefined, "sleep", t(
+            "toast.sleepEnded",
+            { duration: formatDuration(duration, t) },
+          ));
+        } else {
+          return;
+        }
+        setSaving(true);
+        void save.then((ok) => {
+          setSaving(false);
+          if (ok) onSaved?.();
+        });
+      }}
+    >
+      {children}
+      <div className="min-w-0 space-y-2">
+        <Label htmlFor="sleep-moment">{t("sleep.momentLabel")}</Label>
+        <Select value={moment} onValueChange={(value) => setMoment(value as SleepMoment)}>
+          <SelectTrigger
+            id="sleep-moment"
+            className="w-full rounded-xl border-border bg-background px-2.5 data-[size=default]:h-11"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="sleep">{t("sleep.momentSleep")}</SelectItem>
+            <SelectItem value="wake">{t("sleep.momentWake")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <DateField
+          label={moment === "sleep" ? t("sleep.startDate") : t("sleep.endDate")}
+          date={date}
+          onDate={setDate}
+        />
+        <TimeField label={moment === "sleep" ? t("sleep.start") : t("sleep.end")} time={time} onTime={setTime} />
+      </div>
+      {problem ? (
+        <p className="text-sm text-destructive">{problem}</p>
+      ) : moment === "wake" && active && duration > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {t("sleep.asleepSince", { time: formatTimeLabel(clockOf(active.startedAt)) })} ·{" "}
+          {t("sleep.durationPreview", { duration: formatDuration(duration, t) })}
+        </p>
+      ) : null}
+      <SubmitButton label={moment === "sleep" ? t("sleep.saveSleep") : t("sleep.saveWake")} disabled={!canSave} />
+    </LogForm>
+  );
+}
+
+/** Logs sleep and wake-up as separate moments. While a sleep is running, it shows how long it has lasted. */
 export function SleepTracker({
   entries,
   onSaved,
@@ -437,113 +570,30 @@ export function SleepTracker({
 }) {
   const { t } = useLocale();
   const now = useNow();
-  const [panel, setPanel] = useState<"none" | "manual" | "edit">("none");
-  const [busyFor, setBusyFor] = useState<SleepEntry[] | null>(null);
   const active = activeSleep(entries);
-  // Stays busy until the list reloads, so a second tap cannot start a duplicate sleep.
-  const busy = busyFor === entries;
-
-  function run(save: () => Promise<void>, action: "save" | "update", detail: string) {
-    setBusyFor(entries);
-    void commitSave("sleep", save, action, undefined, "sleep", detail).then((ok) => {
-      if (!ok) {
-        setBusyFor(null);
-        return;
-      }
-      setPanel("none");
-      onSaved?.();
-    });
-  }
-
-  function start() {
-    if (active) return;
-    const startedAt = new Date();
-    const entry: SleepEntry = {
-      id: crypto.randomUUID(),
-      date: getTodayDateStr(),
-      startedAt: startedAt.toISOString(),
-      period: sleepPeriodAt(startedAt),
-    };
-    run(() => saveSleep(entry), "save", t("toast.sleepStarted", { time: formatTimeLabel(clockOf(entry.startedAt)) }));
-  }
-
-  function wake() {
-    if (!active) return;
-    const endedAt = new Date();
-    const minutes = sleepElapsedMinutes(active, endedAt);
-    run(() => endSleep(active.id, endedAt.toISOString()), "update", t("toast.sleepEnded", { duration: formatDuration(minutes, t) }));
-  }
-
   const elapsed = active ? sleepElapsedMinutes(active, now) : 0;
 
   return (
-    <section className={embedded ? "w-full min-w-0 space-y-4" : "space-y-4 rounded-2xl glass-regular p-4"}>
-      <div className={embedded ? "pr-8" : undefined}>
-        <h2 className="text-base font-semibold">{t("sleep.trackerTitle")}</h2>
-        {active ? null : <p className="mt-1 text-sm text-muted-foreground">{t("sleep.trackerHint")}</p>}
-      </div>
-      {active ? (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-3 text-indigo-900">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-800">
-              <Moon className="size-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium">
-                {t("sleep.asleepSince", { time: formatTimeLabel(clockOf(active.startedAt)) })}
-              </p>
-              <p className="text-2xl font-bold tabular-nums">{formatDuration(elapsed, t)}</p>
+    <SleepMomentForm key={active?.id ?? "idle"} active={active} onSaved={onSaved} embedded={embedded}>
+        {active ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-3 text-indigo-900">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-800">
+                <Moon className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {t("sleep.asleepSince", { time: formatTimeLabel(clockOf(active.startedAt)) })}
+                </p>
+                <p className="text-2xl font-bold tabular-nums">{formatDuration(elapsed, t)}</p>
+              </div>
             </div>
+            {elapsed >= FORGOTTEN_SLEEP_MINUTES ? (
+              <p className="text-sm font-medium text-destructive">{t("sleep.forgotWake")}</p>
+            ) : null}
           </div>
-          {elapsed >= FORGOTTEN_SLEEP_MINUTES ? (
-            <p className="text-sm font-medium text-destructive">{t("sleep.forgotWake")}</p>
-          ) : null}
-          <div className="flex gap-2">
-            <Button type="button" className="min-h-11 flex-1 gap-2 rounded-full" disabled={busy} onClick={wake}>
-              <Sun className="size-4" aria-hidden />
-              {t("sleep.wakeNow")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11 gap-2 rounded-full"
-              aria-pressed={panel === "edit"}
-              onClick={() => setPanel(panel === "edit" ? "none" : "edit")}
-            >
-              <Pencil className="size-4" aria-hidden />
-              {t("child.edit")}
-            </Button>
-          </div>
-          {panel === "edit" ? (
-            <SleepLogForm key={active.id} initial={active} embedded onSaved={() => setPanel("none")} />
-          ) : null}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <Button type="button" className="min-h-12 w-full gap-2 rounded-full" disabled={busy} onClick={start}>
-            <Moon className="size-4" aria-hidden />
-            {t("sleep.startNow")}
-          </Button>
-          <button
-            type="button"
-            aria-expanded={panel === "manual"}
-            onClick={() => setPanel(panel === "manual" ? "none" : "manual")}
-            className="w-full text-center text-sm font-semibold text-lilac-deep hover:underline"
-          >
-            {t("sleep.addManual")}
-          </button>
-          {panel === "manual" ? (
-            <SleepLogForm
-              embedded
-              onSaved={() => {
-                setPanel("none");
-                onSaved?.();
-              }}
-            />
-          ) : null}
-        </div>
-      )}
-    </section>
+        ) : null}
+    </SleepMomentForm>
   );
 }
 
@@ -551,6 +601,6 @@ export function SleepTracker({
 export function SleepQuickLog({ onSaved, embedded }: { onSaved?: () => void; embedded?: boolean }) {
   const { signedIn } = useSupabase();
   const { data } = useRemote("sleep", listSleeps, signedIn);
-  if (!data) return <Skeleton className="h-40 rounded-2xl" />;
+  if (!data) return <SleepFormSkeleton embedded={embedded} />;
   return <SleepTracker entries={data} onSaved={onSaved} embedded={embedded} />;
 }

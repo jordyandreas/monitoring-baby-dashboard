@@ -1,5 +1,7 @@
 import { parseISO } from "date-fns";
 import { latestTimed } from "@/lib/child/summary";
+import type { FeedEntry } from "@/lib/child/types";
+import { feedAnchor } from "@/lib/push-reminders/schedule";
 import { getMinutesFromTimeString, toTimeString } from "@/utils/time";
 
 export const SCHEDULE_KINDS = ["feed", "pump"] as const;
@@ -57,7 +59,15 @@ function loggedAt(entry: Timed): Date | null {
 }
 
 export function nextSchedule(entries: Timed[], intervalMinutes: number, now = new Date()): NextSchedule {
-  const latest = latestTimed(entries);
+  return scheduleFrom(latestTimed(entries), intervalMinutes, now);
+}
+
+export function nextFeedSchedule(feeds: FeedEntry[], intervalMinutes: number, now = new Date()): NextSchedule {
+  const anchor = feedAnchor(feeds);
+  return scheduleFrom(anchor, intervalMinutes + (anchor?.extraMinutes ?? 0), now);
+}
+
+function scheduleFrom(latest: Timed | null, intervalMinutes: number, now: Date): NextSchedule {
   const logged = latest ? loggedAt(latest) : null;
   if (!logged) return { state: "empty", at: null, minutesUntil: null };
   const at = new Date(logged.getTime() + intervalMinutes * 60_000);

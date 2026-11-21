@@ -61,19 +61,6 @@ export function sleepPeriodAt(when: Date): "day" | "night" {
   return hour >= 19 || hour < 7 ? "night" : "day";
 }
 
-/** Local date + clock times to timestamps. An end at or before the start is the next morning. */
-export function sleepRange(
-  date: string,
-  startTime: string,
-  endTime?: string,
-): { startedAt: string; endedAt?: string } {
-  const start = parseISO(`${date}T${startTime}`);
-  if (!endTime) return { startedAt: start.toISOString() };
-  const end = parseISO(`${date}T${endTime}`);
-  if (end <= start) end.setDate(end.getDate() + 1);
-  return { startedAt: start.toISOString(), endedAt: end.toISOString() };
-}
-
 export function formatDuration(minutes: number, t: Translate): string {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
@@ -313,14 +300,15 @@ export function datesBetween(from: string, to: string, locale: Locale, reference
 }
 
 export function sleepDaySummary(entries: SleepEntry[]) {
-  const nap = entries
-    .filter((entry) => entry.period === "day")
-    .reduce((sum, entry) => sum + sleepMinutes(entry), 0);
-  const night = entries
-    .filter((entry) => entry.period === "night")
-    .reduce((sum, entry) => sum + sleepMinutes(entry), 0);
-  const count = entries.filter((entry) => entry.endedAt).length;
-  return { count, total: nap + night, nap, night };
+  const minutes = entries.filter((entry) => entry.endedAt).map(sleepMinutes);
+  const total = minutes.reduce((sum, value) => sum + value, 0);
+  const count = minutes.length;
+  return {
+    count,
+    total,
+    longest: Math.max(0, ...minutes),
+    average: count > 0 ? Math.round(total / count) : 0,
+  };
 }
 
 export function todayTotals(data: ChildStorage, today: string): TodayTotals {
@@ -428,17 +416,19 @@ export function sleepHistoryParts(
   t: Translate,
 ): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
   return {
-    title: entry.period === "night" ? t("sleep.night") : t("sleep.day"),
-    subtitle: sleepSpanLabel(entry, t, formatTimeLabel),
+    title: entry.endedAt ? formatDuration(sleepMinutes(entry), t) : t("sleep.asleepNow"),
+    subtitle: sleepRangeLabel(entry, t, formatTimeLabel),
     tone: "sky",
     icon: "sleep",
   };
 }
 
-function sleepSpanLabel(entry: SleepEntry, t: Translate, clockLabel: (time: string) => string): string {
+function sleepRangeLabel(entry: SleepEntry, t: Translate, clockLabel: (time: string) => string): string {
   const start = clockLabel(clockOf(entry.startedAt));
-  if (!entry.endedAt) return `${start}–… · ${t("sleep.ongoing")}`;
-  return `${start}–${clockLabel(clockOf(entry.endedAt))} · ${formatDuration(sleepMinutes(entry), t)}`;
+  if (!entry.endedAt) return t("sleep.rangeOngoing", { start });
+  const end = clockLabel(clockOf(entry.endedAt));
+  const nextDay = format(parseISO(entry.endedAt), "yyyy-MM-dd") !== format(parseISO(entry.startedAt), "yyyy-MM-dd");
+  return t("sleep.range", { start, end: nextDay ? `${end} (${t("sleep.nextDay")})` : end });
 }
 
 export function pumpHistoryParts(
@@ -601,8 +591,8 @@ export function describePotty(entry: PottyEntry, t: Translate): string {
 }
 
 export function describeSleep(entry: SleepEntry, t: Translate): string {
-  const period = entry.period === "night" ? t("sleep.night") : t("sleep.day");
-  return `${period} · ${sleepSpanLabel(entry, t, (time) => time)}`;
+  const range = sleepRangeLabel(entry, t, (time) => time);
+  return entry.endedAt ? `${range} · ${formatDuration(sleepMinutes(entry), t)}` : range;
 }
 
 export function todayTimeline(data: ChildStorage, today: string, t: Translate): TimelineItem[] {

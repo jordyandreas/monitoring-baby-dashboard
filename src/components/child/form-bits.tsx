@@ -51,14 +51,16 @@ export function ChoiceRow<T extends string>({
 export function DateField({
   date,
   onDate,
+  label,
 }: {
   date: string;
   onDate: (value: string) => void;
+  label?: string;
 }) {
   const { t } = useLocale();
   return (
     <div className="min-w-0 space-y-2">
-      <Label>{t("child.date")}</Label>
+      <Label>{label ?? t("child.date")}</Label>
       <DatePicker
         value={date}
         onChange={onDate}

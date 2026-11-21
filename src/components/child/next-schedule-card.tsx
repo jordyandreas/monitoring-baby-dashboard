@@ -6,12 +6,14 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { formatDuration } from "@/lib/child/summary";
 import {
   dueClock,
+  nextFeedSchedule,
   nextSchedule,
   reminderFor,
   type NextSchedule,
   type ScheduleKind,
   type ScheduleReminder,
 } from "@/lib/child/schedule-reminder";
+import type { FeedEntry } from "@/lib/child/types";
 import { cn } from "@/utils/cn";
 import { formatTimeLabel } from "@/utils/time";
 
@@ -38,21 +40,18 @@ function relativeLabel(next: NextSchedule, t: Translate): string | null {
 
 function ScheduleCard({
   kind,
-  reminder,
-  entries,
+  next,
   showKind,
   column,
   now,
 }: {
   kind: ScheduleKind;
-  reminder: ScheduleReminder;
-  entries: Timed[];
+  next: NextSchedule;
   showKind: boolean;
   column: boolean;
   now: Date;
 }) {
   const { t } = useLocale();
-  const next = nextSchedule(entries, reminder.intervalMinutes, now);
   const overdue = next.state === "overdue";
   const label = showKind
     ? kind === "feed"
@@ -98,7 +97,7 @@ export function NextScheduleStrip({
   column = false,
 }: {
   reminders: ScheduleReminder[];
-  feeds: Timed[];
+  feeds: FeedEntry[];
   pumps: Timed[];
   kinds: ScheduleKind[];
   showKind?: boolean;
@@ -114,7 +113,11 @@ export function NextScheduleStrip({
   const cards = kinds.flatMap((kind) => {
     const reminder = reminderFor(reminders, kind);
     if (!reminder.enabled) return [];
-    return [{ kind, reminder, entries: kind === "feed" ? feeds : pumps }];
+    const next =
+      kind === "feed"
+        ? nextFeedSchedule(feeds, reminder.intervalMinutes, now)
+        : nextSchedule(pumps, reminder.intervalMinutes, now);
+    return [{ kind, next }];
   });
 
   if (cards.length === 0) return null;

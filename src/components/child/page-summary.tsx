@@ -544,8 +544,8 @@ export function SleepRangeSummary({
           emphasis
         />
         <StatTile value={String(summary.count)} caption={t("sleep.summarySessions")} />
-        <StatTile value={formatDuration(summary.nap, t)} caption={t("sleep.day")} />
-        <StatTile value={formatDuration(summary.night, t)} caption={t("sleep.night")} />
+        <StatTile value={formatDuration(summary.longest, t)} caption={t("sleep.summaryLongest")} />
+        <StatTile value={formatDuration(summary.average, t)} caption={t("sleep.summaryAverage")} />
       </div>
       {!showChart && summary.count === 0 && entries.length > 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t("child.emptyDay")}</p>

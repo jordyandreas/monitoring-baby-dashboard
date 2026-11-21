@@ -5,7 +5,7 @@ import { ChildDayHistory } from "@/components/child/day-history";
 import { SleepRangeSummary, useSummaryLink } from "@/components/child/page-summary";
 import { SleepLogForm, SleepTracker } from "@/components/child/quick-log-forms";
 import { LogScreen } from "@/components/child/form-bits";
-import { LogPageSkeleton, remotePlaceholder } from "@/components/layout/data-skeletons";
+import { LogPageSkeleton, remotePlaceholder, SleepFormSkeleton } from "@/components/layout/data-skeletons";
 import { useLocale } from "@/components/providers/locale-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
@@ -23,7 +23,13 @@ export function SleepPageContent() {
   const sleeps = data ?? [];
   const editing = sleeps.find((entry) => entry.id === editingId) ?? null;
 
-  const placeholder = remotePlaceholder(ready, error, data, reload, <LogPageSkeleton tiles={4} />);
+  const placeholder = remotePlaceholder(
+    ready,
+    error,
+    data,
+    reload,
+    <LogPageSkeleton tiles={4} form={<SleepFormSkeleton />} />,
+  );
   if (placeholder) return placeholder;
 
   return (

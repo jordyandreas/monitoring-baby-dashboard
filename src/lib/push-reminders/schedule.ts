@@ -1,5 +1,6 @@
 export {
   computeSchedules,
+  feedAnchor,
   parsePushPreferences,
   clampIntervalMinutes,
   DEFAULT_PUSH_PREFERENCES,

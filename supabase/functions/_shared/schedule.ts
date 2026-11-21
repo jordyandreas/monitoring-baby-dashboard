@@ -153,6 +153,36 @@ const COPY: Record<
   },
 };
 
+export const BREAST_FEED_EXTENSION_MINUTES = 20;
+
+export type FeedStamp = { date: string; time: string; kind: string };
+
+/**
+ * The next feed counts from the latest bottle feed. Each direct breastfeed after it
+ * pushes that time back by 20 minutes instead of restarting the interval.
+ * With no bottle feed logged, the latest breastfeed is the anchor.
+ */
+export function feedAnchor(
+  feeds: FeedStamp[],
+): { date: string; time: string; extraMinutes: number } | null {
+  const sorted = [...feeds].sort((a, b) =>
+    `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`)
+  );
+  if (sorted.length === 0) return null;
+  let breastCount = 0;
+  for (const feed of sorted) {
+    if (feed.kind !== "breast") {
+      return {
+        date: feed.date,
+        time: feed.time,
+        extraMinutes: breastCount * BREAST_FEED_EXTENSION_MINUTES,
+      };
+    }
+    breastCount += 1;
+  }
+  return { date: sorted[0].date, time: sorted[0].time, extraMinutes: 0 };
+}
+
 export function clampIntervalMinutes(value: number): number {
   if (!Number.isFinite(value)) return 60;
   return Math.min(MAX_INTERVAL_MINUTES, Math.max(MIN_INTERVAL_MINUTES, Math.round(value)));
