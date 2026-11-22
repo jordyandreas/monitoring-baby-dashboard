@@ -191,7 +191,7 @@ export function PushReminderDialog({
 }
 
 function PushReminderPanel() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
   const remindersRemote = useRemote("push-reminders", getPushReminders, signedIn);
   const babyPlusRemote = useRemote("babyPlus", getBabyPlus, signedIn);
@@ -421,7 +421,7 @@ function PushReminderPanel() {
               label={t("pushReminders.babyPlusLabel")}
               description={
                 babyPlusTime
-                  ? t("pushReminders.babyPlusUsesTime", { time: formatTimeLabel(babyPlusTime) })
+                  ? t("pushReminders.babyPlusUsesTime", { time: formatTimeLabel(babyPlusTime, locale) })
                   : t("pushReminders.babyPlusNoTime")
               }
               enabled={preferences.babyPlus.enabled && canSchedule}

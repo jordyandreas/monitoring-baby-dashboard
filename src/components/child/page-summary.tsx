@@ -26,8 +26,10 @@ import {
   pumpDaySummary,
   recentDates,
   sessionIntervals,
+  ongoingSleepMinutesOn,
   sleepDaySummary,
-  sleepMinutes,
+  sleepDurations,
+  sleepMinutesByDay,
 } from "@/lib/child/summary";
 import { formatGrams, kgToGrams } from "@/lib/child/weight";
 import type { DiaperEntry, FeedEntry, GrowthEntry, PumpEntry, SleepEntry } from "@/lib/child/types";
@@ -41,6 +43,7 @@ import {
 } from "@/lib/child/who-growth";
 import type { Locale } from "@/lib/i18n/types";
 import type { Gender } from "@/lib/pregnancy/types";
+import { useNow } from "@/hooks/use-now";
 import { useSummaryLink, type SummaryRange } from "@/hooks/use-summary-link";
 import { cn } from "@/utils/cn";
 
@@ -234,10 +237,12 @@ function IntervalBand({
 function StatTile({
   value,
   caption,
+  note,
   emphasis = false,
 }: {
   value: string;
   caption: string;
+  note?: string;
   emphasis?: boolean;
 }) {
   return (
@@ -249,6 +254,7 @@ function StatTile({
     >
       <p className="text-2xl font-bold tabular-nums">{value}</p>
       <p className="text-xs text-muted-foreground">{caption}</p>
+      {note ? <p className="mt-0.5 text-xs font-medium text-lilac-foreground">{note}</p> : null}
     </div>
   );
 }
@@ -502,15 +508,17 @@ export function SleepRangeSummary({
     link,
   );
   const { range, day, today, axis, locale, showChart, customFrom, customTo } = period;
-  const byDay = axis.map((item) => {
-    const dayEntries = entries.filter((entry) => entry.date === item.date);
-    return {
-      ...item,
-      entries: dayEntries,
-      minutes: dayEntries.reduce((sum, entry) => sum + sleepMinutes(entry), 0),
-    };
-  });
-  const summary = sleepDaySummary(byDay.flatMap((item) => item.entries));
+  const now = useNow();
+  const durations = sleepDurations(entries);
+  const minutesByDay = sleepMinutesByDay(entries);
+  const byDay = axis.map((item) => ({
+    ...item,
+    entries: entries.filter((entry) => entry.date === item.date),
+    minutes: minutesByDay.get(item.date) ?? 0,
+  }));
+  const summary = sleepDaySummary(byDay.flatMap((item) => item.entries), durations);
+  const total = byDay.reduce((sum, item) => sum + item.minutes, 0);
+  const ongoing = axis.some((item) => item.date === today) ? ongoingSleepMinutesOn(entries, today, now) : 0;
   const maxMinutes = Math.max(...byDay.map((item) => item.minutes), 1);
 
   return (
@@ -527,7 +535,8 @@ export function SleepRangeSummary({
       />
       <div className="grid grid-cols-2 gap-3">
         <StatTile
-          value={formatDuration(summary.total, t)}
+          value={formatDuration(total, t)}
+          note={ongoing > 0 ? t("sleep.ongoingExtra", { duration: formatDuration(ongoing, t) }) : undefined}
           caption={rangeCaption({
             range,
             day,

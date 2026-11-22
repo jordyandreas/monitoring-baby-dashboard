@@ -9,15 +9,15 @@ import {
 } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import type { Locale } from "@/lib/i18n/types";
-import { formatTimeAmPm } from "@/utils/time";
+import { formatTimeLabel, toTimeString } from "@/utils/time";
 
 function dateFnsLocale(locale: Locale) {
   return locale === "id" ? idLocale : enUS;
 }
 import type { KickEntry } from "./types";
 
-export function formatKickTime(time: string): string {
-  return formatTimeAmPm(time);
+export function formatKickTime(time: string, locale: Locale): string {
+  return formatTimeLabel(time, locale);
 }
 
 export function getKicksInRange(
@@ -142,6 +142,7 @@ export function getHourlyDistribution(
 export function getTopHours(
   kicks: KickEntry[],
   days: number,
+  locale: Locale,
   topN = 3,
   reference: Date = new Date(),
 ): { hour: number; count: number; label: string }[] {
@@ -153,7 +154,7 @@ export function getTopHours(
     .slice(0, topN)
     .map((b) => ({
       ...b,
-      label: formatHourLabel(b.hour),
+      label: formatHourLabel(b.hour, locale),
     }));
 }
 
@@ -161,6 +162,7 @@ export function getTopHoursBetween(
   kicks: KickEntry[],
   from: string,
   to: string,
+  locale: Locale,
   topN = 3,
 ): { hour: number; count: number; label: string }[] {
   const filtered = getKicksBetween(kicks, from, to);
@@ -175,14 +177,12 @@ export function getTopHoursBetween(
     .slice(0, topN)
     .map((b) => ({
       ...b,
-      label: formatHourLabel(b.hour),
+      label: formatHourLabel(b.hour, locale),
     }));
 }
 
-export function formatHourLabel(hour: number): string {
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:00 ${ampm}`;
+export function formatHourLabel(hour: number, locale: Locale): string {
+  return formatTimeLabel(toTimeString(String(hour), "00"), locale);
 }
 
 export function getTodayDateStr(reference: Date = new Date()): string {

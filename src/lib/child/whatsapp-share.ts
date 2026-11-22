@@ -2,12 +2,12 @@ import { format, parseISO } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import {
   activeSleep,
-  clockOf,
   describeFeed,
   describePump,
   formatDuration,
   growthByDay,
-  sleepMinutes,
+  sleepDurations,
+  sleepMinutesByDay,
 } from "@/lib/child/summary";
 import { formatGrams, kgToGrams } from "@/lib/child/weight";
 import type {
@@ -64,6 +64,14 @@ export function diaperShareText(entry: Omit<DiaperEntry, "id">, t: Translate): s
   return [kind, color, texture, amount, entry.time].filter(Boolean).join(" · ");
 }
 
+/** `entries` should include `entry` so a wake can be paired with its sleep for the duration. */
+export function sleepShareText(entry: SleepEntry, entries: SleepEntry[], t: Translate): string {
+  const heading = `${t(entry.kind === "sleep" ? "sleep.momentSleep" : "sleep.momentWake")} · ${entry.time}`;
+  if (entry.kind === "sleep") return heading;
+  const minutes = sleepDurations(entries).get(entry.id);
+  return minutes ? `${heading}\n${t("sleep.durationPreview", { duration: formatDuration(minutes, t) })}` : heading;
+}
+
 export function openWhatsAppShare(text: string) {
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(url, "_blank", "noopener,noreferrer");
@@ -86,8 +94,7 @@ export function dayShareText(
 ): string {
   const feeds = input.feeds.filter((entry) => entry.date === input.date);
   const ml = feeds.reduce((sum, entry) => sum + (entry.amountMl ?? 0), 0);
-  const sleeps = input.sleeps.filter((entry) => entry.date === input.date);
-  const sleepMin = sleeps.reduce((sum, entry) => sum + sleepMinutes(entry), 0);
+  const sleepMin = sleepMinutesByDay(input.sleeps).get(input.date) ?? 0;
   const asleep = input.date === format(new Date(), "yyyy-MM-dd") ? activeSleep(input.sleeps) : null;
   const source = input.elimination === "potty" ? input.potty : input.diapers;
   const dayElimination = source.filter((entry) => entry.date === input.date);
@@ -116,7 +123,7 @@ export function dayShareText(
     t("share.milk", { count: feeds.length, ml }),
     t("share.peePoop", { pee, poop }),
     t("share.sleep", { duration: formatDuration(sleepMin, t) }),
-    asleep ? t("sleep.asleepSince", { time: clockOf(asleep.startedAt) }) : "",
+    asleep ? t("sleep.asleepSince", { time: asleep.time }) : "",
     growthLine,
   ]
     .filter(Boolean)

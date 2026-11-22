@@ -165,21 +165,18 @@ export function sleepToRow(userId: string, entry: SleepEntry): Tables["sleep_log
     id: entry.id,
     user_id: userId,
     logged_date: entry.date,
-    started_at: entry.startedAt,
-    ended_at: entry.endedAt ?? null,
-    period: entry.period,
+    logged_time: clock(entry.time),
+    kind: entry.kind,
   };
 }
 
 export function rowToSleep(row: Tables["sleep_logs"]["Row"]): SleepEntry {
-  const entry: SleepEntry = {
+  return {
     id: row.id,
     date: row.logged_date,
-    startedAt: row.started_at,
-    period: row.period === "night" ? "night" : "day",
+    time: hhmm(row.logged_time),
+    kind: row.kind === "wake" ? "wake" : "sleep",
   };
-  if (row.ended_at) entry.endedAt = row.ended_at;
-  return entry;
 }
 
 export function growthToRow(userId: string, entry: GrowthEntry): Tables["growth_logs"]["Insert"] {

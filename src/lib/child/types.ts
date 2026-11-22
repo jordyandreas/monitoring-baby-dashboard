@@ -35,17 +35,14 @@ export type DiaperEntry = {
   poopAmount?: PoopAmount;
 };
 
-export type SleepPeriod = "day" | "night";
+export type SleepKind = "sleep" | "wake";
 
+/** One moment: the baby fell asleep, or woke up. Either can be logged without the other. */
 export type SleepEntry = {
   id: string;
-  /** Local calendar day the sleep started (yyyy-MM-dd). */
   date: string;
-  /** ISO timestamp. */
-  startedAt: string;
-  /** ISO timestamp. Missing while the baby is still asleep. */
-  endedAt?: string;
-  period: SleepPeriod;
+  time: string;
+  kind: SleepKind;
 };
 
 export type GrowthEntry = {

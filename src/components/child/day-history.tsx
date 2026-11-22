@@ -81,7 +81,7 @@ export function ChildDayHistory<T extends DayEntry>({
           <HistoryDayList
             items={dayEntries.map((entry) => ({
               id: entry.id,
-              time: formatTimeLabel(entry.time),
+              time: formatTimeLabel(entry.time, locale),
               title: entry.title,
               subtitle: entry.subtitle,
               tone: entry.tone,

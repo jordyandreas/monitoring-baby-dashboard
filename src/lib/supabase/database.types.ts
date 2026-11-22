@@ -411,9 +411,8 @@ export interface Database {
         user_id: string;
         id: string;
         logged_date: string;
-        started_at: string;
-        ended_at: string | null;
-        period: string;
+        logged_time: string;
+        kind: string;
       }>;
       growth_logs: TableShape<{
         user_id: string;

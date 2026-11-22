@@ -69,6 +69,7 @@ import {
   formatDuration,
   growthComparison,
   logDates,
+  ongoingSleepMinutesOn,
   pumpLastStatus,
   sleepActiveStatus,
   todayTimeline,
@@ -78,7 +79,7 @@ import {
 } from "@/lib/child/summary";
 import { formatGrams, gramsToKg, kgToGrams } from "@/lib/child/weight";
 import { genderLabel } from "@/lib/i18n/baby";
-import { diaperShareText, dayShareText, feedShareText, pumpShareText } from "@/lib/child/whatsapp-share";
+import { diaperShareText, dayShareText, feedShareText, pumpShareText, sleepShareText } from "@/lib/child/whatsapp-share";
 import { getTodayDateStr } from "@/lib/pregnancy/vitamins";
 import { saveChildProfile } from "@/services/child.service";
 import { deleteDiaper } from "@/services/diapers.service";
@@ -91,6 +92,7 @@ import { deleteHealth } from "@/services/health.service";
 import { deletePotty } from "@/services/potty.service";
 import { deleteSleep } from "@/services/sleep.service";
 import { useChildBoard } from "@/hooks/use-child-board";
+import { useNow } from "@/hooks/use-now";
 import { useRemote } from "@/hooks/use-remote";
 import { formatTimeLabel } from "@/utils/time";
 import { cn } from "@/utils/cn";
@@ -442,6 +444,10 @@ function timelineShareText(
     const entry = board.diapers.find((row) => row.id === parsed.id);
     return entry ? diaperShareText(entry, t) : undefined;
   }
+  if (parsed.kind === "sleep") {
+    const entry = board.sleeps.find((row) => row.id === parsed.id);
+    return entry ? sleepShareText(entry, board.sleeps, t) : undefined;
+  }
   return undefined;
 }
 
@@ -462,7 +468,7 @@ function TodayLogList({
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [pending, setPending] = useState<string | null>(null);
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const current = Math.min(page, pageCount);
@@ -490,7 +496,7 @@ function TodayLogList({
               className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
             >
               <span className="w-16 shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums">
-                {formatTimeLabel(item.time)}
+                {formatTimeLabel(item.time, locale)}
               </span>
               <span className="h-8 w-px shrink-0 bg-border" aria-hidden />
               <span
@@ -633,7 +639,7 @@ function LogEditDialog({
         {feed ? <FeedLogForm key={feed.id} initial={feed} onSaved={onClose} /> : null}
         {pump ? <PumpLogForm key={pump.id} initial={pump} onSaved={onClose} /> : null}
         {diaper ? <DiaperLogForm key={diaper.id} initial={diaper} onSaved={onClose} /> : null}
-        {sleep ? <SleepLogForm key={sleep.id} initial={sleep} onSaved={onClose} /> : null}
+        {sleep ? <SleepLogForm key={sleep.id} initial={sleep} entries={board.sleeps} onSaved={onClose} /> : null}
         {food ? <FoodLogForm key={food.id} initial={food} onSaved={onClose} /> : null}
         {temperature ? <TemperatureLogForm key={temperature.id} initial={temperature} onSaved={onClose} /> : null}
         {medicine ? <MedicineLogForm key={medicine.id} initial={medicine} onSaved={onClose} /> : null}
@@ -989,11 +995,13 @@ function TodayActivity({
   diapers: DiaperEntry[];
   sleeps: SleepEntry[];
 }) {
-  const { t } = useLocale();
-  const feedLast = feedLastStatus(feeds, t);
-  const pumpLast = pumpLastStatus(pumps, t);
-  const diaperLast = diaperLastStatuses(diapers, t);
-  const sleepActive = sleepActiveStatus(sleeps, t);
+  const { t, locale } = useLocale();
+  const feedLast = feedLastStatus(feeds, t, locale);
+  const pumpLast = pumpLastStatus(pumps, t, locale);
+  const diaperLast = diaperLastStatuses(diapers, t, locale);
+  const sleepActive = sleepActiveStatus(sleeps, t, locale);
+  const now = useNow();
+  const sleepOngoing = ongoingSleepMinutesOn(sleeps, format(now, "yyyy-MM-dd"), now);
   const cards: {
     href: string;
     kind: QuickKind;
@@ -1040,6 +1048,7 @@ function TodayActivity({
       kind: "sleep",
       label: t("child.tagSleep"),
       value: formatDuration(totals.sleepMin, t),
+      detail: sleepOngoing > 0 ? t("sleep.ongoingExtra", { duration: formatDuration(sleepOngoing, t) }) : undefined,
       notes: activityNotes([sleepActive]),
       tint: "bg-sky-50",
     },

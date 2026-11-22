@@ -268,7 +268,7 @@ export function formatLogWhen(date: string, time: string, locale: "en" | "id"): 
   const label = format(parseISO(date), "d MMM yyyy", {
     locale: locale === "id" ? idLocale : enUS,
   });
-  return time ? `${label} · ${formatTimeLabel(time)}` : label;
+  return time ? `${label} · ${formatTimeLabel(time, locale)}` : label;
 }
 
 export function newestFirst<T extends { date: string; time?: string; startTime?: string }>(

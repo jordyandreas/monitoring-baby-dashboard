@@ -20,7 +20,7 @@ import { deletePump, listPumps } from "@/services/pump.service";
 import { listScheduleReminders } from "@/services/schedule-reminder.service";
 
 export function PumpPageContent() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("pump", listPumps, signedIn);
   const schedule = useRemote("schedule", listScheduleReminders, signedIn);
@@ -39,7 +39,7 @@ export function PumpPageContent() {
   );
   if (placeholder) return placeholder;
 
-  const last = pumpLastStatus(pumps, t);
+  const last = pumpLastStatus(pumps, t, locale);
 
   return (
     <LogScreen>

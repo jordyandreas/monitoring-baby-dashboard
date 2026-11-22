@@ -21,7 +21,7 @@ import { cn } from "@/utils/cn";
 export function KickWidget({ className }: { className?: string }) {
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("kicks", listKicks, signedIn);
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   const placeholder = remotePlaceholder(
     ready,
@@ -35,7 +35,7 @@ export function KickWidget({ className }: { className?: string }) {
   const kicks = data ?? [];
   const last7 = getKicksInRange(kicks, 7).length;
   const todayCount = getKicksForDate(kicks, getTodayDateStr()).length;
-  const topHours = getTopHours(kicks, 7);
+  const topHours = getTopHours(kicks, 7, locale);
 
   return (
     <Card

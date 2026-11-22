@@ -14,6 +14,7 @@ import {
   type ScheduleReminder,
 } from "@/lib/child/schedule-reminder";
 import type { FeedEntry } from "@/lib/child/types";
+import type { Locale } from "@/lib/i18n/types";
 import { cn } from "@/utils/cn";
 import { formatTimeLabel } from "@/utils/time";
 
@@ -21,8 +22,8 @@ type Translate = (key: string, params?: Record<string, string | number>) => stri
 
 type Timed = { date: string; time: string };
 
-function dueLabel(at: Date, t: Translate, now: Date): string {
-  const clock = formatTimeLabel(dueClock(at));
+function dueLabel(at: Date, t: Translate, locale: Locale, now: Date): string {
+  const clock = formatTimeLabel(dueClock(at), locale);
   const days = differenceInCalendarDays(startOfDay(at), startOfDay(now));
   if (days === 0) return clock;
   if (days === 1) return t("schedule.tomorrow", { time: clock });
@@ -51,7 +52,7 @@ function ScheduleCard({
   column: boolean;
   now: Date;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const overdue = next.state === "overdue";
   const label = showKind
     ? kind === "feed"
@@ -59,7 +60,7 @@ function ScheduleCard({
       : t("schedule.nextPump")
     : t("schedule.next");
   const relative = relativeLabel(next, t);
-  const time = next.at ? dueLabel(next.at, t, now) : t("schedule.empty");
+  const time = next.at ? dueLabel(next.at, t, locale, now) : t("schedule.empty");
 
   return (
     <div

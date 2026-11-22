@@ -64,7 +64,7 @@ export function KickList({
           <HistoryDayList
             items={entries.map((kick) => ({
               id: kick.id,
-              time: formatKickTime(kick.time),
+              time: formatKickTime(kick.time, locale),
               title: t("common.kick").replace(/^./, (letter) => letter.toUpperCase()),
               tone: "lilac",
               icon: "kick",

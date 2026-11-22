@@ -19,11 +19,15 @@ import {
 import { useLocale } from "@/components/providers/locale-provider";
 import {
   formatTimeLabel,
+  from12Hour,
   getCurrentTimeString,
+  HOUR_12_OPTIONS,
   HOUR_OPTIONS,
   MINUTE_OPTIONS,
   parseTimeString,
+  to12Hour,
   toTimeString,
+  usesAmPm,
 } from "@/utils/time";
 import { cn } from "@/utils/cn";
 
@@ -44,15 +48,19 @@ export function TimePicker({
   disabled,
   className,
 }: TimePickerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = React.useState(false);
+  const amPm = usesAmPm(locale);
   const parts =
     parseTimeString(value) ??
     parseTimeString(getCurrentTimeString()) ?? { hour: "00", minute: "00" };
+  const { hour12, period } = to12Hour(parts.hour);
 
   const updateTime = (hour: string, minute: string) => {
     onChange(toTimeString(hour, minute));
   };
+
+  const selectTriggerClass = "h-11 w-[4.75rem] rounded-xl";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -70,7 +78,7 @@ export function TimePicker({
           )}
         >
         <span className="truncate">
-          {value ? formatTimeLabel(value) : placeholder ?? t("common.selectTime")}
+          {value ? formatTimeLabel(value, locale) : placeholder ?? t("common.selectTime")}
         </span>
         <ClockIcon className="size-4 shrink-0 opacity-60" aria-hidden />
         </Button>
@@ -79,21 +87,41 @@ export function TimePicker({
         <div className="flex gap-2">
           <div className="min-w-0 space-y-1.5">
             <Label className="text-xs text-muted-foreground">{t("common.hour")}</Label>
-            <Select
-              value={parts.hour}
-              onValueChange={(hour) => hour && updateTime(hour, parts.minute)}
-            >
-              <SelectTrigger className="h-11 w-[4.75rem] rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-56">
-                {HOUR_OPTIONS.map((hour) => (
-                  <SelectItem key={hour} value={hour}>
-                    {hour}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {amPm ? (
+              <Select
+                value={hour12}
+                onValueChange={(next) =>
+                  next && updateTime(from12Hour(next, period), parts.minute)
+                }
+              >
+                <SelectTrigger className={selectTriggerClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {HOUR_12_OPTIONS.map((hour) => (
+                    <SelectItem key={hour} value={hour}>
+                      {hour}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select
+                value={parts.hour}
+                onValueChange={(hour) => hour && updateTime(hour, parts.minute)}
+              >
+                <SelectTrigger className={selectTriggerClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {HOUR_OPTIONS.map((hour) => (
+                    <SelectItem key={hour} value={hour}>
+                      {hour}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="min-w-0 space-y-1.5">
             <Label className="text-xs text-muted-foreground">{t("common.minute")}</Label>
@@ -103,7 +131,7 @@ export function TimePicker({
                 minute && updateTime(parts.hour, minute)
               }
             >
-              <SelectTrigger className="h-11 w-[4.75rem] rounded-xl">
+              <SelectTrigger className={selectTriggerClass}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-56">
@@ -115,6 +143,28 @@ export function TimePicker({
               </SelectContent>
             </Select>
           </div>
+          {amPm ? (
+            <div className="min-w-0 space-y-1.5">
+              <Label className="invisible text-xs" aria-hidden>
+                AM/PM
+              </Label>
+              <Select
+                value={period}
+                onValueChange={(next) =>
+                  next &&
+                  updateTime(from12Hour(hour12, next as "AM" | "PM"), parts.minute)
+                }
+              >
+                <SelectTrigger className={selectTriggerClass} aria-label="AM/PM">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AM">AM</SelectItem>
+                  <SelectItem value="PM">PM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
         <Button
           type="button"

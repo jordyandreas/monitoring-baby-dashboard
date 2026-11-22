@@ -6,7 +6,8 @@ import {
   getTodayListeningStatus,
   type TodayListeningStatus,
 } from "@/lib/pregnancy/baby-plus";
-import { formatTimeAmPm } from "@/utils/time";
+import type { Locale } from "@/lib/i18n/types";
+import { formatTimeLabel } from "@/utils/time";
 import { cn } from "@/utils/cn";
 
 type TodayListeningStatusProps = {
@@ -22,7 +23,7 @@ export function TodayListeningStatus({
   completions,
   className,
 }: TodayListeningStatusProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export function TodayListeningStatus({
       )}
       aria-live="polite"
     >
-      {status ? renderMessage(status, dailyTime, t) : " "}
+      {status ? renderMessage(status, dailyTime, t, locale) : " "}
     </p>
   );
 }
@@ -74,6 +75,7 @@ function renderMessage(
   status: TodayListeningStatus,
   dailyTime: string,
   t: TranslateFn,
+  locale: Locale,
 ): string {
   if (status.kind === "before-program") {
     return t("babyPlus.programStartsSoon");
@@ -92,7 +94,7 @@ function renderMessage(
 
   if (status.phase === "waiting" && dailyTime) {
     return t("babyPlus.startsAt", {
-      time: formatTimeAmPm(dailyTime),
+      time: formatTimeLabel(dailyTime, locale),
       sound,
       day,
     });

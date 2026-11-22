@@ -20,7 +20,7 @@ import { deleteFeed, listFeeds } from "@/services/feed.service";
 import { listScheduleReminders } from "@/services/schedule-reminder.service";
 
 export function FeedPageContent() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("feed", listFeeds, signedIn);
   const schedule = useRemote("schedule", listScheduleReminders, signedIn);
@@ -39,7 +39,7 @@ export function FeedPageContent() {
   );
   if (placeholder) return placeholder;
 
-  const last = feedLastStatus(feeds, t);
+  const last = feedLastStatus(feeds, t, locale);
 
   return (
     <LogScreen>

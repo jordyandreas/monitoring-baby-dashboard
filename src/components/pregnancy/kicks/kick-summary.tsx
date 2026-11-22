@@ -33,7 +33,7 @@ import {
 import type { KickEntry } from "@/lib/pregnancy/types";
 import { listKicks } from "@/services/kicks.service";
 
-function topHoursOnDate(kicks: KickEntry[], date: string) {
+function topHoursOnDate(kicks: KickEntry[], date: string, locale: Locale) {
   const counts = new Map<number, number>();
   for (const kick of kicks) {
     if (kick.date !== date) continue;
@@ -41,7 +41,7 @@ function topHoursOnDate(kicks: KickEntry[], date: string) {
     if (hour >= 0 && hour < 24) counts.set(hour, (counts.get(hour) ?? 0) + 1);
   }
   return [...counts.entries()]
-    .map(([hour, count]) => ({ hour, count, label: formatHourLabel(hour) }))
+    .map(([hour, count]) => ({ hour, count, label: formatHourLabel(hour, locale) }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
 }
@@ -93,12 +93,12 @@ export function KickSummary({
         : getKicksInRange(kicks, range).length;
   const topHours =
     range === 1
-      ? topHoursOnDate(kicks, link.day)
+      ? topHoursOnDate(kicks, link.day, locale)
       : range === "custom"
         ? customReady
-          ? getTopHoursBetween(kicks, link.customFrom, link.customTo)
+          ? getTopHoursBetween(kicks, link.customFrom, link.customTo, locale)
           : []
-        : getTopHours(kicks, range);
+        : getTopHours(kicks, range, locale);
   const showChart = perDay.length > 1;
 
   const totalCaption =

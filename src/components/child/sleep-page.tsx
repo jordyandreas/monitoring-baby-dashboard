@@ -12,11 +12,12 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { clockOf, sleepHistoryParts, sleepLastStatuses } from "@/lib/child/summary";
+import { sleepDurations, sleepHistoryParts, sleepLastStatuses } from "@/lib/child/summary";
+import { sleepShareText } from "@/lib/child/whatsapp-share";
 import { deleteSleep, listSleeps } from "@/services/sleep.service";
 
 export function SleepPageContent() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("sleep", listSleeps, signedIn);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -33,9 +34,11 @@ export function SleepPageContent() {
   );
   if (placeholder) return placeholder;
 
+  const durations = sleepDurations(sleeps);
+
   return (
     <LogScreen>
-      <LastLogLine items={sleepLastStatuses(sleeps, t)} />
+      <LastLogLine items={sleepLastStatuses(sleeps, t, locale)} />
       <SleepTracker entries={sleeps} withStatus={false} />
       <SleepRangeSummary entries={sleeps} link={summary} />
       <ChildDayHistory
@@ -43,8 +46,8 @@ export function SleepPageContent() {
         onSelectDate={summary.selectHistoryDate}
         entries={sleeps.map((entry) => ({
           ...entry,
-          time: clockOf(entry.startedAt),
-          ...sleepHistoryParts(entry, t),
+          ...sleepHistoryParts(entry, t, durations),
+          shareText: sleepShareText(entry, sleeps, t),
         }))}
         emptyLabel={t("sleep.empty")}
         emptyIcon="sleep"
@@ -62,7 +65,7 @@ export function SleepPageContent() {
         <DialogContent className="max-h-[min(90vh,760px)] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
           <DialogTitle className="sr-only">{t("sleep.edit")}</DialogTitle>
           {editing ? (
-            <SleepLogForm key={editing.id} initial={editing} onSaved={() => setEditingId(null)} />
+            <SleepLogForm key={editing.id} initial={editing} entries={sleeps} onSaved={() => setEditingId(null)} />
           ) : null}
         </DialogContent>
       </Dialog>

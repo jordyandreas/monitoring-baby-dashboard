@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { enUS, id as idLocale } from "date-fns/locale";
 import { useLocale } from "@/components/providers/locale-provider";
 import { getProgramEnd } from "@/lib/pregnancy/baby-plus";
-import { formatTimeAmPm, parseTimeString } from "@/utils/time";
+import { formatTimeLabel, parseTimeString } from "@/utils/time";
 
 type ProgramEndsLineProps = {
   startDate: Date;
@@ -21,7 +21,7 @@ export function ProgramEndsLine({
   const dfLocale = locale === "id" ? idLocale : enUS;
   const ends = format(getProgramEnd(startDate), dateFormat, { locale: dfLocale });
   const timeLabel =
-    dailyTime && parseTimeString(dailyTime) ? formatTimeAmPm(dailyTime) : null;
+    dailyTime && parseTimeString(dailyTime) ? formatTimeLabel(dailyTime, locale) : null;
 
   return (
     <p className="text-xs text-muted-foreground">

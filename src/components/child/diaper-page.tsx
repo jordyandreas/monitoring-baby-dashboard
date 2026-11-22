@@ -17,7 +17,7 @@ import { diaperShareText } from "@/lib/child/whatsapp-share";
 import { deleteDiaper, listDiapers } from "@/services/diapers.service";
 
 export function DiaperPageContent() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { signedIn } = useSupabase();
   const { data, ready, error, reload } = useRemote("diaper", listDiapers, signedIn);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export function DiaperPageContent() {
   );
   if (placeholder) return placeholder;
 
-  const last = diaperLastStatuses(diapers, t);
+  const last = diaperLastStatuses(diapers, t, locale);
   const lastItems = last ? [last.change, last.poop].filter((item) => item !== null) : [];
 
   return (

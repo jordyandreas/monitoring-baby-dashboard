@@ -77,7 +77,7 @@ export function WaterList({
           <HistoryDayList
             items={dayEntries.map((entry) => ({
               id: entry.id,
-              time: formatTimeLabel(entry.time),
+              time: formatTimeLabel(entry.time, locale),
               title: formatVolume(entry.amountMl, locale),
               tone: "sky",
               icon: "water",
