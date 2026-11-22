@@ -5,6 +5,7 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/utils/cn";
+import { historyTimeWidth } from "@/utils/time";
 
 export function LoadFailed({ onRetry, className }: { onRetry: () => void; className?: string }) {
   const { t } = useLocale();
@@ -97,16 +98,22 @@ function AreaChartSkeleton({ className }: { className?: string }) {
 }
 
 function LogRow() {
+  const { locale } = useLocale();
   return (
     <div className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm">
-      <Skeleton className="h-4 w-16" />
-      <span className="h-8 w-px shrink-0 bg-border" />
-      <Skeleton className="size-8 rounded-full" />
-      <div className="min-w-0 flex-1 space-y-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-3 w-44" />
+      <div className={cn("shrink-0", historyTimeWidth(locale))}>
+        <Skeleton className="h-4 w-10" />
       </div>
-      <Skeleton className="size-8 rounded-full" />
+      <span className="h-8 w-px shrink-0 bg-border" />
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <Skeleton className="h-4 w-3/4 max-w-32" />
+        <Skeleton className="h-3 w-full max-w-44" />
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Skeleton className="size-6 rounded-full" />
+        <Skeleton className="size-6 rounded-full" />
+      </div>
     </div>
   );
 }
@@ -130,7 +137,7 @@ function LastLogSkeleton() {
       </div>
       <Skeleton className="mt-2 h-6 w-16 max-w-[55%] sm:w-24" />
       <Skeleton className="mt-2 h-3 w-14 max-w-[50%] sm:hidden" />
-      <Skeleton className="mt-2 h-3.5 w-20 max-w-[70%] sm:w-28" />
+      <Skeleton className="mt-2 h-3 w-20 max-w-[70%] sm:w-28" />
     </div>
   );
 }

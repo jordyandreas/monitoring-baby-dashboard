@@ -11,6 +11,7 @@ import { ListEmptyState } from "@/components/ui/list-empty-state";
 import { useLocale } from "@/components/providers/locale-provider";
 import type { HistoryIcon, HistoryTone } from "@/lib/child/summary";
 import { cn } from "@/utils/cn";
+import { historyTimeWidth } from "@/utils/time";
 
 const toneClass: Record<HistoryTone, string> = {
   amber: "bg-amber-100 text-amber-700",
@@ -64,7 +65,7 @@ export function HistoryDayList({
   onDelete: (id: string) => void;
   onEdit?: (id: string) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [pending, setPending] = useState<string | null>(null);
 
   if (items.length === 0) {
@@ -86,7 +87,12 @@ export function HistoryDayList({
             key={item.id}
             className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
           >
-            <span className="w-16 shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums">
+            <span
+              className={cn(
+                "shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums",
+                historyTimeWidth(locale),
+              )}
+            >
               {item.time}
             </span>
             <span className="h-8 w-px shrink-0 bg-border" aria-hidden />

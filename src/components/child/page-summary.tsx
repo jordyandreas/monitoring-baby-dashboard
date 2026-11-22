@@ -28,8 +28,8 @@ import {
   sessionIntervals,
   ongoingSleepMinutesOn,
   sleepDaySummary,
-  sleepDurations,
   sleepMinutesByDay,
+  sleepSessionsInRange,
 } from "@/lib/child/summary";
 import { formatGrams, kgToGrams } from "@/lib/child/weight";
 import type { DiaperEntry, FeedEntry, GrowthEntry, PumpEntry, SleepEntry } from "@/lib/child/types";
@@ -509,14 +509,14 @@ export function SleepRangeSummary({
   );
   const { range, day, today, axis, locale, showChart, customFrom, customTo } = period;
   const now = useNow();
-  const durations = sleepDurations(entries);
   const minutesByDay = sleepMinutesByDay(entries);
   const byDay = axis.map((item) => ({
     ...item,
-    entries: entries.filter((entry) => entry.date === item.date),
     minutes: minutesByDay.get(item.date) ?? 0,
   }));
-  const summary = sleepDaySummary(byDay.flatMap((item) => item.entries), durations);
+  const summary = sleepDaySummary(
+    axis.length > 0 ? sleepSessionsInRange(entries, axis[0].date, axis[axis.length - 1].date) : [],
+  );
   const total = byDay.reduce((sum, item) => sum + item.minutes, 0);
   const ongoing = axis.some((item) => item.date === today) ? ongoingSleepMinutesOn(entries, today, now) : 0;
   const maxMinutes = Math.max(...byDay.map((item) => item.minutes), 1);

@@ -93,6 +93,74 @@ export function sleepMinutesByDay(entries: SleepEntry[]): Map<string, number> {
   return byDay;
 }
 
+export type SleepRowDurations = {
+  /** Sleep id → minutes until midnight, only for sleeps whose wake falls on a later day. */
+  untilMidnight: Map<string, number>;
+  /** Wake id → minutes on the wake's own day (from midnight when the sleep began the day before). */
+  onWakeDay: Map<string, number>;
+  /** Wake ids whose sleep began on an earlier day. */
+  crossedMidnight: Set<string>;
+};
+
+/** Durations per history row, so each day's rows only add up to that day's sleep. */
+export function sleepRowDurations(entries: SleepEntry[]): SleepRowDurations {
+  const sorted = [...entries].sort((a, b) => timedKey(a).localeCompare(timedKey(b)));
+  const result: SleepRowDurations = { untilMidnight: new Map(), onWakeDay: new Map(), crossedMidnight: new Set() };
+  let pending: SleepEntry | null = null;
+  for (const entry of sorted) {
+    if (entry.kind === "sleep") {
+      pending = entry;
+      continue;
+    }
+    if (pending) {
+      const start = timedDate(pending);
+      const end = timedDate(entry);
+      const minutes = (end.getTime() - start.getTime()) / 60000;
+      if (minutes > 0 && minutes <= MAX_SLEEP_PAIR_MINUTES) {
+        const wakeDayStart = startOfDay(end);
+        if (start < wakeDayStart) {
+          const firstMidnight = addDays(startOfDay(start), 1);
+          result.untilMidnight.set(pending.id, Math.round((firstMidnight.getTime() - start.getTime()) / 60000));
+          result.onWakeDay.set(entry.id, Math.round((end.getTime() - wakeDayStart.getTime()) / 60000));
+          result.crossedMidnight.add(entry.id);
+        } else {
+          result.onWakeDay.set(entry.id, Math.round(minutes));
+        }
+      }
+    }
+    pending = null;
+  }
+  return result;
+}
+
+/** Completed sleeps clipped to the `from`–`to` days (inclusive), in minutes. */
+export function sleepSessionsInRange(entries: SleepEntry[], from: string, to: string): number[] {
+  const rangeStart = startOfDay(parseISO(from));
+  const rangeEnd = addDays(startOfDay(parseISO(to)), 1);
+  const sorted = [...entries].sort((a, b) => timedKey(a).localeCompare(timedKey(b)));
+  const sessions: number[] = [];
+  let pending: SleepEntry | null = null;
+  for (const entry of sorted) {
+    if (entry.kind === "sleep") {
+      pending = entry;
+      continue;
+    }
+    if (pending) {
+      const start = timedDate(pending);
+      const end = timedDate(entry);
+      const minutes = (end.getTime() - start.getTime()) / 60000;
+      if (minutes > 0 && minutes <= MAX_SLEEP_PAIR_MINUTES) {
+        const clippedStart = start > rangeStart ? start : rangeStart;
+        const clippedEnd = end < rangeEnd ? end : rangeEnd;
+        const clipped = Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 60000);
+        if (clipped > 0) sessions.push(clipped);
+      }
+    }
+    pending = null;
+  }
+  return sessions;
+}
+
 export function sleepMinutesInRange(byDay: Map<string, number>, inRange: (date: string) => boolean): number {
   let total = 0;
   for (const [date, minutes] of byDay) if (inRange(date)) total += minutes;
@@ -125,7 +193,6 @@ export function formatDuration(minutes: number, t: Translate): string {
   if (rest === 0) return t("child.hoursShort", { hours });
   return t("child.hoursMinutes", { hours, minutes: rest });
 }
-
 type Timed = { date: string; time: string };
 
 function timedKey(entry: Timed): string {
@@ -221,7 +288,9 @@ export function sleepLastStatuses(entries: SleepEntry[], t: Translate, locale: L
   if (lastSleep) {
     items.push(
       statusFrom(t("sleep.lastSleep"), lastWhenParts(lastSleep.date, lastSleep.time, t, locale, now), [
-        active ? t("sleep.ongoing") : "",
+        active
+          ? t("sleep.ongoingFor", { duration: formatDuration(sleepElapsedMinutes(active, now), t) })
+          : "",
       ]),
     );
   }
@@ -387,12 +456,8 @@ export function datesBetween(from: string, to: string, locale: Locale, reference
   }));
 }
 
-/** Only completed sleeps (a wake paired with its sleep) count toward the totals. */
-export function sleepDaySummary(entries: SleepEntry[], durations: Map<string, number>) {
-  const minutes = entries.flatMap((entry) => {
-    const value = durations.get(entry.id);
-    return value === undefined ? [] : [value];
-  });
+/** Session minutes, e.g. from `sleepSessionsInRange`. */
+export function sleepDaySummary(minutes: number[]) {
   const total = minutes.reduce((sum, value) => sum + value, 0);
   const count = minutes.length;
   return {
@@ -506,12 +571,23 @@ export function diaperHistoryParts(
 export function sleepHistoryParts(
   entry: SleepEntry,
   t: Translate,
-  durations: Map<string, number>,
+  rows: SleepRowDurations,
 ): { title: string; subtitle: string; tone: HistoryTone; icon: HistoryIcon } {
-  const parts = sleepDetailParts(entry, t, durations);
+  let subtitle = "";
+  if (entry.kind === "sleep") {
+    const minutes = rows.untilMidnight.get(entry.id);
+    if (minutes) subtitle = t("sleep.durationUntilMidnight", { duration: formatDuration(minutes, t) });
+  } else {
+    const minutes = rows.onWakeDay.get(entry.id);
+    if (minutes) {
+      subtitle = t(rows.crossedMidnight.has(entry.id) ? "sleep.durationSinceMidnight" : "sleep.durationPreview", {
+        duration: formatDuration(minutes, t),
+      });
+    }
+  }
   return {
-    title: parts[0],
-    subtitle: parts.slice(1).join(" · "),
+    title: entry.kind === "sleep" ? t("sleep.momentSleep") : t("sleep.momentWake"),
+    subtitle,
     tone: "sky",
     icon: "sleep",
   };

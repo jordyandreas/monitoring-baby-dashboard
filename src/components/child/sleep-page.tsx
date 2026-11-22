@@ -12,7 +12,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { commitSave } from "@/components/ui/save-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRemote } from "@/hooks/use-remote";
-import { sleepDurations, sleepHistoryParts, sleepLastStatuses } from "@/lib/child/summary";
+import { sleepHistoryParts, sleepLastStatuses, sleepRowDurations } from "@/lib/child/summary";
 import { sleepShareText } from "@/lib/child/whatsapp-share";
 import { deleteSleep, listSleeps } from "@/services/sleep.service";
 
@@ -34,7 +34,7 @@ export function SleepPageContent() {
   );
   if (placeholder) return placeholder;
 
-  const durations = sleepDurations(sleeps);
+  const rowDurations = sleepRowDurations(sleeps);
 
   return (
     <LogScreen>
@@ -46,7 +46,7 @@ export function SleepPageContent() {
         onSelectDate={summary.selectHistoryDate}
         entries={sleeps.map((entry) => ({
           ...entry,
-          ...sleepHistoryParts(entry, t, durations),
+          ...sleepHistoryParts(entry, t, rowDurations),
           shareText: sleepShareText(entry, sleeps, t),
         }))}
         emptyLabel={t("sleep.empty")}

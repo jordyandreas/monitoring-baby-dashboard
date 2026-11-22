@@ -31,6 +31,11 @@ export function usesAmPm(locale: Locale): boolean {
   return locale === "en";
 }
 
+/** Time column in history rows: fits "12:30 PM" with AM/PM, otherwise just "16:23". */
+export function historyTimeWidth(locale: Locale): string {
+  return usesAmPm(locale) ? "w-16" : "w-11";
+}
+
 export function formatTimeLabel(value: string, locale: Locale): string {
   if (usesAmPm(locale)) return formatTimeAmPm(value);
   return parseTimeString(value) ? value : "";

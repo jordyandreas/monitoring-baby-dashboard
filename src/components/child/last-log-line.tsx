@@ -23,7 +23,7 @@ function LastLogCard({ item, pair }: { item: LastLogStatus; pair: boolean }) {
         <p className={cn("mt-1 text-xs font-medium text-lilac-foreground", !pair && "sm:hidden")}>{item.ago}</p>
       ) : null}
       {item.details.length > 0 ? (
-        <p className="mt-1 text-sm text-lilac-foreground/80">{item.details.join(" · ")}</p>
+        <p className="mt-1 text-xs text-lilac-foreground/80">{item.details.join(" · ")}</p>
       ) : null}
     </div>
   );

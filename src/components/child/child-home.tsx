@@ -94,7 +94,7 @@ import { deleteSleep } from "@/services/sleep.service";
 import { useChildBoard } from "@/hooks/use-child-board";
 import { useNow } from "@/hooks/use-now";
 import { useRemote } from "@/hooks/use-remote";
-import { formatTimeLabel } from "@/utils/time";
+import { formatTimeLabel, historyTimeWidth } from "@/utils/time";
 import { cn } from "@/utils/cn";
 
 const PAGE_SIZE = 20;
@@ -495,7 +495,12 @@ function TodayLogList({
               key={item.id}
               className="flex items-center gap-3 rounded-2xl glass-regular px-4 py-3 shadow-sm"
             >
-              <span className="w-16 shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums">
+              <span
+                className={cn(
+                  "shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground tabular-nums",
+                  historyTimeWidth(locale),
+                )}
+              >
                 {formatTimeLabel(item.time, locale)}
               </span>
               <span className="h-8 w-px shrink-0 bg-border" aria-hidden />
