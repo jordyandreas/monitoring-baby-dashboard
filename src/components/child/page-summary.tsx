@@ -181,9 +181,9 @@ function IntervalStat({
   captionClass: string;
 }) {
   return (
-    <div className={cn("rounded-xl px-3 py-3", className)}>
-      <p className={cn("font-bold tabular-nums", valueClass)}>{value}</p>
-      <p className={cn("text-xs font-semibold", captionClass)}>{caption}</p>
+    <div className={cn("min-w-0 rounded-xl px-2.5 py-3 sm:px-3", className)}>
+      <p className={cn("text-base font-bold leading-tight tabular-nums sm:text-xl", valueClass)}>{value}</p>
+      <p className={cn("mt-0.5 truncate text-xs font-semibold", captionClass)}>{caption}</p>
     </div>
   );
 }
@@ -202,30 +202,28 @@ function IntervalBand({
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">{title}</p>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2">
         <IntervalStat
           value={label(interval?.average)}
           caption={t("child.intervalAvg")}
           className="bg-lilac/40"
-          valueClass="text-xl text-lilac-foreground"
+          valueClass="text-lilac-foreground"
           captionClass="text-lilac-foreground/70"
         />
-        <div className="grid grid-cols-2 gap-2 sm:contents">
-          <IntervalStat
-            value={label(interval?.shortest)}
-            caption={t("child.intervalShortest")}
-            className="bg-baby-sky/40"
-            valueClass="text-lg text-sky-foreground"
-            captionClass="text-sky-foreground/70"
-          />
-          <IntervalStat
-            value={label(interval?.longest)}
-            caption={t("child.intervalLongest")}
-            className="bg-mint/40"
-            valueClass="text-lg text-mint-foreground"
-            captionClass="text-mint-foreground/70"
-          />
-        </div>
+        <IntervalStat
+          value={label(interval?.shortest)}
+          caption={t("child.intervalShortest")}
+          className="bg-baby-sky/40"
+          valueClass="text-sky-foreground"
+          captionClass="text-sky-foreground/70"
+        />
+        <IntervalStat
+          value={label(interval?.longest)}
+          caption={t("child.intervalLongest")}
+          className="bg-mint/40"
+          valueClass="text-mint-foreground"
+          captionClass="text-mint-foreground/70"
+        />
       </div>
       {interval ? null : (
         <p className="text-xs leading-relaxed text-muted-foreground">{t("child.intervalNeedTwo")}</p>
@@ -535,8 +533,7 @@ export function SleepRangeSummary({
       />
       <div className="grid grid-cols-2 gap-3">
         <StatTile
-          value={formatDuration(total, t)}
-          note={ongoing > 0 ? t("sleep.ongoingExtra", { duration: formatDuration(ongoing, t) }) : undefined}
+          value={String(summary.count)}
           caption={rangeCaption({
             range,
             day,
@@ -544,15 +541,19 @@ export function SleepRangeSummary({
             customFrom,
             customTo,
             locale,
-            todayKeyName: "sleep.totalToday",
-            onDayKey: "sleep.totalOnDay",
-            inRangeKey: "sleep.totalInRange",
-            inSpanKey: "sleep.totalInSpan",
+            todayKeyName: "sleep.sessionsToday",
+            onDayKey: "sleep.sessionsOnDay",
+            inRangeKey: "sleep.sessionsInRange",
+            inSpanKey: "sleep.sessionsInSpan",
             t,
           })}
           emphasis
         />
-        <StatTile value={String(summary.count)} caption={t("sleep.summarySessions")} />
+        <StatTile
+          value={formatDuration(total, t)}
+          caption={t("sleep.summaryTotal")}
+          note={ongoing > 0 ? t("sleep.ongoingExtra", { duration: formatDuration(ongoing, t) }) : undefined}
+        />
         <StatTile value={formatDuration(summary.longest, t)} caption={t("sleep.summaryLongest")} />
         <StatTile value={formatDuration(summary.average, t)} caption={t("sleep.summaryAverage")} />
       </div>

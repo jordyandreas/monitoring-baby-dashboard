@@ -156,21 +156,13 @@ function IntervalSkeleton() {
   return (
     <div className="space-y-2">
       <Skeleton className="h-4 w-36" />
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div className="space-y-2 rounded-xl bg-lilac/40 px-3 py-3">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-3 w-16" />
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:contents">
-          <div className="space-y-2 rounded-xl bg-baby-sky/40 px-3 py-3">
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-3 w-14" />
+      <div className="grid grid-cols-3 gap-2">
+        {["bg-lilac/40", "bg-baby-sky/40", "bg-mint/40"].map((tone) => (
+          <div key={tone} className={cn("min-w-0 space-y-2 rounded-xl px-2.5 py-3 sm:px-3", tone)}>
+            <Skeleton className="h-5 w-14 max-w-full" />
+            <Skeleton className="h-3 w-12 max-w-full" />
           </div>
-          <div className="space-y-2 rounded-xl bg-mint/40 px-3 py-3">
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

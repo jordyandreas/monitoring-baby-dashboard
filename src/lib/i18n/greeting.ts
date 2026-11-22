@@ -1,5 +1,7 @@
+import { format } from "date-fns";
 import type { MessageKey } from "@/lib/i18n";
 import { localeToIntl, type Locale } from "@/lib/i18n/types";
+import { formatTimeLabel, TIME_STORAGE_FORMAT } from "@/utils/time";
 
 export type TimeOfDayGreeting = {
   message: string;
@@ -31,11 +33,11 @@ export function getTimeOfDayGreeting(
 
 export function formatLiveClockParts(date: Date, locale: Locale): { time: string; date: string } {
   const intl = localeToIntl(locale);
-  const time = new Intl.DateTimeFormat(intl, {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
+  const zone = new Intl.DateTimeFormat(intl, { timeZoneName: "short" })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value;
+  const clock = formatTimeLabel(format(date, TIME_STORAGE_FORMAT), locale);
+  const time = zone ? `${clock} ${zone}` : clock;
   const fullDate = new Intl.DateTimeFormat(intl, {
     weekday: "long",
     day: "numeric",
