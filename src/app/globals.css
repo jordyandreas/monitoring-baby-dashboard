@@ -136,6 +136,12 @@ body::before {
     radial-gradient(ellipse 54% 40% at -8% 78%, #e3d4fb 0%, transparent 52%);
 }
 
+/* Radix locks body pointer events while a Select or modal is open. The FAB opts back in
+   with pointer-events-auto, so without this taps on the open layer leak through to it. */
+body[style*="pointer-events: none"] [data-slot="expandable-fab"] {
+  pointer-events: none;
+}
+
 @layer components {
   .glass-clear,
   .glass-regular,

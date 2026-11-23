@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -33,16 +33,6 @@ export function SettingsDialog({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!open) {
-      setDraft(null);
-      setAddValue("");
-      setError(null);
-      return;
-    }
-    if (remote.data) setDraft(remote.data);
-  }, [open, remote.data]);
-
   const presets = draft ?? remote.data;
 
   const close = (next: boolean) => {
@@ -54,18 +44,23 @@ export function SettingsDialog({
     onOpenChange(next);
   };
 
-  const addPreset = () => {
-    if (!presets) return;
-    const parsed = parseBottleMlToAdd(addValue, presets);
+  const withPendingAdd = (current: number[]): number[] | null => {
+    const parsed = parseBottleMlToAdd(addValue, current);
     if (!parsed.ok) {
       if (parsed.reason === "duplicate") setError(t("settings.duplicate"));
       else if (parsed.reason === "max") setError(t("settings.maxPresets"));
       else setError(t("settings.invalid"));
-      return;
+      return null;
     }
     setError(null);
-    setDraft(normalizeBottleMlPresets([...presets, parsed.ml]));
+    const next = normalizeBottleMlPresets([...current, parsed.ml]);
+    setDraft(next);
     setAddValue("");
+    return next;
+  };
+
+  const addPreset = () => {
+    if (presets) withPendingAdd(presets);
   };
 
   const removePreset = (ml: number) => {
@@ -90,11 +85,13 @@ export function SettingsDialog({
       setError(t("settings.minOne"));
       return;
     }
+    const toSave = addValue.trim() ? withPendingAdd(presets) : presets;
+    if (!toSave) return;
     setError(null);
     setBusy(true);
     const ok = await commitSave(
       "bottle-presets",
-      () => saveBottleMlPresets(presets),
+      () => saveBottleMlPresets(toSave),
       "save",
       undefined,
       "settings",

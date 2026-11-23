@@ -161,6 +161,44 @@ export function sleepSessionsInRange(entries: SleepEntry[], from: string, to: st
   return sessions;
 }
 
+/** Awake time from each wake to the next sleep, clipped to the `from`–`to` days (inclusive), in minutes. */
+export function awakeMinutesInRange(entries: SleepEntry[], from: string, to: string): number {
+  const rangeStart = startOfDay(parseISO(from));
+  const rangeEnd = addDays(startOfDay(parseISO(to)), 1);
+  const sorted = [...entries].sort((a, b) => timedKey(a).localeCompare(timedKey(b)));
+  let total = 0;
+  let pending: SleepEntry | null = null;
+  for (const entry of sorted) {
+    if (entry.kind === "wake") {
+      pending = entry;
+      continue;
+    }
+    if (pending) {
+      const start = timedDate(pending);
+      const end = timedDate(entry);
+      const minutes = (end.getTime() - start.getTime()) / 60000;
+      if (minutes > 0 && minutes <= MAX_SLEEP_PAIR_MINUTES) {
+        const clippedStart = start > rangeStart ? start : rangeStart;
+        const clippedEnd = end < rangeEnd ? end : rangeEnd;
+        const clipped = Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 60000);
+        if (clipped > 0) total += clipped;
+      }
+    }
+    pending = null;
+  }
+  return total;
+}
+
+/** The current awake stretch's minutes on `date` so far; 0 once it looks like a forgotten sleep log. */
+export function ongoingAwakeMinutesOn(entries: SleepEntry[], date: string, now = new Date()): number {
+  const latest = latestTimed(entries);
+  if (latest?.kind !== "wake") return 0;
+  if (sleepElapsedMinutes(latest, now) >= FORGOTTEN_SLEEP_MINUTES) return 0;
+  const byDay = new Map<string, number>();
+  addMinutesByDay(byDay, timedDate(latest), now);
+  return byDay.get(date) ?? 0;
+}
+
 export function sleepMinutesInRange(byDay: Map<string, number>, inRange: (date: string) => boolean): number {
   let total = 0;
   for (const [date, minutes] of byDay) if (inRange(date)) total += minutes;

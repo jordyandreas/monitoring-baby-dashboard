@@ -38,7 +38,7 @@ function SheetOverlay({
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/10 transition-opacity duration-150 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-[80] bg-black/10 transition-opacity duration-150 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 supports-backdrop-filter:backdrop-blur-xs",
         className
       )}
       {...props}
@@ -47,7 +47,7 @@ function SheetOverlay({
 }
 
 const sheetContentVariants = cva(
-  "fixed z-50 flex flex-col gap-4 glass-regular bg-clip-padding text-sm text-popover-foreground shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-[80] flex flex-col gap-4 glass-regular bg-clip-padding text-sm text-popover-foreground shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {

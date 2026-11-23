@@ -52,7 +52,7 @@ export function ExpandableFab({
             document.body,
           )
         : null}
-      <div className={cn("relative z-50", className)}>
+      <div data-slot="expandable-fab" className={cn("relative z-50", className)}>
         <ul
           className={cn(
             "absolute right-0 bottom-full mb-3 flex flex-col-reverse items-end gap-3",

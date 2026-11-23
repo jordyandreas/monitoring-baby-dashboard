@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { BabyProfileForm } from "./baby-profile-form";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useLocale } from "@/components/providers/locale-provider";
 import {
   Dialog,
@@ -31,15 +31,7 @@ export function BabyProfileDialog({
   onSave,
 }: BabyProfileDialogProps) {
   const { t } = useLocale();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+  const isMobile = useIsMobile();
 
   const form = (
     <BabyProfileForm

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import {
   Dialog,
   DialogContent,
@@ -52,15 +52,7 @@ function EddInfoGotItButton({ onClose }: { onClose: () => void }) {
 
 export function EddInfoDialog({ open, onOpenChange }: EddInfoDialogProps) {
   const { t } = useLocale();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+  const isMobile = useIsMobile();
 
   const close = () => onOpenChange(false);
   const title = t("baby.eddInfoTitle");

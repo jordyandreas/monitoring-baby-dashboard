@@ -18,6 +18,7 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { ActivityAreaChart } from "@/components/summary/activity-area-chart";
 import { SummaryRangeControl } from "@/components/summary/summary-range-control";
 import {
+  awakeMinutesInRange,
   datesBetween,
   diaperDaySummary,
   feedDaySummary,
@@ -26,6 +27,7 @@ import {
   pumpDaySummary,
   recentDates,
   sessionIntervals,
+  ongoingAwakeMinutesOn,
   ongoingSleepMinutesOn,
   sleepDaySummary,
   sleepMinutesByDay,
@@ -246,11 +248,11 @@ function StatTile({
   return (
     <div
       className={cn(
-        "rounded-xl px-3 py-3 text-center",
+        "min-w-0 rounded-xl px-2 py-3 text-center sm:px-3",
         emphasis ? "bg-lilac/35" : "bg-lilac/20",
       )}
     >
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
+      <p className="text-lg leading-tight font-bold break-words tabular-nums sm:text-2xl">{value}</p>
       <p className="text-xs text-muted-foreground">{caption}</p>
       {note ? <p className="mt-0.5 text-xs font-medium text-lilac-foreground">{note}</p> : null}
     </div>
@@ -516,7 +518,10 @@ export function SleepRangeSummary({
     axis.length > 0 ? sleepSessionsInRange(entries, axis[0].date, axis[axis.length - 1].date) : [],
   );
   const total = byDay.reduce((sum, item) => sum + item.minutes, 0);
-  const ongoing = axis.some((item) => item.date === today) ? ongoingSleepMinutesOn(entries, today, now) : 0;
+  const includesToday = axis.some((item) => item.date === today);
+  const ongoing = includesToday ? ongoingSleepMinutesOn(entries, today, now) : 0;
+  const awake = axis.length > 0 ? awakeMinutesInRange(entries, axis[0].date, axis[axis.length - 1].date) : 0;
+  const ongoingAwake = includesToday ? ongoingAwakeMinutesOn(entries, today, now) : 0;
   const maxMinutes = Math.max(...byDay.map((item) => item.minutes), 1);
 
   return (
@@ -531,28 +536,33 @@ export function SleepRangeSummary({
         onCustomFromChange={period.setCustomFrom}
         onCustomToChange={period.setCustomTo}
       />
+      <p className="text-sm text-muted-foreground">
+        <span className="font-semibold text-foreground tabular-nums">{summary.count}</span>{" "}
+        {rangeCaption({
+          range,
+          day,
+          today,
+          customFrom,
+          customTo,
+          locale,
+          todayKeyName: "sleep.sessionsToday",
+          onDayKey: "sleep.sessionsOnDay",
+          inRangeKey: "sleep.sessionsInRange",
+          inSpanKey: "sleep.sessionsInSpan",
+          t,
+        })}
+      </p>
       <div className="grid grid-cols-2 gap-3">
-        <StatTile
-          value={String(summary.count)}
-          caption={rangeCaption({
-            range,
-            day,
-            today,
-            customFrom,
-            customTo,
-            locale,
-            todayKeyName: "sleep.sessionsToday",
-            onDayKey: "sleep.sessionsOnDay",
-            inRangeKey: "sleep.sessionsInRange",
-            inSpanKey: "sleep.sessionsInSpan",
-            t,
-          })}
-          emphasis
-        />
         <StatTile
           value={formatDuration(total, t)}
           caption={t("sleep.summaryTotal")}
           note={ongoing > 0 ? t("sleep.ongoingExtra", { duration: formatDuration(ongoing, t) }) : undefined}
+          emphasis
+        />
+        <StatTile
+          value={formatDuration(awake, t)}
+          caption={t("sleep.summaryAwake")}
+          note={ongoingAwake > 0 ? t("sleep.ongoingExtra", { duration: formatDuration(ongoingAwake, t) }) : undefined}
         />
         <StatTile value={formatDuration(summary.longest, t)} caption={t("sleep.summaryLongest")} />
         <StatTile value={formatDuration(summary.average, t)} caption={t("sleep.summaryAverage")} />
